@@ -7,14 +7,12 @@ import gsap from "gsap";
 import Image from "next/image";
 
 export default function Hero() {
-  // Trigger the text reveal after the preloader finishes
   const textRef = useGsapTextReveal(0.5); 
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Extraordinary pulse on hover for the button
   const handleButtonHover = () => {
     gsap.to(buttonRef.current, {
-      boxShadow: "0px 0px 30px 5px rgba(233,69,96,0.6)", // Glowing signal-red
+      boxShadow: "0px 0px 30px 5px rgba(233,69,96,0.6)", 
       scale: 1.05,
       duration: 0.3,
       ease: "power2.out"
@@ -33,10 +31,10 @@ export default function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
       
-      {/* 1. YOUR KEKE BACKGROUND IMAGE */}
-      <div className="absolute inset-0 w-full h-full -z-20">
+      {/* 1. YOUR KEKE BACKGROUND IMAGE (Changed to z-0) */}
+      <div className="absolute inset-0 w-full h-full z-0">
         <Image 
-          src="/images/keke-bg.jpg" // Make sure your file name matches this exactly
+          src="/images/keke-bg.jpg" 
           alt="YUSDAAM Transport Fleet"
           fill
           priority
@@ -44,11 +42,11 @@ export default function Hero() {
         />
       </div>
 
-      {/* 2. THE DARK OVERLAY (Makes the text readable over the picture) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-void-navy/90 via-void-navy/70 to-void-navy/95 -z-10" />
+      {/* 2. THE DARK OVERLAY (Changed to z-10) */}
+      <div className="absolute inset-0 bg-gradient-to-b from-void-navy/90 via-void-navy/70 to-void-navy/95 z-10" />
 
-      {/* 3. THE CONTENT */}
-      <div className="container mx-auto px-6 md:px-12 flex flex-col items-center text-center relative z-10">
+      {/* 3. THE CONTENT (Changed to z-20) */}
+      <div className="container mx-auto px-6 md:px-12 flex flex-col items-center text-center relative z-20">
         
         <div ref={textRef} className="max-w-4xl flex flex-col items-center">
           
@@ -75,7 +73,6 @@ export default function Hero() {
               onMouseLeave={handleButtonLeave}
               className="px-10 py-5 bg-signal-red text-crisp-white text-lg font-bold rounded-lg shadow-[0_0_20px_rgba(233,69,96,0.3)] relative overflow-hidden group"
             >
-              {/* Shimmer effect */}
               <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
               Get Your Proposal
             </button>
