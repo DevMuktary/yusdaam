@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-void-navy text-slate-light antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-crisp-white font-semibold;
+  }
+}
