@@ -16,7 +16,7 @@ export default function Hero() {
   useGSAP(() => {
     if (floatingWrapperRef.current) {
       gsap.to(floatingWrapperRef.current, {
-        y: -10, 
+        y: -8, // Reduced float height slightly to keep it compact
         duration: 2.5,
         repeat: -1, 
         yoyo: true, 
@@ -45,7 +45,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative min-h-[100svh] flex items-center justify-center pt-32 pb-16 overflow-hidden">
+    <section className="relative min-h-[100svh] flex items-center justify-center pt-24 pb-12 overflow-hidden">
       
       {/* 1. BACKGROUND IMAGE */}
       <div className="absolute inset-0 w-full h-full z-0">
@@ -67,12 +67,12 @@ export default function Hero() {
         <div ref={textRef} className="max-w-5xl flex flex-col items-center w-full">
           
           {/* Company Registration Badge */}
-          <div className="reveal-text inline-flex items-center px-4 py-2 rounded-full bg-void-navy/60 backdrop-blur-md border border-cobalt/50 text-slate-light text-xs sm:text-sm font-semibold mb-6 tracking-widest uppercase">
+          <div className="reveal-text inline-flex items-center px-4 py-1.5 rounded-full bg-void-navy/60 backdrop-blur-md border border-cobalt/50 text-slate-light text-xs font-semibold mb-4 tracking-widest uppercase">
             Yusdaam Autos Investment Mgt Nig Ltd. (RC-9335611)
           </div>
           
-          {/* The Main 3-Part Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-crisp-white leading-[1.1] mb-6 drop-shadow-2xl uppercase">
+          {/* The Main 3-Part Headline - Scaled down slightly to fit better vertically */}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-crisp-white leading-[1.1] mb-4 drop-shadow-2xl uppercase">
             <SplitText text="Own the asset." /> <br />
             <span className="text-slate-light">
               <SplitText text="We do the work." />
@@ -83,22 +83,22 @@ export default function Hero() {
           </h1>
 
           {/* The Punchline */}
-          <h2 className="reveal-text text-xl sm:text-2xl md:text-3xl font-bold text-crisp-white mb-6 drop-shadow-lg">
+          <h2 className="reveal-text text-lg sm:text-xl md:text-2xl font-bold text-crisp-white mb-4 drop-shadow-lg">
             No chasing drivers. No surprise repairs. Just alerts.
           </h2>
           
-          {/* The Core Explainer */}
-          <p className="reveal-text text-base sm:text-lg md:text-xl text-slate-light/95 mb-8 leading-relaxed max-w-4xl font-medium drop-shadow-lg px-2">
+          {/* The Core Explainer - Tighter margins */}
+          <p className="reveal-text text-sm sm:text-base md:text-lg text-slate-light/95 mb-6 leading-relaxed max-w-4xl font-medium drop-shadow-lg px-2">
             Buy a tricycle, Uber car, Mini-bus, Long-bus or Tipper truck. We handle the driver, maintenance, police wahala, and agberos. You receive weekly remittance direct to your bank. No pooling of funds. No SEC wahala. You own it, we manage it.
           </p>
 
           {/* Legal Clarification */}
-          <div className="reveal-text text-sm md:text-base text-slate-light/70 mb-10 font-bold tracking-widest uppercase border-b border-cobalt pb-2 inline-block">
+          <div className="reveal-text text-xs md:text-sm text-slate-light/70 mb-8 font-bold tracking-widest uppercase border-b border-cobalt pb-1 inline-block">
             We manage vehicles, not investments.
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full px-4 sm:px-0 reveal-text">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full px-4 sm:px-0 reveal-text">
             
             <div ref={floatingWrapperRef} className="w-full sm:w-auto">
               <Link 
@@ -106,7 +106,7 @@ export default function Hero() {
                 ref={primaryBtnRef}
                 onMouseEnter={handleButtonHover}
                 onMouseLeave={handleButtonLeave}
-                className="flex items-center justify-center w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-signal-red text-crisp-white text-base sm:text-lg font-bold rounded-xl shadow-[0_0_20px_rgba(233,69,96,0.3)] relative overflow-hidden group"
+                className="flex items-center justify-center w-full sm:w-auto px-8 py-4 bg-signal-red text-crisp-white text-base font-bold rounded-xl shadow-[0_0_20px_rgba(233,69,96,0.3)] relative overflow-hidden group"
               >
                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
                 Get Your Proposal
@@ -115,7 +115,7 @@ export default function Hero() {
             
             <Link 
               href="/services"
-              className="flex items-center justify-center w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-void-navy/40 backdrop-blur-md border-2 border-slate-light/20 hover:border-slate-light/60 hover:bg-void-light/60 text-crisp-white text-base sm:text-lg font-bold rounded-xl transition-all shadow-lg"
+              className="flex items-center justify-center w-full sm:w-auto px-8 py-4 bg-void-navy/40 backdrop-blur-md border-2 border-slate-light/20 hover:border-slate-light/60 hover:bg-void-light/60 text-crisp-white text-base font-bold rounded-xl transition-all shadow-lg"
             >
               View Vehicle Portfolios
             </Link>
