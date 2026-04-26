@@ -17,12 +17,13 @@ export default function TheEngine() {
   useGSAP(() => {
     if (!containerRef.current || !vehicleRef.current) return;
 
+    // Fixed for Mobile: Uses viewport width (vw) so it always crosses the whole screen
     gsap.to(vehicleRef.current, {
-      xPercent: 200, 
+      x: "120vw", 
       ease: "none",
       scrollTrigger: {
         trigger: containerRef.current,
-        start: "top 95%", // Triggers much earlier now
+        start: "top 95%", 
         end: "bottom top",
         scrub: 1, 
       },
@@ -31,14 +32,14 @@ export default function TheEngine() {
     const steps = gsap.utils.toArray('.engine-step');
     steps.forEach((step: any) => {
       gsap.fromTo(step, 
-        { opacity: 0, y: 40 }, // Reduced the jump distance
+        { opacity: 0, y: 40 }, 
         {
           opacity: 1, 
           y: 0,
           duration: 0.8,
           scrollTrigger: {
             trigger: step,
-            start: "top 95%", // Fades in the moment you scroll to it
+            start: "top 95%", 
             toggleActions: "play none none reverse"
           }
         }
@@ -47,14 +48,18 @@ export default function TheEngine() {
   }, { scope: containerRef });
 
   return (
-    // Reduced padding from py-32 to py-12/16 to close the dead space
     <section ref={containerRef} className="relative bg-void-light py-12 md:py-16 overflow-hidden border-y border-cobalt/30 w-full">
       
+      {/* Fixed Parallax Layer:
+        - Starts fully off-screen left (-left-[300px])
+        - Positioned nicely from the top
+        - Increased opacity on mobile (opacity-30) so it's visible behind the dark cards
+      */}
       <div 
         ref={vehicleRef} 
-        className="absolute top-1/4 -left-[30%] w-[300px] md:w-[400px] h-[200px] md:h-[250px] opacity-20 pointer-events-none z-0 mix-blend-screen"
+        className="absolute top-[15%] md:top-1/4 -left-[300px] w-[250px] md:w-[400px] h-[150px] md:h-[250px] opacity-30 md:opacity-20 pointer-events-none z-0 mix-blend-screen"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-signal-red/10 to-transparent blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-signal-red/20 to-transparent blur-3xl" />
         <Image 
           src="/images/keke-transparent.png" 
           alt="Driving Fleet"
