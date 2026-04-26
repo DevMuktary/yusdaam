@@ -11,17 +11,17 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <main className="bg-void-navy min-h-screen text-crisp-white">
+    // STRICT OVERFLOW CONTROL ADDED HERE TO PREVENT SIDE DRAGGING
+    <main className="bg-void-navy min-h-screen text-crisp-white overflow-x-hidden w-full max-w-[100vw]">
       {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
       
       <div 
-        className={`transition-opacity duration-1000 ${isLoading ? 'opacity-0 h-screen overflow-hidden' : 'opacity-100'}`}
+        className={`transition-opacity duration-1000 w-full ${isLoading ? 'opacity-0 h-screen overflow-hidden' : 'opacity-100'}`}
       >
-        {/* Navbar */}
-        <nav className="absolute top-0 w-full z-50 px-6 py-6 border-b border-cobalt/20 bg-void-navy/80 backdrop-blur-md">
+        <nav className="absolute top-0 w-full z-50 px-4 sm:px-6 py-4 sm:py-6 border-b border-cobalt/20 bg-void-navy/80 backdrop-blur-md">
           <div className="container mx-auto flex justify-between items-center">
             
-            <Link href="/" className="text-2xl font-black tracking-wider hover:opacity-80 transition">
+            <Link href="/" className="text-xl sm:text-2xl font-black tracking-wider hover:opacity-80 transition">
               YUSDAAM<span className="text-signal-red">.</span>
             </Link>
             
@@ -34,7 +34,7 @@ export default function Home() {
             
             <Link 
               href="/auth/login"
-              className="px-6 py-2.5 text-sm font-bold bg-cobalt border border-cobalt hover:border-slate-light/50 text-crisp-white rounded-lg hover:bg-void-light transition shadow-lg"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold bg-cobalt border border-cobalt hover:border-slate-light/50 text-crisp-white rounded-lg hover:bg-void-light transition shadow-lg"
             >
               Investor Portal
             </Link>
@@ -42,13 +42,8 @@ export default function Home() {
           </div>
         </nav>
 
-        {/* 1. The Hero Section */}
         <Hero />
-        
-        {/* 2. The Operations Explainer with Parallax Drive-by */}
         <TheEngine />
-
-        {/* 3. The Call to Action for Drivers */}
         <RiderCall />
         
       </div>
