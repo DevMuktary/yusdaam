@@ -6,27 +6,26 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Hero() {
   const textRef = useGsapTextReveal(0.5); 
-  const primaryBtnRef = useRef<HTMLButtonElement>(null);
+  const primaryBtnRef = useRef<HTMLAnchorElement>(null);
   const floatingWrapperRef = useRef<HTMLDivElement>(null);
 
-  // 1. The Floating Animation (Smooth, continuous levitation)
   useGSAP(() => {
     if (floatingWrapperRef.current) {
       gsap.to(floatingWrapperRef.current, {
-        y: -12, // Floats up 12px
-        duration: 2,
-        repeat: -1, // Infinite loop
-        yoyo: true, // Goes back down smoothly
+        y: -10, 
+        duration: 2.5,
+        repeat: -1, 
+        yoyo: true, 
         ease: "sine.inOut",
-        delay: 2.5 // Waits for the entrance animation to finish before floating
+        delay: 2.5 
       });
     }
   });
 
-  // 2. The Hover Pulse Effect (Remains intact for interaction)
   const handleButtonHover = () => {
     gsap.to(primaryBtnRef.current, {
       boxShadow: "0px 0px 30px 5px rgba(233,69,96,0.6)", 
@@ -46,7 +45,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative min-h-[100svh] flex items-center justify-center pt-24 pb-12 overflow-hidden">
+    <section className="relative min-h-[100svh] flex items-center justify-center pt-32 pb-16 overflow-hidden">
       
       {/* 1. BACKGROUND IMAGE */}
       <div className="absolute inset-0 w-full h-full z-0">
@@ -60,45 +59,66 @@ export default function Hero() {
       </div>
 
       {/* 2. THE DARK OVERLAY */}
-      <div className="absolute inset-0 bg-gradient-to-b from-void-navy/95 via-void-navy/80 to-void-navy/95 z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-void-navy/95 via-void-navy/85 to-void-navy/95 z-10" />
 
       {/* 3. THE CONTENT */}
       <div className="container mx-auto px-4 sm:px-6 md:px-12 flex flex-col items-center text-center relative z-20">
         
-        <div ref={textRef} className="max-w-4xl flex flex-col items-center w-full">
+        <div ref={textRef} className="max-w-5xl flex flex-col items-center w-full">
           
-          {/* AI Pill Badge REMOVED */}
+          {/* Company Registration Badge */}
+          <div className="reveal-text inline-flex items-center px-4 py-2 rounded-full bg-void-navy/60 backdrop-blur-md border border-cobalt/50 text-slate-light text-xs sm:text-sm font-semibold mb-6 tracking-widest uppercase">
+            Yusdaam Autos Investment Mgt Nig Ltd. (RC-9335611)
+          </div>
           
-          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-crisp-white leading-[1.1] mb-6 drop-shadow-2xl">
-            <SplitText text="Earn Weekly." /> <br />
+          {/* The Main 3-Part Headline */}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-crisp-white leading-[1.1] mb-6 drop-shadow-2xl uppercase">
+            <SplitText text="Own the asset." /> <br />
             <span className="text-slate-light">
-              <SplitText text="Without the Stress." />
+              <SplitText text="We do the work." />
+            </span> <br />
+            <span className="text-signal-red">
+              <SplitText text="You get paid weekly." />
             </span>
           </h1>
+
+          {/* The Punchline */}
+          <h2 className="reveal-text text-xl sm:text-2xl md:text-3xl font-bold text-crisp-white mb-6 drop-shadow-lg">
+            No chasing drivers. No surprise repairs. Just alerts.
+          </h2>
           
-          <p className="reveal-text text-lg sm:text-xl md:text-2xl text-slate-light/95 mb-10 leading-relaxed max-w-3xl font-medium drop-shadow-lg px-2">
-            Buy a Tricycle, Uber, or Minibus, and let the experts manage it. We vet the riders, handle the maintenance, and remit your money every week. No agberos, no excuses.
+          {/* The Core Explainer */}
+          <p className="reveal-text text-base sm:text-lg md:text-xl text-slate-light/95 mb-8 leading-relaxed max-w-4xl font-medium drop-shadow-lg px-2">
+            Buy a tricycle, Uber car, Mini-bus, Long-bus or Tipper truck. We handle the driver, maintenance, police wahala, and agberos. You receive weekly remittance direct to your bank. No pooling of funds. No SEC wahala. You own it, we manage it.
           </p>
 
-          {/* CTA Buttons - Mobile Optimized (w-full on mobile, auto on larger screens) */}
+          {/* Legal Clarification */}
+          <div className="reveal-text text-sm md:text-base text-slate-light/70 mb-10 font-bold tracking-widest uppercase border-b border-cobalt pb-2 inline-block">
+            We manage vehicles, not investments.
+          </div>
+
+          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full px-4 sm:px-0 reveal-text">
             
-            {/* The Floating Wrapper specifically for the primary button */}
             <div ref={floatingWrapperRef} className="w-full sm:w-auto">
-              <button 
+              <Link 
+                href="/invest"
                 ref={primaryBtnRef}
                 onMouseEnter={handleButtonHover}
                 onMouseLeave={handleButtonLeave}
-                className="w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-signal-red text-crisp-white text-base sm:text-lg font-bold rounded-xl shadow-[0_0_20px_rgba(233,69,96,0.3)] relative overflow-hidden group"
+                className="flex items-center justify-center w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-signal-red text-crisp-white text-base sm:text-lg font-bold rounded-xl shadow-[0_0_20px_rgba(233,69,96,0.3)] relative overflow-hidden group"
               >
                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                Start Earning Weekly
-              </button>
+                Get Your Proposal
+              </Link>
             </div>
             
-            <button className="w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-void-navy/40 backdrop-blur-md border-2 border-slate-light/20 hover:border-slate-light/60 hover:bg-void-light/60 text-crisp-white text-base sm:text-lg font-bold rounded-xl transition-all shadow-lg">
-              See Investment Plans
-            </button>
+            <Link 
+              href="/services"
+              className="flex items-center justify-center w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-void-navy/40 backdrop-blur-md border-2 border-slate-light/20 hover:border-slate-light/60 hover:bg-void-light/60 text-crisp-white text-base sm:text-lg font-bold rounded-xl transition-all shadow-lg"
+            >
+              View Vehicle Portfolios
+            </Link>
 
           </div>
 
