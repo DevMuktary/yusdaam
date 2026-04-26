@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import FloatingWhatsApp from "@/components/FloatingWhatsApp"; // Added import
 
-// Using Inter for clean, financial-grade typography
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "YUSDAAM Autos | Lagos Transport Investment Management",
-  description: "Invest in tricycles, cars, and minibuses with zero risk. We manage the fleet, you get guaranteed weekly returns.",
+  description: "Own the asset. We do the work. You get paid weekly.",
 };
 
 export default function RootLayout({
@@ -18,11 +18,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className={`${inter.className} min-h-screen flex flex-col`}>
-        {/* Navigation bar will go here later */}
+        
         <main className="flex-grow">
           {children}
         </main>
-        {/* Footer will go here later */}
+        
+        {/* The global WhatsApp button */}
+        <FloatingWhatsApp />
+        
       </body>
     </html>
   );
