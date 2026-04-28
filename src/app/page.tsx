@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Preloader from "@/components/Preloader";
 import Hero from "@/components/Hero";
+import VehicleShowcase from "@/components/VehicleShowcase"; // NEW IMPORT
 import TheEngine from "@/components/TheEngine";
 import RiderCall from "@/components/RiderCall";
 import Link from "next/link";
-import { Menu, X } from "lucide-react"; // Importing icons for the mobile menu
+import { Menu, X } from "lucide-react";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -71,8 +72,10 @@ export default function Home() {
         </div>
 
         {/* PAGE CONTENT */}
-        <div className="pt-16"> {/* Offset for the fixed navbar */}
+        <div className="pt-16">
           <Hero />
+          {/* The New Vehicle Showcase inserted here */}
+          <VehicleShowcase />
           <TheEngine />
           <RiderCall />
         </div>
