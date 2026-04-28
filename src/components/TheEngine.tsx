@@ -48,13 +48,9 @@ export default function TheEngine() {
   }, { scope: containerRef });
 
   return (
-    <section ref={containerRef} className="relative bg-void-light py-12 md:py-16 overflow-hidden border-y border-cobalt/30 w-full">
+    <section ref={containerRef} className="relative bg-void-light py-8 md:py-16 overflow-hidden border-y border-cobalt/30 w-full">
       
-      {/* Fixed Parallax Layer:
-        - Starts fully off-screen left (-left-[300px])
-        - Positioned nicely from the top
-        - Increased opacity on mobile (opacity-30) so it's visible behind the dark cards
-      */}
+      {/* Parallax Layer: Starts off-screen left and drives across */}
       <div 
         ref={vehicleRef} 
         className="absolute top-[15%] md:top-1/4 -left-[300px] w-[250px] md:w-[400px] h-[150px] md:h-[250px] opacity-30 md:opacity-20 pointer-events-none z-0 mix-blend-screen"
@@ -72,7 +68,7 @@ export default function TheEngine() {
         
         <div className="text-center mb-12 md:mb-16 engine-step">
           <h2 className="text-xs sm:text-sm font-bold tracking-widest text-signal-red uppercase mb-3">The Operations Engine</h2>
-          <h3 className="text-3xl md:text-5xl font-black text-crisp-white">How We Secure Your Investment</h3>
+          <h3 className="text-3xl md:text-5xl font-black text-crisp-white">How We Secure Your Asset</h3>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 md:gap-12">
