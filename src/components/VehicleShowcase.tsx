@@ -115,7 +115,7 @@ export default function VehicleShowcase() {
 
         <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
           
-          {/* Text & Navigation Side */}
+          {/* Text Side (Controls Removed from here) */}
           <div className="w-full lg:w-1/3 flex flex-col items-center lg:items-start text-center lg:text-left order-2 lg:order-1">
             <div className="inline-block px-4 py-1.5 rounded-full bg-cobalt/30 border border-cobalt text-signal-red text-xs font-bold uppercase tracking-widest mb-6">
               {vehicles[currentIndex].tag}
@@ -125,36 +125,15 @@ export default function VehicleShowcase() {
               {vehicles[currentIndex].name}
             </h4>
             
-            <p className="text-slate-light text-base md:text-lg leading-relaxed mb-8 h-24 lg:h-auto">
+            <p className="text-slate-light text-base md:text-lg leading-relaxed h-24 lg:h-auto">
               {vehicles[currentIndex].description}
             </p>
-
-            {/* Controls */}
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={prevSlide}
-                className="w-12 h-12 rounded-full bg-void-light border border-cobalt flex items-center justify-center text-crisp-white hover:bg-signal-red hover:border-signal-red transition-colors shadow-lg"
-                aria-label="Previous Vehicle"
-              >
-                <ChevronLeft size={24} />
-              </button>
-              
-              <div className="text-slate-light font-bold text-sm tracking-widest">
-                0{currentIndex + 1} <span className="mx-2 text-cobalt">/</span> 0{vehicles.length}
-              </div>
-
-              <button 
-                onClick={nextSlide}
-                className="w-12 h-12 rounded-full bg-void-light border border-cobalt flex items-center justify-center text-crisp-white hover:bg-signal-red hover:border-signal-red transition-colors shadow-lg"
-                aria-label="Next Vehicle"
-              >
-                <ChevronRight size={24} />
-              </button>
-            </div>
           </div>
 
-          {/* 3D Image Display Side */}
-          <div className="w-full lg:w-1/2 order-1 lg:order-2 perspective-[1000px]">
+          {/* 3D Image Display Side with Floating Controls */}
+          <div className="w-full lg:w-1/2 order-1 lg:order-2 relative perspective-[1000px]">
+            
+            {/* The 3D Image Card */}
             <div 
               ref={cardRef}
               onMouseMove={handleMouseMove}
@@ -162,7 +141,6 @@ export default function VehicleShowcase() {
               className="relative w-full aspect-[4/3] md:aspect-video lg:aspect-[4/3] rounded-2xl overflow-hidden border-2 border-cobalt/50 shadow-[0_20px_50px_rgba(15,52,96,0.5)] cursor-grab active:cursor-grabbing"
               style={{ transformStyle: 'preserve-3d' }}
             >
-              {/* Image changes instantly with state, Next/Image optimizes it */}
               <Image 
                 src={vehicles[currentIndex].image}
                 alt={vehicles[currentIndex].name}
@@ -171,9 +149,33 @@ export default function VehicleShowcase() {
                 className="object-cover object-center transition-transform duration-700 hover:scale-105"
               />
               
-              {/* Premium dark gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-void-navy via-transparent to-transparent opacity-60" />
+              {/* Premium dark gradient overlay so the buttons stand out */}
+              <div className="absolute inset-0 bg-gradient-to-t from-void-navy/90 via-transparent to-transparent opacity-80 pointer-events-none" />
             </div>
+
+            {/* Floating Navigation Controls - Pinned to the Bottom Right of the Image */}
+            <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-30 flex items-center gap-3 bg-void-navy/85 backdrop-blur-md p-2 sm:p-2.5 rounded-full border border-cobalt/50 shadow-2xl">
+              <button 
+                onClick={prevSlide}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-void-light border border-cobalt flex items-center justify-center text-crisp-white hover:bg-signal-red hover:border-signal-red transition-all shadow-lg active:scale-95"
+                aria-label="Previous Vehicle"
+              >
+                <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
+              </button>
+              
+              <div className="text-slate-light font-bold text-xs sm:text-sm tracking-widest text-center min-w-[3rem]">
+                0{currentIndex + 1} <span className="mx-1 text-cobalt">/</span> 0{vehicles.length}
+              </div>
+
+              <button 
+                onClick={nextSlide}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-void-light border border-cobalt flex items-center justify-center text-crisp-white hover:bg-signal-red hover:border-signal-red transition-all shadow-lg active:scale-95"
+                aria-label="Next Vehicle"
+              >
+                <ChevronRight size={20} className="sm:w-6 sm:h-6" />
+              </button>
+            </div>
+
           </div>
 
         </div>
