@@ -13,22 +13,21 @@ export default function RiderCall() {
     if (!containerRef.current) return;
     
     gsap.fromTo(".rider-content", 
-      { opacity: 0, x: -30 }, // Smoother entry
+      { opacity: 0, x: -30 }, 
       {
         opacity: 1, 
         x: 0,
         duration: 0.8,
         scrollTrigger: {
           trigger: containerRef.current,
-          start: "top 85%", // Triggers faster
+          start: "top 85%", 
         }
       }
     );
   }, { scope: containerRef });
 
   return (
-    // Reduced padding
-    <section ref={containerRef} className="bg-void-navy py-12 md:py-16 relative overflow-hidden w-full">
+    <section ref={containerRef} className="bg-void-navy py-8 md:py-16 relative overflow-hidden w-full">
       <div className="container mx-auto px-4 sm:px-6 md:px-12 grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
         
         <div className="rider-content max-w-2xl z-10 order-2 lg:order-1">
