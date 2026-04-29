@@ -65,7 +65,7 @@ export default function Hero() {
         <div ref={textRef} className="max-w-5xl flex flex-col items-center w-full">
           
           <div className="reveal-text flex flex-col sm:flex-row items-center justify-center px-4 py-2 sm:py-1.5 rounded-xl sm:rounded-full bg-void-navy/70 backdrop-blur-md border border-cobalt/50 text-slate-light text-[10px] sm:text-xs font-semibold mb-6 tracking-widest uppercase text-center w-max mx-auto">
-            <span>Yusdaam Autos Asset Mgt Nig Ltd.</span>
+            <span>Yusdaam Autos Investment Mgt Nig Ltd.</span>
             <span className="hidden sm:inline mx-2 text-cobalt">|</span>
             <span className="mt-1 sm:mt-0 text-signal-red">(RC-9335611)</span>
           </div>
@@ -85,7 +85,7 @@ export default function Hero() {
           </h2>
           
           <p className="reveal-text text-sm sm:text-base md:text-lg text-slate-light/95 mb-6 leading-relaxed max-w-4xl font-medium drop-shadow-lg px-2">
-            Buy a tricycle, Uber car, Mini-bus, Long-bus or Tipper truck. We handle the driver, maintenance, police wahala, and agberos. You receive weekly remittance direct to your bank. No pooling of funds. No SEC wahala. You own it, we manage it.
+            Buy a tricycle, Uber car, Mini-bus, Long-bus or Tipper truck. We handle the driver, maintenance, police wahala, and agberos. You receive weekly remittance direct to your bank. No pooling of funds. You own it, we manage it.
           </p>
 
           <div className="reveal-text text-xs md:text-sm text-slate-light/70 mb-8 font-bold tracking-widest uppercase border-b border-cobalt pb-1 inline-block">
