@@ -56,7 +56,7 @@ export default function OwnerRegistration() {
       countryIso: selectedIso, 
       countryName: countryData?.name || "", 
       phoneCountryCode: `+${countryData?.phonecode || ""}`,
-      state: "" // Reset state when country changes
+      state: "" 
     });
   };
 
@@ -175,16 +175,18 @@ export default function OwnerRegistration() {
     );
   }
 
-  const inputStyle = "w-full bg-void-navy border border-cobalt/40 rounded-lg px-4 py-3 sm:py-3.5 text-[16px] text-crisp-white focus:outline-none focus:border-signal-red focus:ring-1 focus:ring-signal-red/50 transition-all placeholder:text-slate-light/40";
+  // FIXED: Added border-l-4 border-l-signal-red for the Ribbon effect
+  const inputStyle = "w-full bg-void-navy border border-cobalt/40 border-l-4 border-l-signal-red rounded-lg px-4 py-3 sm:py-3.5 text-[16px] text-crisp-white focus:outline-none focus:border-signal-red focus:ring-1 focus:ring-signal-red/50 transition-all placeholder:text-slate-light/40";
   const labelStyle = "block text-[10px] sm:text-xs font-bold text-slate-light/70 uppercase tracking-widest mb-1.5 sm:mb-2";
 
   return (
     <main className="min-h-screen bg-void-navy flex flex-col lg:flex-row text-crisp-white">
       
       {/* LEFT SIDE: Branding */}
-      <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-cobalt/20 p-6 sm:p-10 lg:p-12 flex flex-col justify-between">
+      <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-cobalt/20 p-4 py-6 sm:p-10 lg:p-12 flex flex-col justify-between">
         <div>
-          <Link href="/" className="text-2xl sm:text-3xl font-black tracking-wider hover:opacity-80 transition block mb-12">
+          {/* FIXED: Reduced mb-12 to mb-4 on mobile so the form isn't pushed too far down */}
+          <Link href="/" className="text-2xl sm:text-3xl font-black tracking-wider hover:opacity-80 transition block mb-4 lg:mb-12">
             YUSDAAM<span className="text-signal-red">.</span>
           </Link>
           <div className="hidden sm:block space-y-10 border-l border-cobalt/20 ml-2">
@@ -265,7 +267,6 @@ export default function OwnerRegistration() {
                     <label className={labelStyle}>Password *</label>
                     <input type="password" name="password" value={formData.password} onChange={handleTextChange} className={inputStyle} required />
                     
-                    {/* Live Password Strength Checklist */}
                     {formData.password && (
                       <div className="mt-3 space-y-1.5 bg-void-light/5 border border-cobalt/20 p-3 rounded-lg">
                         <p className="text-[10px] font-bold text-slate-light/60 uppercase tracking-widest mb-2 border-b border-cobalt/20 pb-1">Security Requirements</p>
