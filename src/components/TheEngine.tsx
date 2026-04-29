@@ -91,9 +91,9 @@ export default function TheEngine() {
 
           <div className="engine-step bg-void-navy border border-cobalt p-6 md:p-8 rounded-2xl shadow-xl hover:border-signal-red/50 transition-colors duration-500 mt-0 md:mt-16">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-cobalt/50 rounded-full flex items-center justify-center text-signal-red font-bold text-lg md:text-xl mb-4 md:mb-6">3</div>
-            <h4 className="text-xl md:text-2xl font-bold text-crisp-white mb-3">Guaranteed Remittance</h4>
+            <h4 className="text-xl md:text-2xl font-bold text-crisp-white mb-3">Automated Remittance</h4>
             <p className="text-slate-light text-sm md:text-base leading-relaxed">
-              No stories about "low turnout" or "police wahala." Our automated financial ledger collects the daily funds from riders and triggers a guaranteed, consolidated weekly payment directly to your bank account.
+              Proactive default intervention about "low turnout" or "police wahala." Our automated financial ledger collects the daily funds from riders and triggers a consolidated weekly payment directly to your bank account.
             </p>
           </div>
 
