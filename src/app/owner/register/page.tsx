@@ -56,7 +56,7 @@ export default function OwnerRegistration() {
       countryIso: selectedIso, 
       countryName: countryData?.name || "", 
       phoneCountryCode: `+${countryData?.phonecode || ""}`,
-      state: "" 
+      state: "" // Reset state when country changes
     });
   };
 
@@ -175,18 +175,18 @@ export default function OwnerRegistration() {
     );
   }
 
-  // FIXED: Added border-l-4 border-l-signal-red for the Ribbon effect
-  const inputStyle = "w-full bg-void-navy border border-cobalt/40 border-l-4 border-l-signal-red rounded-lg px-4 py-3 sm:py-3.5 text-[16px] text-crisp-white focus:outline-none focus:border-signal-red focus:ring-1 focus:ring-signal-red/50 transition-all placeholder:text-slate-light/40";
+  // UPDATED DESIGN: Red border by default, Cobalt glow on click/focus
+  const inputStyle = "w-full bg-void-light/5 border border-signal-red/60 rounded-lg px-4 py-3 sm:py-3.5 text-[16px] text-crisp-white focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/40 transition-all placeholder:text-slate-light/40 shadow-[0_0_10px_rgba(233,69,96,0.05)]";
+  
   const labelStyle = "block text-[10px] sm:text-xs font-bold text-slate-light/70 uppercase tracking-widest mb-1.5 sm:mb-2";
 
   return (
     <main className="min-h-screen bg-void-navy flex flex-col lg:flex-row text-crisp-white">
       
-      {/* LEFT SIDE: Branding */}
-      <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-cobalt/20 p-4 py-6 sm:p-10 lg:p-12 flex flex-col justify-between">
+      {/* LEFT SIDE: Branding - Tightened mobile padding */}
+      <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-cobalt/20 p-5 sm:p-10 lg:p-12 flex flex-col justify-between">
         <div>
-          {/* FIXED: Reduced mb-12 to mb-4 on mobile so the form isn't pushed too far down */}
-          <Link href="/" className="text-2xl sm:text-3xl font-black tracking-wider hover:opacity-80 transition block mb-4 lg:mb-12">
+          <Link href="/" className="text-xl sm:text-3xl font-black tracking-wider hover:opacity-80 transition block mb-4 lg:mb-12">
             YUSDAAM<span className="text-signal-red">.</span>
           </Link>
           <div className="hidden sm:block space-y-10 border-l border-cobalt/20 ml-2">
@@ -201,13 +201,13 @@ export default function OwnerRegistration() {
         </div>
       </div>
 
-      {/* RIGHT SIDE: Form */}
+      {/* RIGHT SIDE: Form - Tightened top margin on mobile */}
       <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-8 lg:p-16 overflow-y-auto">
         <div className="max-w-2xl w-full">
           
-          <div className="mb-8 sm:mb-12 border-b border-cobalt/20 pb-6 sm:pb-8">
+          <div className="mb-6 sm:mb-12 border-b border-cobalt/20 pb-4 sm:pb-8">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase mb-2">Asset Owner Registry</h1>
-            <p className="text-sm sm:text-base text-slate-light">Complete KYC profiling for portal access.</p>
+            <p className="text-xs sm:text-base text-slate-light">Complete KYC profiling for portal access.</p>
           </div>
 
           {errorMsg && (
@@ -253,7 +253,7 @@ export default function OwnerRegistration() {
                   <div className="flex gap-2">
                     <div className="w-1/3">
                       <label className={labelStyle}>Code</label>
-                      <input type="text" value={formData.phoneCountryCode} readOnly className={`${inputStyle} bg-void-navy/50 text-slate-light/60 cursor-not-allowed`} />
+                      <input type="text" value={formData.phoneCountryCode} readOnly className={`${inputStyle} !bg-void-navy/50 text-slate-light/60 cursor-not-allowed`} />
                     </div>
                     <div className="w-2/3">
                       <label className={labelStyle}>WhatsApp No. *</label>
@@ -354,7 +354,6 @@ export default function OwnerRegistration() {
                   </div>
                 </div>
 
-                {/* Live Account Verification Feedback */}
                 <div className="h-12 flex items-center bg-void-navy/50 px-4 rounded-lg border border-cobalt/20">
                   {isVerifyingBank && <p className="text-sm text-slate-light flex items-center gap-2"><Loader2 size={16} className="animate-spin text-cobalt" /> Resolving Account...</p>}
                   {bankError && <p className="text-sm text-signal-red flex items-center gap-2 font-bold"><XCircle size={16} /> {bankError}</p>}
