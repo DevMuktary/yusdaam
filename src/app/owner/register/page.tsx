@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle } from "lucide-react";
+import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X } from "lucide-react";
 import { Country, State } from "country-state-city";
 
 export default function OwnerRegistration() {
@@ -27,7 +27,7 @@ export default function OwnerRegistration() {
   const countries = useMemo(() => Country.getAllCountries(), []);
   const availableStates = useMemo(() => State.getStatesOfCountry(formData.countryIso), [formData.countryIso]);
 
-  // Mock Bank List (To be replaced by Paystack bank list API in production)
+  // Mock Bank List
   const banks = [
     { name: "Access Bank", code: "044" },
     { name: "Guaranty Trust Bank", code: "058" },
@@ -61,16 +61,14 @@ export default function OwnerRegistration() {
   };
 
   // --- PASSWORD STRENGTH VALIDATOR ---
-  const getPasswordStrength = (pass: string) => {
-    let score = 0;
-    if (pass.length >= 8) score++;
-    if (/[A-Z]/.test(pass)) score++;
-    if (/[a-z]/.test(pass)) score++;
-    if (/[0-9]/.test(pass)) score++;
-    if (/[^A-Za-z0-9]/.test(pass)) score++;
-    return score; // 0 to 5
-  };
-  const passScore = getPasswordStrength(formData.password);
+  const passwordCriteria = [
+    { label: "8+ Characters", met: formData.password.length >= 8 },
+    { label: "Uppercase Letter", met: /[A-Z]/.test(formData.password) },
+    { label: "Lowercase Letter", met: /[a-z]/.test(formData.password) },
+    { label: "Number", met: /[0-9]/.test(formData.password) },
+    { label: "Special Char (@,#,etc)", met: /[^A-Za-z0-9]/.test(formData.password) }
+  ];
+  const passScore = passwordCriteria.filter(c => c.met).length;
 
   // --- AUTO BANK VERIFICATION ---
   useEffect(() => {
@@ -102,7 +100,7 @@ export default function OwnerRegistration() {
       }
     };
 
-    const debounce = setTimeout(() => verifyAccount(), 500); // 500ms delay to stop spamming API
+    const debounce = setTimeout(() => verifyAccount(), 500); 
     return () => clearTimeout(debounce);
   }, [formData.accountNumber, formData.bankCode]);
 
@@ -115,7 +113,7 @@ export default function OwnerRegistration() {
         return setErrorMsg("Please fill in all required identity fields.");
       }
       if (formData.nin.length !== 11) return setErrorMsg("NIN must be exactly 11 digits.");
-      if (passScore < 4) return setErrorMsg("Password is too weak. Please meet the security criteria.");
+      if (passScore < 5) return setErrorMsg("Password does not meet all security requirements.");
       if (formData.password !== formData.confirmPassword) return setErrorMsg("Passwords do not match.");
     }
 
@@ -141,7 +139,6 @@ export default function OwnerRegistration() {
 
     setIsSubmitting(true);
     try {
-      // Pass the fully constructed payload
       const payload = { ...formData, country: formData.countryName }; 
       const res = await fetch("/api/owner/auth/register", {
         method: "POST",
@@ -178,8 +175,7 @@ export default function OwnerRegistration() {
     );
   }
 
-  // NOTE: text-[16px] specifically added to inputs to prevent iOS Safari Pinch-Zoom
-  const inputStyle = "w-full bg-void-light/5 border border-cobalt/30 rounded-lg px-4 py-3 sm:py-3.5 text-[16px] text-crisp-white focus:outline-none focus:border-signal-red transition-all placeholder:text-slate-light/30";
+  const inputStyle = "w-full bg-void-navy border border-cobalt/40 rounded-lg px-4 py-3 sm:py-3.5 text-[16px] text-crisp-white focus:outline-none focus:border-signal-red focus:ring-1 focus:ring-signal-red/50 transition-all placeholder:text-slate-light/40";
   const labelStyle = "block text-[10px] sm:text-xs font-bold text-slate-light/70 uppercase tracking-widest mb-1.5 sm:mb-2";
 
   return (
@@ -196,7 +192,7 @@ export default function OwnerRegistration() {
               <div key={s} className={`relative pl-8 transition-opacity duration-500 ${step === s ? 'opacity-100' : 'opacity-40'}`}>
                 <span className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${step === s ? 'bg-signal-red shadow-[0_0_10px_rgba(233,69,96,0.8)]' : 'bg-cobalt'}`} />
                 <div className="text-[10px] font-bold text-signal-red uppercase mb-1">Phase 0{s}</div>
-                <h3 className="font-bold text-sm">{s === 1 ? 'Identity' : s === 2 ? 'Location & NOK' : 'Financial Routing'}</h3>
+                <h3 className="font-bold text-sm">{s === 1 ? 'Identity & Contact' : s === 2 ? 'Location & NOK' : 'Financial Routing'}</h3>
               </div>
             ))}
           </div>
@@ -214,13 +210,13 @@ export default function OwnerRegistration() {
 
           {errorMsg && (
             <div className="bg-signal-red/10 border border-signal-red text-signal-red px-4 py-3 rounded-lg mb-8 text-sm font-medium flex gap-2">
-              <XCircle size={18} /> {errorMsg}
+              <XCircle size={18} className="shrink-0 mt-0.5" /> <p>{errorMsg}</p>
             </div>
           )}
 
           <form onSubmit={step === 3 ? handleSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-6 sm:space-y-8">
             
-            {/* STEP 1: IDENTITY */}
+            {/* STEP 1: IDENTITY & CONTACT */}
             {step === 1 && (
               <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-500">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -233,35 +229,51 @@ export default function OwnerRegistration() {
                     <input type="text" name="lastName" value={formData.lastName} onChange={handleTextChange} className={inputStyle} required />
                   </div>
                 </div>
-                <div>
-                  <label className={labelStyle}>National Identity Number (NIN) *</label>
-                  <input type="text" inputMode="numeric" name="nin" value={formData.nin} onChange={(e) => handleNumberOnlyChange(e, 11)} placeholder="11 Digits Only" className={inputStyle} required />
-                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className={labelStyle}>Email Address *</label>
                     <input type="email" name="email" value={formData.email} onChange={handleTextChange} className={inputStyle} required />
                   </div>
+                  <div>
+                    <label className={labelStyle}>National Identity Number *</label>
+                    <input type="text" inputMode="numeric" name="nin" value={formData.nin} onChange={(e) => handleNumberOnlyChange(e, 11)} placeholder="11 Digits" className={inputStyle} required />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className={labelStyle}>Country *</label>
+                    <select value={formData.countryIso} onChange={handleCountryChange} className={`${inputStyle} appearance-none cursor-pointer`} required>
+                      {countries.map(c => <option key={c.isoCode} value={c.isoCode} className="bg-void-navy text-crisp-white">{c.name}</option>)}
+                    </select>
+                  </div>
                   <div className="flex gap-2">
                     <div className="w-1/3">
                       <label className={labelStyle}>Code</label>
-                      <input type="text" value={formData.phoneCountryCode} readOnly className={`${inputStyle} bg-void-navy text-slate-light cursor-not-allowed`} />
+                      <input type="text" value={formData.phoneCountryCode} readOnly className={`${inputStyle} bg-void-navy/50 text-slate-light/60 cursor-not-allowed`} />
                     </div>
                     <div className="w-2/3">
-                      <label className={labelStyle}>Phone No. *</label>
+                      <label className={labelStyle}>WhatsApp No. *</label>
                       <input type="text" inputMode="numeric" name="phoneNumber" value={formData.phoneNumber} onChange={(e) => handleNumberOnlyChange(e, 15)} className={inputStyle} required />
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-cobalt/20">
                   <div>
                     <label className={labelStyle}>Password *</label>
                     <input type="password" name="password" value={formData.password} onChange={handleTextChange} className={inputStyle} required />
-                    {/* Password Strength Meter */}
+                    
+                    {/* Live Password Strength Checklist */}
                     {formData.password && (
-                      <div className="mt-2 flex gap-1 h-1.5 w-full bg-void-light/20 rounded-full overflow-hidden">
-                        {[1, 2, 3, 4, 5].map(level => (
-                          <div key={level} className={`flex-1 ${passScore >= level ? (passScore > 3 ? 'bg-emerald-500' : 'bg-signal-red') : 'bg-transparent'}`} />
+                      <div className="mt-3 space-y-1.5 bg-void-light/5 border border-cobalt/20 p-3 rounded-lg">
+                        <p className="text-[10px] font-bold text-slate-light/60 uppercase tracking-widest mb-2 border-b border-cobalt/20 pb-1">Security Requirements</p>
+                        {passwordCriteria.map((req, i) => (
+                          <div key={i} className={`flex items-center gap-2 text-xs font-medium transition-colors ${req.met ? 'text-emerald-400' : 'text-slate-light/50'}`}>
+                            {req.met ? <Check size={14} /> : <X size={14} />}
+                            {req.label}
+                          </div>
                         ))}
                       </div>
                     )}
@@ -279,22 +291,16 @@ export default function OwnerRegistration() {
               <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-500">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className={labelStyle}>Country *</label>
-                    <select value={formData.countryIso} onChange={handleCountryChange} className={`${inputStyle} appearance-none`} required>
-                      {countries.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
+                    <label className={labelStyle}>State / Province *</label>
+                    <select name="state" value={formData.state} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required>
+                      <option value="" className="bg-void-navy text-slate-light">Select State...</option>
+                      {availableStates.map(s => <option key={s.isoCode} value={s.name} className="bg-void-navy text-crisp-white">{s.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className={labelStyle}>State / Province *</label>
-                    <select name="state" value={formData.state} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
-                      <option value="">Select State...</option>
-                      {availableStates.map(s => <option key={s.isoCode} value={s.name}>{s.name}</option>)}
-                    </select>
+                    <label className={labelStyle}>Full Street Address *</label>
+                    <input type="text" name="streetAddress" value={formData.streetAddress} onChange={handleTextChange} className={inputStyle} placeholder="Unit, House No, Street" required />
                   </div>
-                </div>
-                <div>
-                  <label className={labelStyle}>Full Street Address *</label>
-                  <input type="text" name="streetAddress" value={formData.streetAddress} onChange={handleTextChange} className={inputStyle} required />
                 </div>
                 
                 <div className="pt-6 pb-2"><h4 className="text-base font-bold border-b border-cobalt/20 pb-3">Next of Kin (Succession)</h4></div>
@@ -310,12 +316,12 @@ export default function OwnerRegistration() {
                   </div>
                   <div>
                     <label className={labelStyle}>Relationship *</label>
-                    <select name="nokRelationship" value={formData.nokRelationship} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
-                      <option value="">Select...</option>
-                      <option value="Spouse">Spouse</option>
-                      <option value="Sibling">Sibling</option>
-                      <option value="Parent">Parent</option>
-                      <option value="Child">Child</option>
+                    <select name="nokRelationship" value={formData.nokRelationship} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required>
+                      <option value="" className="bg-void-navy">Select...</option>
+                      <option value="Spouse" className="bg-void-navy text-crisp-white">Spouse</option>
+                      <option value="Sibling" className="bg-void-navy text-crisp-white">Sibling</option>
+                      <option value="Parent" className="bg-void-navy text-crisp-white">Parent</option>
+                      <option value="Child" className="bg-void-navy text-crisp-white">Child</option>
                     </select>
                   </div>
                   <div>
@@ -336,9 +342,9 @@ export default function OwnerRegistration() {
                     <select name="bankCode" value={formData.bankCode} onChange={(e) => {
                         const selectedBank = banks.find(b => b.code === e.target.value);
                         setFormData({ ...formData, bankCode: e.target.value, bankName: selectedBank?.name || "" });
-                      }} className={`${inputStyle} appearance-none`} required>
-                      <option value="">Select Bank...</option>
-                      {banks.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
+                      }} className={`${inputStyle} appearance-none cursor-pointer`} required>
+                      <option value="" className="bg-void-navy text-slate-light">Select Bank...</option>
+                      {banks.map(b => <option key={b.code} value={b.code} className="bg-void-navy text-crisp-white">{b.name}</option>)}
                     </select>
                   </div>
                   <div>
@@ -348,32 +354,33 @@ export default function OwnerRegistration() {
                 </div>
 
                 {/* Live Account Verification Feedback */}
-                <div className="h-12 flex items-center">
-                  {isVerifyingBank && <p className="text-sm text-slate-light flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Resolving Account...</p>}
-                  {bankError && <p className="text-sm text-signal-red flex items-center gap-2"><XCircle size={16} /> {bankError}</p>}
+                <div className="h-12 flex items-center bg-void-navy/50 px-4 rounded-lg border border-cobalt/20">
+                  {isVerifyingBank && <p className="text-sm text-slate-light flex items-center gap-2"><Loader2 size={16} className="animate-spin text-cobalt" /> Resolving Account...</p>}
+                  {bankError && <p className="text-sm text-signal-red flex items-center gap-2 font-bold"><XCircle size={16} /> {bankError}</p>}
                   {verifiedAccountName && <p className="text-sm text-emerald-400 font-bold flex items-center gap-2"><CheckCircle2 size={16} /> Verified: {verifiedAccountName}</p>}
+                  {!isVerifyingBank && !bankError && !verifiedAccountName && <p className="text-[10px] uppercase tracking-widest text-slate-light/40">Awaiting 10-Digit Account Number...</p>}
                 </div>
 
-                <div className="pt-2 pb-2"><h4 className="text-base font-bold border-b border-cobalt/20 pb-3">Administration Intent</h4></div>
+                <div className="pt-4 pb-2"><h4 className="text-base font-bold border-b border-cobalt/20 pb-3">Administration Intent</h4></div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className={labelStyle}>Target Asset Class</label>
-                    <select name="preferredAssetClass" value={formData.preferredAssetClass} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
-                      <option value="">Select...</option>
-                      <option value="Tricycle">Tricycle (Keke)</option>
-                      <option value="Uber Sedan">Uber/Bolt Sedan</option>
-                      <option value="Mini-Bus">Mini-Bus (Korope)</option>
-                      <option value="Tipper Truck">Tipper Truck</option>
+                    <select name="preferredAssetClass" value={formData.preferredAssetClass} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required>
+                      <option value="" className="bg-void-navy">Select...</option>
+                      <option value="Tricycle" className="bg-void-navy text-crisp-white">Tricycle (Keke)</option>
+                      <option value="Uber Sedan" className="bg-void-navy text-crisp-white">Uber/Bolt Sedan</option>
+                      <option value="Mini-Bus" className="bg-void-navy text-crisp-white">Mini-Bus (Korope)</option>
+                      <option value="Tipper Truck" className="bg-void-navy text-crisp-white">Tipper Truck</option>
                     </select>
                   </div>
                   <div>
                     <label className={labelStyle}>Intended Volume</label>
-                    <select name="intendedVolume" value={formData.intendedVolume} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
-                      <option value="">Select...</option>
-                      <option value="1 Vehicle">1 Vehicle</option>
-                      <option value="2-5 Vehicles">2-5 Vehicles</option>
-                      <option value="6+ Fleet">6+ Fleet</option>
+                    <select name="intendedVolume" value={formData.intendedVolume} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required>
+                      <option value="" className="bg-void-navy">Select...</option>
+                      <option value="1 Vehicle" className="bg-void-navy text-crisp-white">1 Vehicle</option>
+                      <option value="2-5 Vehicles" className="bg-void-navy text-crisp-white">2-5 Vehicles</option>
+                      <option value="6+ Fleet" className="bg-void-navy text-crisp-white">6+ Fleet</option>
                     </select>
                   </div>
                 </div>
@@ -381,14 +388,14 @@ export default function OwnerRegistration() {
             )}
 
             {/* FORM CONTROLS */}
-            <div className="pt-8 flex items-center justify-between mt-8">
+            <div className="pt-8 flex items-center justify-between mt-8 border-t border-cobalt/20">
               {step > 1 ? (
                 <button type="button" onClick={prevStep} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-light hover:text-crisp-white transition">
                   <ArrowLeft size={14} /> Back
                 </button>
               ) : <div />}
               
-              <button type="submit" disabled={isSubmitting || (step === 3 && (!verifiedAccountName || isVerifyingBank))} className="flex items-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase rounded-xl shadow-lg hover:bg-signal-red/90 transition disabled:opacity-50">
+              <button type="submit" disabled={isSubmitting || (step === 3 && (!verifiedAccountName || isVerifyingBank))} className="flex items-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl shadow-lg hover:bg-signal-red/90 transition disabled:opacity-50 disabled:cursor-not-allowed">
                 {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing</> : <>{step === 3 ? "Submit Application" : "Proceed"} {step !== 3 && <ChevronRight size={16} />}</>}
               </button>
             </div>
