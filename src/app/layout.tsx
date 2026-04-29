@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import Footer from "@/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// SEC COMPLIANCE: Changed "Investment Management" to "Asset Management"
+// SEC COMPLIANCE: Positioned strictly as "Asset Management"
 export const metadata: Metadata = {
   title: "YUSDAAM Autos | Lagos Transport Asset Management",
   description: "Own the asset. We do the work. You get paid weekly.",
@@ -19,10 +20,18 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className={`${inter.className} min-h-screen flex flex-col`}>
+        
+        {/* Main Content Area */}
         <main className="flex-grow">
           {children}
         </main>
+        
+        {/* Global Footer (Shows at the bottom of every page) */}
+        <Footer />
+
+        {/* Global WhatsApp Button (Floats above everything) */}
         <FloatingWhatsApp />
+        
       </body>
     </html>
   );
