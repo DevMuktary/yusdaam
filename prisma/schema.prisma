@@ -10,8 +10,15 @@ datasource db {
 // --- ENUMS ---
 enum Role {
   ADMIN
-  INVESTOR
+  ASSET_OWNER // Changed from INVESTOR for SEC compliance
   RIDER
+}
+
+enum AccountStatus {
+  PENDING     // Default for new registrations
+  APPROVED    // Unlocks the dashboard
+  REJECTED
+  SUSPENDED
 }
 
 enum VehicleType {
@@ -67,24 +74,62 @@ model VerificationToken {
 
 // --- CORE APPLICATION MODELS ---
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  phoneNumber   String?
-  role          Role      @default(INVESTOR)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String        @id @default(cuid())
+  // Standard NextAuth fields
+  name             String?       // Can be auto-populated as firstName + lastName
+  email            String?       @unique
+  emailVerified    DateTime?
+  image            String?
+  
+  // Custom Registration Fields
+  password         String?       // Required for Credentials login
+  firstName        String?
+  lastName         String?
+  middleName       String?
+  
+  // Location (Diaspora Support)
+  country          String        @default("Nigeria")
+  state            String?
+  streetAddress    String?
+  
+  // Contact
+  phoneCountryCode String        @default("+234")
+  phoneNumber      String?       @unique
+  
+  // KYC 
+  nin              String?
+  
+  // Next of Kin
+  nokFirstName     String?
+  nokLastName      String?
+  nokRelationship  String?
+  nokPhone         String?
+  
+  // Financial Routing
+  bankName         String?
+  bankCode         String?
+  accountNumber    String?
+  accountName      String?
+  
+  // Pre-Qualification Intents
+  preferredAssetClass String?
+  intendedVolume      String?
 
-  accounts      Account[]
-  sessions      Session[]
+  // Authorization & Roles
+  role             Role          @default(ASSET_OWNER)
+  accountStatus    AccountStatus @default(PENDING) // Locks them out until admin approves
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
   
   // Relations based on roles
-  ownedVehicles Vehicle[]  @relation("InvestorVehicles")
-  assignedTrip  Vehicle?   @relation("RiderVehicle")
-  contracts     Contract[]
-  transactions  Ledger[]
+  ownedVehicles    Vehicle[]     @relation("AssetOwnerVehicles")
+  assignedTrip     Vehicle?      @relation("RiderVehicle")
+  contracts        Contract[]
+  transactions     Ledger[]
 }
 
 model Vehicle {
@@ -95,8 +140,8 @@ model Vehicle {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
-  investorId         String?
-  investor           User?         @relation("InvestorVehicles", fields: [investorId], references: [id])
+  ownerId            String?       // Changed from investorId
+  owner              User?         @relation("AssetOwnerVehicles", fields: [ownerId], references: [id])
   
   riderId            String?       @unique
   rider              User?         @relation("RiderVehicle", fields: [riderId], references: [id])
@@ -106,31 +151,31 @@ model Vehicle {
 }
 
 model Contract {
-  id                     String   @id @default(cuid())
-  investorId             String
-  vehicleId              String   @unique
-  guaranteedWeeklyReturn Float
-  agreedDurationMonths   Int
-  isActive               Boolean  @default(true)
-  signedDocumentUrl      String?  // URL to the AWS/Cloudinary PDF
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  ownerId              String   // Changed from investorId
+  vehicleId            String   @unique
+  weeklyRemittance     Float    // SEC Compliant: Changed from guaranteedWeeklyReturn
+  agreedDurationMonths Int
+  isActive             Boolean  @default(true)
+  signedDocumentUrl    String?  // URL to the AWS/Cloudinary PDF
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  investor               User     @relation(fields: [investorId], references: [id])
-  vehicle                Vehicle  @relation(fields: [vehicleId], references: [id])
+  owner                User     @relation(fields: [ownerId], references: [id])
+  vehicle              Vehicle  @relation(fields: [vehicleId], references: [id])
 }
 
 model Ledger {
-  id            String   @id @default(cuid())
-  amount        Float
-  type          String   // e.g., "PAYMENT_COLLECTED", "INVESTOR_REMITTANCE"
-  reference     String   @unique // Paystack/Flutterwave transaction ref
-  description   String?
-  date          DateTime @default(now())
+  id          String   @id @default(cuid())
+  amount      Float
+  type        String   // e.g., "PAYMENT_COLLECTED", "OWNER_REMITTANCE"
+  reference   String   @unique // Paystack/Flutterwave transaction ref
+  description String?
+  date        DateTime @default(now())
   
-  vehicleId     String
-  investorId    String
+  vehicleId   String
+  ownerId     String   // Changed from investorId
 
-  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id])
-  investor      User     @relation(fields: [investorId], references: [id])
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+  owner       User     @relation(fields: [ownerId], references: [id])
 }
