@@ -12,6 +12,7 @@
     "@gsap/react": "^2.1.0",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/client": "^5.13.0",
+    "bcrypt": "^5.1.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.1.7",
@@ -22,9 +23,11 @@
     "react": "^18",
     "react-dom": "^18",
     "tailwind-merge": "^2.3.0",
+    "zeptomail": "^3.0.0",
     "zod": "^3.23.6"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
