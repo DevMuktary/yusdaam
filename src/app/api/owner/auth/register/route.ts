@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { sendSystemEmail } from "@/lib/email/sender";
+import { getRegistrationReceivedEmail } from "@/lib/email/templates";
 
 const prisma = new PrismaClient();
 
@@ -14,7 +16,7 @@ export async function POST(req: Request) {
       bankName, bankCode, accountNumber, preferredAssetClass, intendedVolume
     } = body;
 
-    // 1. Check for existing user (Using prisma.user now)
+    // 1. Check for existing user
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email }, { phoneNumber }]
@@ -54,13 +56,13 @@ export async function POST(req: Request) {
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // 4. Save to Database (Status defaults to PENDING per Prisma schema)
+    // 4. Save to Database
     const newUser = await prisma.user.create({
       data: {
         firstName,
         lastName,
         middleName: middleName || null,
-        name: `${firstName} ${lastName}`, // Combined for NextAuth compatibility
+        name: `${firstName} ${lastName}`, 
         email,
         password: hashedPassword,
         country,
@@ -76,15 +78,34 @@ export async function POST(req: Request) {
         bankName,
         bankCode,
         accountNumber,
-        accountName: resolvedAccountName, // Securely mapped from Paystack
+        accountName: resolvedAccountName, 
         preferredAssetClass,
         intendedVolume,
-        role: "ASSET_OWNER",        // Explicitly defining the role
-        accountStatus: "PENDING",   // Explicitly locking the account for review
+        role: "ASSET_OWNER",        
+        accountStatus: "PENDING",   
       },
     });
 
-    // Remove password from response for security
+    // 5. Generate and Send HTML Email via Library
+    const emailHtml = getRegistrationReceivedEmail({
+      firstName,
+      lastName,
+      email,
+      phoneCountryCode,
+      phoneNumber,
+      preferredAssetClass,
+      intendedVolume,
+      bankName
+    });
+
+    await sendSystemEmail({
+      toEmail: email,
+      toName: `${firstName} ${lastName}`,
+      subject: "Registration Received: YUSDAAM Asset Administration Portal",
+      htmlBody: emailHtml
+    });
+
+    // Remove password from response
     const { password: _, ...safeOwnerData } = newUser;
 
     return NextResponse.json(
