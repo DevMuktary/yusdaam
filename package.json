@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@gsap/react": "^2.1.0",
