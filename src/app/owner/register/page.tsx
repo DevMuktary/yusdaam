@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X } from "lucide-react";
+import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X, Eye, EyeOff } from "lucide-react";
 import { Country, State } from "country-state-city";
 
 export default function OwnerRegistration() {
@@ -11,7 +11,13 @@ export default function OwnerRegistration() {
   const [errorMsg, setErrorMsg] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Bank Verification States
+  // Security Toggles
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Bank States (Now fetching from Paystack)
+  const [banks, setBanks] = useState<{name: string, code: string}[]>([]);
+  const [isLoadingBanks, setIsLoadingBanks] = useState(true);
   const [isVerifyingBank, setIsVerifyingBank] = useState(false);
   const [verifiedAccountName, setVerifiedAccountName] = useState("");
   const [bankError, setBankError] = useState("");
@@ -19,24 +25,33 @@ export default function OwnerRegistration() {
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", middleName: "", email: "", password: "", confirmPassword: "",
     countryIso: "NG", countryName: "Nigeria", state: "", streetAddress: "", phoneCountryCode: "+234", phoneNumber: "",
-    nin: "", nokFirstName: "", nokLastName: "", nokRelationship: "", nokPhone: "",
-    bankName: "", bankCode: "", accountNumber: "", preferredAssetClass: "", intendedVolume: ""
+    nin: "", nokFirstName: "", nokLastName: "", nokRelationship: "", nokRelationshipOther: "", nokPhone: "",
+    bankName: "", bankCode: "", accountNumber: "", preferredAssetClass: "", preferredAssetClassOther: "", intendedVolume: ""
   });
 
   // Derived Data for Dropdowns
   const countries = useMemo(() => Country.getAllCountries(), []);
   const availableStates = useMemo(() => State.getStatesOfCountry(formData.countryIso), [formData.countryIso]);
 
-  // Mock Bank List
-  const banks = [
-    { name: "Access Bank", code: "044" },
-    { name: "Guaranty Trust Bank", code: "058" },
-    { name: "Zenith Bank", code: "057" },
-    { name: "First Bank of Nigeria", code: "011" },
-    { name: "United Bank for Africa", code: "033" },
-    { name: "Moniepoint MFB", code: "50515" },
-    { name: "Opay", code: "999992" }
-  ];
+  // --- FETCH BANKS FROM PAYSTACK ---
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        const res = await fetch("https://api.paystack.co/bank?country=nigeria");
+        const data = await res.json();
+        if (data.status) {
+          // Sort banks alphabetically
+          const sortedBanks = data.data.sort((a: any, b: any) => a.name.localeCompare(b.name));
+          setBanks(sortedBanks);
+        }
+      } catch (err) {
+        console.error("Failed to load banks");
+      } finally {
+        setIsLoadingBanks(false);
+      }
+    };
+    fetchBanks();
+  }, []);
 
   // --- STRICT INPUT HANDLERS ---
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -121,6 +136,9 @@ export default function OwnerRegistration() {
       if (!formData.state || !formData.streetAddress || !formData.nokFirstName || !formData.nokLastName || !formData.nokRelationship || !formData.nokPhone) {
         return setErrorMsg("Please complete your address and Next of Kin details.");
       }
+      if (formData.nokRelationship === "Others" && !formData.nokRelationshipOther) {
+        return setErrorMsg("Please specify your relationship with your Next of Kin.");
+      }
     }
 
     setStep(step + 1);
@@ -133,13 +151,27 @@ export default function OwnerRegistration() {
     e.preventDefault();
     setErrorMsg("");
     
+    if (formData.preferredAssetClass === "Others" && !formData.preferredAssetClassOther) {
+      return setErrorMsg("Please specify your preferred asset class.");
+    }
+
     if (!verifiedAccountName) {
       return setErrorMsg("Please provide a valid, verified bank account before submitting.");
     }
 
     setIsSubmitting(true);
     try {
-      const payload = { ...formData, country: formData.countryName }; 
+      // Smart Payload formatting
+      const finalRelationship = formData.nokRelationship === "Others" ? formData.nokRelationshipOther : formData.nokRelationship;
+      const finalAssetClass = formData.preferredAssetClass === "Others" ? formData.preferredAssetClassOther : formData.preferredAssetClass;
+
+      const payload = { 
+        ...formData, 
+        country: formData.countryName,
+        nokRelationship: finalRelationship,
+        preferredAssetClass: finalAssetClass
+      }; 
+
       const res = await fetch("/api/owner/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -175,15 +207,13 @@ export default function OwnerRegistration() {
     );
   }
 
-  // UPDATED DESIGN: Red border by default, Cobalt glow on click/focus
   const inputStyle = "w-full bg-void-light/5 border border-signal-red/60 rounded-lg px-4 py-3 sm:py-3.5 text-[16px] text-crisp-white focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/40 transition-all placeholder:text-slate-light/40 shadow-[0_0_10px_rgba(233,69,96,0.05)]";
-  
   const labelStyle = "block text-[10px] sm:text-xs font-bold text-slate-light/70 uppercase tracking-widest mb-1.5 sm:mb-2";
 
   return (
     <main className="min-h-screen bg-void-navy flex flex-col lg:flex-row text-crisp-white">
       
-      {/* LEFT SIDE: Branding - Tightened mobile padding */}
+      {/* LEFT SIDE: Branding */}
       <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-cobalt/20 p-5 sm:p-10 lg:p-12 flex flex-col justify-between">
         <div>
           <Link href="/" className="text-xl sm:text-3xl font-black tracking-wider hover:opacity-80 transition block mb-4 lg:mb-12">
@@ -201,7 +231,7 @@ export default function OwnerRegistration() {
         </div>
       </div>
 
-      {/* RIGHT SIDE: Form - Tightened top margin on mobile */}
+      {/* RIGHT SIDE: Form */}
       <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-8 lg:p-16 overflow-y-auto">
         <div className="max-w-2xl w-full">
           
@@ -211,7 +241,7 @@ export default function OwnerRegistration() {
           </div>
 
           {errorMsg && (
-            <div className="bg-signal-red/10 border border-signal-red text-signal-red px-4 py-3 rounded-lg mb-8 text-sm font-medium flex gap-2">
+            <div className="bg-signal-red/10 border border-signal-red text-signal-red px-4 py-3 rounded-lg mb-8 text-sm font-medium flex gap-2 items-start">
               <XCircle size={18} className="shrink-0 mt-0.5" /> <p>{errorMsg}</p>
             </div>
           )}
@@ -263,9 +293,14 @@ export default function OwnerRegistration() {
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-cobalt/20">
-                  <div>
+                  <div className="relative">
                     <label className={labelStyle}>Password *</label>
-                    <input type="password" name="password" value={formData.password} onChange={handleTextChange} className={inputStyle} required />
+                    <div className="relative">
+                      <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleTextChange} className={`${inputStyle} pr-12`} required />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-light/50 hover:text-crisp-white transition-colors">
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
                     
                     {formData.password && (
                       <div className="mt-3 space-y-1.5 bg-void-light/5 border border-cobalt/20 p-3 rounded-lg">
@@ -279,9 +314,15 @@ export default function OwnerRegistration() {
                       </div>
                     )}
                   </div>
+                  
                   <div>
                     <label className={labelStyle}>Confirm Password *</label>
-                    <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleTextChange} className={inputStyle} required />
+                    <div className="relative">
+                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleTextChange} className={`${inputStyle} pr-12`} required />
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-light/50 hover:text-crisp-white transition-colors">
+                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -323,12 +364,30 @@ export default function OwnerRegistration() {
                       <option value="Sibling" className="bg-void-navy text-crisp-white">Sibling</option>
                       <option value="Parent" className="bg-void-navy text-crisp-white">Parent</option>
                       <option value="Child" className="bg-void-navy text-crisp-white">Child</option>
+                      <option value="Others" className="bg-void-navy text-crisp-white">Others (Specify)</option>
                     </select>
                   </div>
-                  <div>
-                    <label className={labelStyle}>Phone Number *</label>
-                    <input type="text" inputMode="numeric" name="nokPhone" value={formData.nokPhone} onChange={(e) => handleNumberOnlyChange(e, 15)} className={inputStyle} required />
-                  </div>
+                  
+                  {/* Render 'Others' input if selected */}
+                  {formData.nokRelationship === "Others" ? (
+                    <div className="animate-in slide-in-from-top-2 duration-300">
+                      <label className={labelStyle}>Specify Relationship *</label>
+                      <input type="text" name="nokRelationshipOther" value={formData.nokRelationshipOther} onChange={handleTextChange} className={inputStyle} placeholder="e.g. Uncle, Cousin" required />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className={labelStyle}>Phone Number *</label>
+                      <input type="text" inputMode="numeric" name="nokPhone" value={formData.nokPhone} onChange={(e) => handleNumberOnlyChange(e, 15)} className={inputStyle} required />
+                    </div>
+                  )}
+
+                  {/* If 'Others' took up the grid slot, shift Phone Number down */}
+                  {formData.nokRelationship === "Others" && (
+                    <div className="sm:col-span-2">
+                      <label className={labelStyle}>Phone Number *</label>
+                      <input type="text" inputMode="numeric" name="nokPhone" value={formData.nokPhone} onChange={(e) => handleNumberOnlyChange(e, 15)} className={inputStyle} required />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -343,8 +402,10 @@ export default function OwnerRegistration() {
                     <select name="bankCode" value={formData.bankCode} onChange={(e) => {
                         const selectedBank = banks.find(b => b.code === e.target.value);
                         setFormData({ ...formData, bankCode: e.target.value, bankName: selectedBank?.name || "" });
-                      }} className={`${inputStyle} appearance-none cursor-pointer`} required>
-                      <option value="" className="bg-void-navy text-slate-light">Select Bank...</option>
+                      }} className={`${inputStyle} appearance-none cursor-pointer`} required disabled={isLoadingBanks}>
+                      <option value="" className="bg-void-navy text-slate-light">
+                        {isLoadingBanks ? "Loading Banks..." : "Select Bank..."}
+                      </option>
                       {banks.map(b => <option key={b.code} value={b.code} className="bg-void-navy text-crisp-white">{b.name}</option>)}
                     </select>
                   </div>
@@ -372,17 +433,41 @@ export default function OwnerRegistration() {
                       <option value="Uber Sedan" className="bg-void-navy text-crisp-white">Uber/Bolt Sedan</option>
                       <option value="Mini-Bus" className="bg-void-navy text-crisp-white">Mini-Bus (Korope)</option>
                       <option value="Tipper Truck" className="bg-void-navy text-crisp-white">Tipper Truck</option>
+                      <option value="Others" className="bg-void-navy text-crisp-white">Others (Specify)</option>
                     </select>
                   </div>
-                  <div>
-                    <label className={labelStyle}>Intended Volume</label>
-                    <select name="intendedVolume" value={formData.intendedVolume} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required>
-                      <option value="" className="bg-void-navy">Select...</option>
-                      <option value="1 Vehicle" className="bg-void-navy text-crisp-white">1 Vehicle</option>
-                      <option value="2-5 Vehicles" className="bg-void-navy text-crisp-white">2-5 Vehicles</option>
-                      <option value="6+ Fleet" className="bg-void-navy text-crisp-white">6+ Fleet</option>
-                    </select>
-                  </div>
+                  
+                  {formData.preferredAssetClass === "Others" ? (
+                    <div className="animate-in slide-in-from-top-2 duration-300">
+                      <label className={labelStyle}>Specify Asset *</label>
+                      <input type="text" name="preferredAssetClassOther" value={formData.preferredAssetClassOther} onChange={handleTextChange} className={inputStyle} placeholder="e.g. Delivery Van" required />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className={labelStyle}>Intended Volume</label>
+                      <select name="intendedVolume" value={formData.intendedVolume} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required>
+                        <option value="" className="bg-void-navy">Select...</option>
+                        <option value="1 Vehicle" className="bg-void-navy text-crisp-white">1 Vehicle</option>
+                        <option value="2-5 Vehicles" className="bg-void-navy text-crisp-white">2-5 Vehicles</option>
+                        <option value="6+ Fleet" className="bg-void-navy text-crisp-white">6+ Fleet</option>
+                        <option value="Undecided" className="bg-void-navy text-crisp-white">Undecided</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* If 'Others' took up the slot, shift Volume down */}
+                  {formData.preferredAssetClass === "Others" && (
+                    <div className="sm:col-span-2">
+                      <label className={labelStyle}>Intended Volume</label>
+                      <select name="intendedVolume" value={formData.intendedVolume} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required>
+                        <option value="" className="bg-void-navy">Select...</option>
+                        <option value="1 Vehicle" className="bg-void-navy text-crisp-white">1 Vehicle</option>
+                        <option value="2-5 Vehicles" className="bg-void-navy text-crisp-white">2-5 Vehicles</option>
+                        <option value="6+ Fleet" className="bg-void-navy text-crisp-white">6+ Fleet</option>
+                        <option value="Undecided" className="bg-void-navy text-crisp-white">Undecided</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
