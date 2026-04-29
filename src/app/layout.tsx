@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// SEC COMPLIANCE: Positioned strictly as "Asset Management"
+// SEC COMPLIANCE: "Asset Management" instead of "Investment Management"
 export const metadata: Metadata = {
   title: "YUSDAAM Autos | Lagos Transport Asset Management",
   description: "Own the asset. We do the work. You get paid weekly.",
@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
+      <body className={`${inter.className} min-h-screen flex flex-col bg-void-navy text-slate-light`}>
         
         {/* Main Content Area */}
         <main className="flex-grow">
