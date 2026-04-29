@@ -46,7 +46,7 @@ export default function RiderCall() {
             </li>
             <li className="flex items-start text-crisp-white font-medium text-sm sm:text-base">
               <span className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 rounded-full bg-signal-red/20 text-signal-red flex items-center justify-center mr-3 sm:mr-4 mt-0.5">✓</span>
-              Routine Maintenance Support Included.
+              Professional Maintenance Oversight.
             </li>
             <li className="flex items-start text-crisp-white font-medium text-sm sm:text-base">
               <span className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 rounded-full bg-signal-red/20 text-signal-red flex items-center justify-center mr-3 sm:mr-4 mt-0.5">✓</span>
