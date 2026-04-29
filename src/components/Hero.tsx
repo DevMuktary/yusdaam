@@ -81,7 +81,7 @@ export default function Hero() {
           </h1>
 
           <h2 className="reveal-text text-lg sm:text-xl md:text-2xl font-bold text-crisp-white mb-4 drop-shadow-lg">
-            No chasing drivers. No surprise repairs. Just alerts.
+          Zero-Friction Management. Contractual Maintenance. Regular Settlement Notifications..
           </h2>
           
           <p className="reveal-text text-sm sm:text-base md:text-lg text-slate-light/95 mb-6 leading-relaxed max-w-4xl font-medium drop-shadow-lg px-2">
