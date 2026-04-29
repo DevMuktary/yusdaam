@@ -14,14 +14,14 @@ export async function POST(req: Request) {
       bankName, bankCode, accountNumber, preferredAssetClass, intendedVolume
     } = body;
 
-    // 1. Check for existing user
-    const existingOwner = await prisma.assetOwner.findFirst({
+    // 1. Check for existing user (Using prisma.user now)
+    const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email }, { phoneNumber }]
       }
     });
 
-    if (existingOwner) {
+    if (existingUser) {
       return NextResponse.json(
         { error: "An account with this email or phone number already exists." },
         { status: 409 }
@@ -55,11 +55,12 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // 4. Save to Database (Status defaults to PENDING per Prisma schema)
-    const newOwner = await prisma.assetOwner.create({
+    const newUser = await prisma.user.create({
       data: {
         firstName,
         lastName,
         middleName: middleName || null,
+        name: `${firstName} ${lastName}`, // Combined for NextAuth compatibility
         email,
         password: hashedPassword,
         country,
@@ -78,11 +79,13 @@ export async function POST(req: Request) {
         accountName: resolvedAccountName, // Securely mapped from Paystack
         preferredAssetClass,
         intendedVolume,
+        role: "ASSET_OWNER",        // Explicitly defining the role
+        accountStatus: "PENDING",   // Explicitly locking the account for review
       },
     });
 
-    // Remove password from response
-    const { password: _, ...safeOwnerData } = newOwner;
+    // Remove password from response for security
+    const { password: _, ...safeOwnerData } = newUser;
 
     return NextResponse.json(
       { message: "Registration successful. Account pending admin verification.", data: safeOwnerData },
