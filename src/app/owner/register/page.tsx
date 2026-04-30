@@ -195,9 +195,9 @@ export default function OwnerRegistration() {
       <main className="min-h-screen bg-void-navy flex items-center justify-center p-4 sm:p-6 text-crisp-white">
         <div className="max-w-lg w-full bg-void-light/5 border border-cobalt/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl">
           <ShieldCheck className="w-16 h-16 text-signal-red mx-auto mb-6" />
-          <h2 className="text-2xl sm:text-3xl font-black mb-4 uppercase tracking-wider">REGISTRATION Received</h2>
+          <h2 className="text-2xl sm:text-3xl font-black mb-4 uppercase tracking-wider">Registration Received</h2>
           <p className="text-slate-light leading-relaxed mb-8">
-            Your REGISTRATION is locked and secured. Our team is running mandatory KYC checks. You will receive an email once your portal is activated.
+            Your Profile is currently locked. Our team is running mandatory KYC checks. You will receive an email once your portal is activated.
           </p>
           <Link href="/owner/login" className="inline-block px-8 py-4 bg-signal-red hover:bg-signal-red/90 font-bold rounded-xl w-full text-sm uppercase">
             Proceed to Login
