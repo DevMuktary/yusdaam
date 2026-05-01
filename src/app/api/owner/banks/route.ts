@@ -13,14 +13,25 @@ export async function GET() {
 
     const data = await paystackRes.json();
 
-    if (!data.status) {
-      return NextResponse.json({ error: "Failed to load banks from Paystack" }, { status: 400 });
+    // Check if the network request failed OR if Paystack explicitly returned status: false
+    if (!paystackRes.ok || !data.status) {
+      // Log the exact Paystack error to your server terminal for debugging
+      console.error("Paystack API Rejection:", data);
+      
+      // Pass Paystack's specific error message to the browser
+      return NextResponse.json(
+        { error: data.message || "Failed to load banks from Paystack" }, 
+        { status: paystackRes.status === 200 ? 400 : paystackRes.status }
+      );
     }
 
     return NextResponse.json(data, { status: 200 });
 
   } catch (error) {
     console.error("Bank Fetch Error:", error);
-    return NextResponse.json({ error: "Internal server error fetching banks" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error fetching banks" }, 
+      { status: 500 }
+    );
   }
 }
