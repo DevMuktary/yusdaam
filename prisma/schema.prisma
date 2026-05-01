@@ -98,12 +98,17 @@ model User {
   
   // KYC 
   nin              String?
+  bvn              String?       // NEW
+  passportUrl      String?       // NEW (Cloudinary)
+  utilityBillUrl   String?       // NEW (Cloudinary)
   
   // Next of Kin
   nokFirstName     String?
   nokLastName      String?
   nokRelationship  String?
   nokPhone         String?
+  nokAddress       String?       // NEW
+  nokIdNumber      String?       // NEW (NIN or BVN)
   
   // Financial Routing
   bankName         String?
