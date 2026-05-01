@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, XCircle, Eye, EyeOff, ShieldCheck, ArrowRight } from "lucide-react";
+import { Loader2, XCircle, Eye, EyeOff, Briefcase, ArrowRight } from "lucide-react";
 
 export default function OwnerLogin() {
   const router = useRouter();
@@ -23,7 +23,6 @@ export default function OwnerLogin() {
     setIsSubmitting(true);
 
     try {
-      // Calls NextAuth credentials provider
       const res = await signIn("credentials", {
         redirect: false,
         email: formData.email,
@@ -31,16 +30,14 @@ export default function OwnerLogin() {
       });
 
       if (res?.error) {
-        // Handle incorrect passwords or non-existent accounts
         setErrorMsg("Invalid email or password. Please try again.");
         setIsSubmitting(false);
       } else {
-        // Success: Route them to their secure portal
         router.push("/owner/dashboard");
         router.refresh();
       }
     } catch (error) {
-      setErrorMsg("A secure connection could not be established. Please try again.");
+      setErrorMsg("Connection could not be established. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -58,10 +55,10 @@ export default function OwnerLogin() {
             YUSDAAM<span className="text-signal-red">.</span>
           </Link>
           <div className="hidden sm:block mt-12">
-            <ShieldCheck size={48} className="text-cobalt mb-6 opacity-50" />
-            <h2 className="text-lg font-bold mb-2">Secure Portal</h2>
+            <Briefcase size={48} className="text-cobalt mb-6 opacity-50" />
+            <h2 className="text-lg font-bold mb-2">Administration Portal</h2>
             <p className="text-xs text-slate-light leading-relaxed">
-              Access your asset administration dashboard. Monitor vehicle deployment, track remittance status, and manage your successions securely.
+              Access your asset dashboard. Monitor vehicle deployment, track remittance status, and manage your successions efficiently.
             </p>
           </div>
         </div>
@@ -130,15 +127,19 @@ export default function OwnerLogin() {
             <button 
               type="submit" 
               disabled={isSubmitting || !formData.email || !formData.password} 
-              className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl shadow-lg hover:bg-signal-red/90 transition disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+              className="w-full flex items-center justify-center h-[52px] bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl shadow-lg hover:bg-signal-red/90 transition disabled:opacity-50 disabled:cursor-not-allowed mt-4"
             >
-              {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Authenticating</> : <>Access Portal <ArrowRight size={16} /></>}
+              {isSubmitting ? (
+                <Loader2 size={24} className="animate-spin" />
+              ) : (
+                <span className="flex items-center gap-2">Access Portal <ArrowRight size={16} /></span>
+              )}
             </button>
           </form>
 
           <div className="mt-8 text-center border-t border-cobalt/20 pt-8">
             <p className="text-xs text-slate-light">
-              Do not have an asset portfolio yet? <br className="sm:hidden" />
+              Not yet registered as an asset owner? <br className="sm:hidden" />
               <Link href="/owner/register" className="text-cobalt font-bold hover:text-signal-red transition-colors ml-1 uppercase tracking-wider">
                 Register Here
               </Link>
