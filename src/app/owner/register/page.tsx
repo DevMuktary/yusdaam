@@ -43,15 +43,20 @@ export default function OwnerRegistration() {
   const countries = useMemo(() => Country.getAllCountries(), []);
   const availableStates = useMemo(() => State.getStatesOfCountry(formData.countryIso), [formData.countryIso]);
 
+  // --- FETCH BANKS VIA INTERNAL API ---
   useEffect(() => {
     const fetchBanks = async () => {
       try {
-        const res = await fetch("https://api.paystack.co/bank?country=nigeria");
+        const res = await fetch("/api/owner/banks"); // Updated to use our secure backend route
         const data = await res.json();
-        if (data.status) setBanks(data.data.sort((a: any, b: any) => a.name.localeCompare(b.name)));
+        if (data.status) {
+          setBanks(data.data.sort((a: any, b: any) => a.name.localeCompare(b.name)));
+        }
       } catch (err) {
         console.error("Failed to load banks");
-      } finally { setIsLoadingBanks(false); }
+      } finally { 
+        setIsLoadingBanks(false); 
+      }
     };
     fetchBanks();
   }, []);
@@ -405,6 +410,7 @@ export default function OwnerRegistration() {
                     </div>
                   )}
 
+                  {/* If 'Others' took up the slot, shift Volume down */}
                   {formData.preferredAssetClass === "Others" && (
                     <div className="sm:col-span-2">
                       <label className={labelStyle}>Intended Volume</label>
