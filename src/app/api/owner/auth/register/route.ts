@@ -12,7 +12,8 @@ export async function POST(req: Request) {
     const {
       firstName, lastName, middleName, email, password,
       country, state, streetAddress, phoneCountryCode, phoneNumber,
-      nin, nokFirstName, nokLastName, nokRelationship, nokPhone,
+      nin, bvn, passportUrl, utilityBillUrl, // <-- NEW KYC FIELDS
+      nokFirstName, nokLastName, nokRelationship, nokPhone, nokAddress, nokIdNumber, // <-- NEW NOK FIELDS
       bankName, bankCode, accountNumber, preferredAssetClass, intendedVolume
     } = body;
 
@@ -70,17 +71,29 @@ export async function POST(req: Request) {
         streetAddress,
         phoneCountryCode,
         phoneNumber,
+        
+        // Identity & KYC
         nin,
+        bvn,
+        passportUrl,
+        utilityBillUrl,
+        
+        // Next of Kin
         nokFirstName,
         nokLastName,
         nokRelationship,
         nokPhone,
+        nokAddress,
+        nokIdNumber,
+        
+        // Financials & Intent
         bankName,
         bankCode,
         accountNumber,
         accountName: resolvedAccountName, 
         preferredAssetClass,
         intendedVolume,
+        
         role: "ASSET_OWNER",        
         accountStatus: "PENDING",   
       },
@@ -101,7 +114,7 @@ export async function POST(req: Request) {
     await sendSystemEmail({
       toEmail: email,
       toName: `${firstName} ${lastName}`,
-      subject: "Registration Received: YUSDAAM Asset Administration Portal",
+      subject: "Welcome to YUSDAAM Autos - Registration Received", // Updated Subject
       htmlBody: emailHtml
     });
 
