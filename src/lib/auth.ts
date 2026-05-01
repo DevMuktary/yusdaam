@@ -35,30 +35,35 @@ export const authOptions: NextAuthOptions = {
         }
 
         // 3. Return the user data we want to store in the session
+        // We cast as 'any' here so NextAuth accepts our custom fields
         return {
           id: user.id,
           name: user.name,
           email: user.email,
           role: user.role, 
           accountStatus: user.accountStatus, 
-        };
+        } as any; 
       }
     })
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.accountStatus = user.accountStatus;
+        // Cast user to any to bypass strict type checking for custom fields
+        const customUser = user as any;
+        token.id = customUser.id;
+        token.role = customUser.role;
+        token.accountStatus = customUser.accountStatus;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.accountStatus = token.accountStatus as string;
+        // Cast session.user to any to attach our custom token fields
+        const customSessionUser = session.user as any;
+        customSessionUser.id = token.id;
+        customSessionUser.role = token.role;
+        customSessionUser.accountStatus = token.accountStatus;
       }
       return session;
     }
