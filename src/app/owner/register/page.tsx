@@ -43,17 +43,22 @@ export default function OwnerRegistration() {
   const countries = useMemo(() => Country.getAllCountries(), []);
   const availableStates = useMemo(() => State.getStatesOfCountry(formData.countryIso), [formData.countryIso]);
 
-  // --- FETCH BANKS VIA INTERNAL API ---
+  // --- FETCH BANKS DIRECTLY FROM GITHUB GIST ---
   useEffect(() => {
     const fetchBanks = async () => {
       try {
-        const res = await fetch("/api/owner/banks"); // Updated to use our secure backend route
+        const res = await fetch("https://gist.githubusercontent.com/03balogun/c6386aaea439f18ffabd9892112ef767/raw/nigerian-banks.json");
         const data = await res.json();
-        if (data.status) {
+        
+        // The gist returns a direct array. We check if it's an array and sort it.
+        if (Array.isArray(data)) {
+          setBanks(data.sort((a: any, b: any) => a.name.localeCompare(b.name)));
+        } else if (data.data && Array.isArray(data.data)) {
+          // Fallback just in case the gist has a nested 'data' object
           setBanks(data.data.sort((a: any, b: any) => a.name.localeCompare(b.name)));
         }
       } catch (err) {
-        console.error("Failed to load banks");
+        console.error("Failed to load banks from JSON");
       } finally { 
         setIsLoadingBanks(false); 
       }
