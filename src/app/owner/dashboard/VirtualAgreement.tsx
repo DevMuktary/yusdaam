@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { useRouter } from "next/navigation";
-import { Loader2, PenTool, CheckSquare } from "lucide-react";
+import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2 } from "lucide-react";
 
 interface AgreementProps {
   ownerName: string;
@@ -12,14 +12,18 @@ interface AgreementProps {
 export default function VirtualAgreement({ ownerName }: AgreementProps) {
   const router = useRouter();
   const sigCanvas = useRef<SignatureCanvas>(null);
+  const contractRef = useRef<HTMLDivElement>(null);
   
   const [agreed, setAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  
+  // New Success States
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [appliedSignature, setAppliedSignature] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const clearSignature = () => {
-    sigCanvas.current?.clear();
-  };
+  const clearSignature = () => sigCanvas.current?.clear();
 
   const handleAccept = async () => {
     setErrorMsg("");
@@ -32,9 +36,8 @@ export default function VirtualAgreement({ ownerName }: AgreementProps) {
     }
 
     setIsSubmitting(true);
-    
-    // Extract the signature as a base64 image string
     const signatureImage = sigCanvas.current?.getTrimmedCanvas().toDataURL("image/png");
+    setAppliedSignature(signatureImage);
 
     try {
       const res = await fetch("/api/owner/agreement/sign", {
@@ -45,63 +48,118 @@ export default function VirtualAgreement({ ownerName }: AgreementProps) {
 
       if (!res.ok) throw new Error("Failed to process agreement.");
       
-      // Refresh the page to trigger the ACTIVE dashboard state
-      router.refresh();
+      // Trigger Success UI instead of immediate redirect
+      setIsSuccess(true);
     } catch (err: any) {
       setErrorMsg(err.message);
+    } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleDownloadPDF = async () => {
+    if (!contractRef.current) return;
+    setIsDownloading(true);
+
+    try {
+      // Dynamically import to prevent Next.js server-side errors
+      const html2pdf = (await import("html2pdf.js")).default;
+      
+      const opt = {
+        margin: 0.5,
+        filename: `YUSDAAM_Agreement_${ownerName.replace(/\s+/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      await html2pdf().set(opt).from(contractRef.current).save();
+    } catch (error) {
+      console.error("PDF Generation failed", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const proceedToDashboard = () => {
+    router.refresh();
+  };
+
+  // --- SUCCESS VIEW ---
+  if (isSuccess) {
+    return (
+      <div className="max-w-2xl mx-auto mt-10 bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500">
+        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 size={40} className="text-emerald-400" />
+        </div>
+        <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreement Executed</h2>
+        <p className="text-slate-light leading-relaxed mb-10">
+          Your signature has been permanently attached to your profile. A copy of the finalized agreement has been automatically dispatched to your registered email address.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button 
+            onClick={handleDownloadPDF}
+            disabled={isDownloading}
+            className="flex items-center justify-center gap-2 px-8 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50"
+          >
+            {isDownloading ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download PDF</>}
+          </button>
+          
+          <button 
+            onClick={proceedToDashboard}
+            className="flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg"
+          >
+            Access Dashboard <ArrowRight size={16} />
+          </button>
+        </div>
+
+        {/* Hidden Contract for PDF Generation */}
+        <div className="hidden">
+          <div ref={contractRef} className="p-8 text-black bg-white" style={{ fontFamily: 'sans-serif' }}>
+            <h2 className="text-xl font-bold uppercase mb-6 border-b pb-2">Hire Purchase Administration Agreement</h2>
+            <p className="mb-4">This Agreement is made this <strong>{new Date().toLocaleDateString()}</strong> between <strong>YUSDAAM AUTOS INVESTMENT MANAGEMENT NIG LTD</strong> and <strong>{ownerName}</strong>.</p>
+            <p className="mb-4"><strong>1. THE ASSET:</strong> The Owner has committed funds for the procurement and administration of One (1) Commercial Vehicle.</p>
+            <p className="mb-4"><strong>2. REMITTANCE:</strong> YUSDAAM AUTOS agrees to administer the asset and remit the agreed weekly sum to the Owner’s registered bank account.</p>
+            <p className="mb-10"><strong>3. SUCCESSION:</strong> In the event of incapacitation, rights transfer to the Next of Kin on file.</p>
+            
+            <div className="mt-12 pt-8 border-t border-gray-300">
+              <p className="text-xs text-gray-500 uppercase tracking-widest mb-4">Digitally Signed By Owner</p>
+              {appliedSignature && <img src={appliedSignature} alt="Signature" className="h-16 object-contain" />}
+              <p className="mt-2 font-bold">{ownerName}</p>
+              <p className="text-xs text-gray-500">{new Date().toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- SIGNATURE VIEW ---
   return (
     <div className="max-w-4xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl overflow-hidden shadow-2xl">
-      
-      {/* Header */}
       <div className="bg-void-navy border-b border-cobalt/30 p-6 text-center">
         <h2 className="text-2xl font-black uppercase tracking-wider text-signal-red">Hire Purchase Administration Agreement</h2>
         <p className="text-slate-light text-sm mt-2">Asset Allocation Contract</p>
       </div>
 
-      {/* Contract Body */}
       <div className="p-8 sm:p-12 space-y-6 text-sm text-slate-light leading-relaxed h-[400px] overflow-y-auto bg-void-navy/50">
-        <p>
-          This Agreement is made this <strong>{new Date().toLocaleDateString()}</strong> between <strong>YUSDAAM AUTOS INVESTMENT MANAGEMENT NIG LTD</strong> and <strong>{ownerName}</strong> (hereinafter referred to as "The Owner").
-        </p>
-
+        <p>This Agreement is made this <strong>{new Date().toLocaleDateString()}</strong> between <strong>YUSDAAM AUTOS INVESTMENT MANAGEMENT NIG LTD</strong> and <strong>{ownerName}</strong>.</p>
         <h3 className="font-bold text-crisp-white text-base mt-6 border-b border-cobalt/20 pb-2">1. THE ASSET</h3>
-        <p>
-          The Owner has committed funds for the procurement and administration of One (1) Commercial Vehicle. 
-          <br /><br />
-          <strong>Asset Type:</strong> [Pending Admin Input]<br />
-          <strong>Chassis No:</strong> [Pending Admin Input]<br />
-          <strong>Vehicle Value:</strong> [Pending Admin Input]
-        </p>
-
+        <p>The Owner has committed funds for the procurement and administration of One (1) Commercial Vehicle. <br /><br /><strong>Asset Type:</strong> [Pending Admin Input]<br /><strong>Vehicle Value:</strong> [Pending Admin Input]</p>
         <h3 className="font-bold text-crisp-white text-base mt-6 border-b border-cobalt/20 pb-2">2. REMITTANCE SCHEDULE</h3>
-        <p>
-          YUSDAAM AUTOS agrees to administer the asset and remit the agreed weekly sum to the Owner’s registered bank account every week for the agreed total duration. Upon completion of the tenure, the ownership of the asset transfers to the designated rider.
-        </p>
-        
+        <p>YUSDAAM AUTOS agrees to administer the asset and remit the agreed weekly sum to the Owner’s registered bank account every week for the agreed total duration. Upon completion of the tenure, the ownership of the asset transfers to the designated rider.</p>
         <h3 className="font-bold text-crisp-white text-base mt-6 border-b border-cobalt/20 pb-2">3. SUCCESSION</h3>
-        <p>
-          In the event of the Owner's incapacitation or death, all administrative rights and remittance instructions shall immediately transfer to the registered Next of Kin on file.
-        </p>
+        <p>In the event of the Owner's incapacitation or death, all administrative rights and remittance instructions shall immediately transfer to the registered Next of Kin on file.</p>
       </div>
 
-      {/* Signature Section */}
       <div className="p-8 border-t border-cobalt/30 bg-void-navy">
         {errorMsg && <p className="text-signal-red text-sm font-bold mb-4">{errorMsg}</p>}
         
         <div className="mb-6">
-          <label className="flex items-center gap-2 text-xs font-bold text-slate-light uppercase tracking-widest mb-3">
-            <PenTool size={14} /> Draw Signature
-          </label>
+          <label className="flex items-center gap-2 text-xs font-bold text-slate-light uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Signature</label>
           <div className="bg-crisp-white rounded-lg border-2 border-cobalt/30 overflow-hidden">
-            <SignatureCanvas 
-              ref={sigCanvas}
-              penColor="#001232"
-              canvasProps={{ className: "w-full h-40 cursor-crosshair" }}
-            />
+            <SignatureCanvas ref={sigCanvas} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
           </div>
           <div className="flex justify-end mt-2">
             <button type="button" onClick={clearSignature} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Canvas</button>
@@ -109,22 +167,11 @@ export default function VirtualAgreement({ ownerName }: AgreementProps) {
         </div>
 
         <label className="flex items-start gap-3 cursor-pointer mb-8 group">
-          <input 
-            type="checkbox" 
-            className="mt-1 w-4 h-4 accent-signal-red cursor-pointer"
-            checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
-          />
-          <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">
-            I, {ownerName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.
-          </span>
+          <input type="checkbox" className="mt-1 w-4 h-4 accent-signal-red cursor-pointer" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+          <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">I, {ownerName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.</span>
         </label>
 
-        <button 
-          onClick={handleAccept}
-          disabled={isSubmitting}
-          className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition disabled:opacity-50"
-        >
+        <button onClick={handleAccept} disabled={isSubmitting} className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition disabled:opacity-50">
           {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing Agreement</> : <><CheckSquare size={16} /> Sign & Accept Allocation</>}
         </button>
       </div>
