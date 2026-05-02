@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import { ShieldAlert, Loader2, CheckCircle2, Clock } from "lucide-react";
+import Link from "next/link";
+import { ShieldAlert, Loader2, CheckCircle2, Clock, TrendingUp, CarFront, Calendar, Activity } from "lucide-react";
 import VirtualAgreement from "./VirtualAgreement";
 
 const prisma = new PrismaClient();
@@ -9,8 +10,10 @@ const prisma = new PrismaClient();
 export default async function DashboardHome() {
   const session = await getServerSession(authOptions);
   
+  if (!session?.user?.id) return null;
+
   const user = await prisma.user.findUnique({
-    where: { id: session?.user?.id },
+    where: { id: session.user.id },
     select: { accountStatus: true, firstName: true, lastName: true }
   });
 
@@ -71,10 +74,127 @@ export default async function DashboardHome() {
   }
 
   // --- STATE 3: FULLY ACTIVE DASHBOARD ---
+  
+  // We only run these database queries if the user is fully active to save server resources.
+  const vehicles = await prisma.vehicle.findMany({
+    where: { ownerId: session.user.id },
+  });
+
+  const ledgers = await prisma.ledger.findMany({
+    where: { ownerId: session.user.id, type: "OWNER_REMITTANCE" },
+    orderBy: { date: 'desc' },
+    take: 5 // Only fetch the 5 most recent for the overview widget
+  });
+
+  const activeFleetCount = vehicles.filter(v => v.status === "ACTIVE").length;
+  const totalRemitted = ledgers.reduce((sum, tx) => sum + tx.amount, 0);
+
   return (
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-3xl font-black uppercase mb-8">Asset Overview</h1>
-      <p className="text-slate-light">Active Dashboard coming next.</p>
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
+      
+      {/* Overview Header */}
+      <div className="border-b border-cobalt/20 pb-6">
+        <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-wide mb-2">Operational Overview</h1>
+        <p className="text-slate-light">Welcome back, {user?.firstName}. Here is your real-time asset performance.</p>
+      </div>
+
+      {/* KPI Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="bg-void-light/5 border border-cobalt/20 p-6 rounded-xl relative overflow-hidden shadow-lg">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-cobalt/10 text-cobalt rounded-lg"><CarFront size={24} /></div>
+          </div>
+          <h3 className="text-3xl font-black text-crisp-white mb-1">{activeFleetCount} <span className="text-sm font-medium text-slate-light">/ {vehicles.length}</span></h3>
+          <p className="text-xs font-bold text-slate-light uppercase tracking-widest">Active Fleet</p>
+        </div>
+        
+        <div className="bg-void-light/5 border border-cobalt/20 p-6 rounded-xl relative overflow-hidden shadow-lg">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-emerald-400/10 text-emerald-400 rounded-lg"><TrendingUp size={24} /></div>
+          </div>
+          <h3 className="text-3xl font-black text-crisp-white mb-1">₦{totalRemitted.toLocaleString()}</h3>
+          <p className="text-xs font-bold text-slate-light uppercase tracking-widest">Total Remitted</p>
+        </div>
+
+        <div className="bg-void-light/5 border border-cobalt/20 p-6 rounded-xl relative overflow-hidden shadow-lg">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-signal-red/10 text-signal-red rounded-lg"><Calendar size={24} /></div>
+          </div>
+          <h3 className="text-3xl font-black text-crisp-white mb-1">Weekly</h3>
+          <p className="text-xs font-bold text-slate-light uppercase tracking-widest">Payout Cycle</p>
+        </div>
+      </div>
+
+      {/* Tables & Lists */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
+        
+        {/* Recent Remittances Widget */}
+        <div className="bg-void-navy/50 border border-cobalt/20 rounded-xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-6 border-b border-cobalt/20 pb-4">
+            <h3 className="font-bold uppercase tracking-wider flex items-center gap-2">
+              <Activity size={18} className="text-cobalt" /> Recent Remittances
+            </h3>
+            <Link href="/owner/dashboard/ledger" className="text-[10px] uppercase font-bold text-signal-red hover:text-crisp-white transition">
+              View Ledger
+            </Link>
+          </div>
+          
+          <div className="space-y-2">
+            {ledgers.length === 0 ? (
+              <p className="text-sm text-slate-light italic py-4">No remittance history recorded yet.</p>
+            ) : (
+              ledgers.map((tx) => (
+                <div key={tx.id} className="flex justify-between items-center p-3 hover:bg-void-light/5 rounded-lg transition border border-transparent hover:border-cobalt/20">
+                  <div>
+                    <p className="text-sm font-bold text-crisp-white">{tx.description || "Weekly Remittance"}</p>
+                    <p className="text-[10px] text-slate-light uppercase tracking-widest">{new Date(tx.date).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-black text-emerald-400">+₦{tx.amount.toLocaleString()}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Fleet Status Widget */}
+        <div className="bg-void-navy/50 border border-cobalt/20 rounded-xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-6 border-b border-cobalt/20 pb-4">
+            <h3 className="font-bold uppercase tracking-wider flex items-center gap-2">
+              <CarFront size={18} className="text-cobalt" /> Fleet Deployment
+            </h3>
+            <Link href="/owner/dashboard/assets" className="text-[10px] uppercase font-bold text-signal-red hover:text-crisp-white transition">
+              Manage Fleet
+            </Link>
+          </div>
+          
+          <div className="space-y-2">
+            {vehicles.length === 0 ? (
+              <p className="text-sm text-slate-light italic py-4">No vehicles assigned to your portfolio yet.</p>
+            ) : (
+              vehicles.map((v) => (
+                <div key={v.id} className="flex justify-between items-center p-3 hover:bg-void-light/5 rounded-lg transition border border-transparent hover:border-cobalt/20">
+                  <div>
+                    <p className="text-sm font-bold text-crisp-white uppercase tracking-wider">{v.registrationNumber || "PENDING PLATE"}</p>
+                    <p className="text-[10px] text-slate-light uppercase tracking-widest">{v.type}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md ${
+                      v.status === 'ACTIVE' ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20' : 
+                      v.status === 'MAINTENANCE' ? 'bg-amber-400/10 text-amber-400 border border-amber-400/20' :
+                      'bg-signal-red/10 text-signal-red border border-signal-red/20'
+                    }`}>
+                      {v.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
