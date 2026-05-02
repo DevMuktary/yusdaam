@@ -66,3 +66,44 @@ export const getRegistrationReceivedEmail = (data: RegistrationEmailData) => {
     </div>
   `;
 };
+
+// --- NEW AGREEMENT EMAIL TEMPLATE ---
+export interface AgreementSignedEmailData {
+  firstName: string;
+  email: string;
+}
+
+export const getAgreementSignedEmail = (data: AgreementSignedEmailData) => {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
+      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px;">
+        <h1 style="margin: 0; font-size: 22px; color: #001232; letter-spacing: 1px;">
+          YUSDAAM<span style="color: #FFB902;">.</span>
+        </h1>
+      </div>
+      
+      <div style="font-size: 15px;">
+        <p>Hi ${data.firstName},</p>
+        <p>Your digital signature has been successfully applied to your Hire Purchase Administration Agreement.</p>
+        
+        <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
+          <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Your Asset is Active</h3>
+          <p style="margin: 0; font-size: 14px; color: #4a4a4a;">Your dashboard is now fully unlocked. You can monitor your vehicle deployment and track your remittance history in real-time.</p>
+        </div>
+
+        <p>A finalized, countersigned PDF copy of your agreement is available for download at any time within the "Vault & Legal" section of your portal.</p>
+        
+        <p style="margin-top: 35px; margin-bottom: 0;">
+          Welcome to the Fleet,<br>
+          <strong>The YUSDAAM Team</strong>
+        </p>
+      </div>
+
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS INVESTMENT MANAGEMENT NIG LTD (RC-9335611)</strong></p>
+        <p style="margin: 0 0 15px 0;">84, Addo Road, Oke-Ira Kekere, Ajah, Lagos | 0906 500 0860</p>
+        <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
+      </div>
+    </div>
+  `;
+};
