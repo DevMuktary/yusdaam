@@ -18,7 +18,7 @@ export default function VirtualAgreement({ ownerName }: AgreementProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   
-  // New Success States
+  // Success States
   const [isSuccess, setIsSuccess] = useState(false);
   const [appliedSignature, setAppliedSignature] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -36,7 +36,9 @@ export default function VirtualAgreement({ ownerName }: AgreementProps) {
     }
 
     setIsSubmitting(true);
-    const signatureImage = sigCanvas.current?.getTrimmedCanvas().toDataURL("image/png");
+    
+    // ADDED || null to satisfy TypeScript's strict type checking
+    const signatureImage = sigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null;
     setAppliedSignature(signatureImage);
 
     try {
