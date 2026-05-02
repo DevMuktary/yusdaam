@@ -14,8 +14,11 @@ export default async function DashboardHome() {
     select: { accountStatus: true, firstName: true }
   });
 
+  // Safely cast the status to a standard string to bypass Prisma's strict Enum typing
+  const currentStatus = String(user?.accountStatus);
+
   // --- STATE 1: PENDING KYC ---
-  if (user?.accountStatus === "PENDING") {
+  if (currentStatus === "PENDING" || currentStatus === "undefined" || !user?.accountStatus) {
     return (
       <div className="max-w-3xl mx-auto mt-10">
         <div className="bg-void-light/5 border border-cobalt/30 p-8 sm:p-12 rounded-2xl relative overflow-hidden shadow-2xl">
@@ -25,7 +28,7 @@ export default async function DashboardHome() {
           <ShieldAlert className="w-16 h-16 text-cobalt mb-6" />
           <h1 className="text-3xl font-black uppercase mb-2">Profile Under Review</h1>
           <p className="text-slate-light leading-relaxed mb-10">
-            Welcome, {user.firstName}. Your onboarding profile is currently locked inside our compliance vault. Our administration team is running mandatory KYC verifications on your submitted documents.
+            Welcome, {user?.firstName}. Your onboarding profile is currently locked inside our compliance vault. Our administration team is running mandatory KYC verifications on your submitted documents.
           </p>
 
           <div className="space-y-4">
@@ -60,7 +63,7 @@ export default async function DashboardHome() {
   }
 
   // --- STATE 2: VIRTUAL AGREEMENT READY ---
-  if (user?.accountStatus === "AWAITING_SIGNATURE") {
+  if (currentStatus === "AWAITING_SIGNATURE") {
     return (
       <div className="max-w-3xl mx-auto mt-10">
         <h1 className="text-3xl font-black uppercase mb-4 text-signal-red">Signature Required</h1>
