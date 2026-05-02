@@ -37,7 +37,6 @@ export default function VirtualAgreement({ ownerName }: AgreementProps) {
 
     setIsSubmitting(true);
     
-    // ADDED || null to satisfy TypeScript's strict type checking
     const signatureImage = sigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null;
     setAppliedSignature(signatureImage);
 
@@ -64,7 +63,8 @@ export default function VirtualAgreement({ ownerName }: AgreementProps) {
     setIsDownloading(true);
 
     try {
-      // Dynamically import to prevent Next.js server-side errors
+      // Tell TypeScript to bypass strict type checking for this specific JS library
+      // @ts-ignore
       const html2pdf = (await import("html2pdf.js")).default;
       
       const opt = {
