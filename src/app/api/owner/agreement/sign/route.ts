@@ -2,15 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import { SendMailClient } from "zeptomail";
+import { sendSystemEmail } from "@/lib/email/sender";
 import { getAgreementSignedEmail } from "@/lib/email/templates";
 
 const prisma = new PrismaClient();
-
-// Initialize ZeptoMail Client
-const url = "api.zeptomail.com/";
-const token = process.env.ZEPTOMAIL_API_KEY || "";
-const client = new SendMailClient({ url, token });
 
 export async function POST(req: Request) {
   try {
@@ -36,32 +31,22 @@ export async function POST(req: Request) {
       },
     });
 
-    // 2. Dispatch the confirmation email via ZeptoMail
+    // 2. Dispatch the confirmation email via your central sender utility
     if (user.email) {
-      try {
-        await client.sendMail({
-          from: {
-            // Update this to your ZeptoMail verified sender address
-            address: "noreply@", 
-            name: "YUSDAAM Autos",
-          },
-          to: [
-            {
-              email_address: {
-                address: user.email,
-                name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
-              },
-            },
-          ],
-          subject: "Your Asset Agreement is Active",
-          htmlbody: getAgreementSignedEmail({ 
-            firstName: user.firstName || "Asset Owner", 
-            email: user.email 
-          }),
-        });
-      } catch (emailError) {
-        // We log the email error but do not fail the overall database transaction
-        console.error("ZeptoMail dispatch failed:", emailError);
+      const ownerFullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Asset Owner";
+      
+      const emailSent = await sendSystemEmail({
+        toEmail: user.email,
+        toName: ownerFullName,
+        subject: "Your Asset Agreement is Active",
+        htmlBody: getAgreementSignedEmail({ 
+          firstName: user.firstName || "Asset Owner", 
+          email: user.email 
+        }),
+      });
+
+      if (!emailSent) {
+        console.warn(`Failed to dispatch confirmation email to ${user.email}, but database update succeeded.`);
       }
     }
 
