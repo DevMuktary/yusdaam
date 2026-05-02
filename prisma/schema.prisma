@@ -10,13 +10,15 @@ datasource db {
 // --- ENUMS ---
 enum Role {
   ADMIN
-  ASSET_OWNER // Changed from INVESTOR for SEC compliance
+  ASSET_OWNER // Changed from INVESTOR for compliance
   RIDER
 }
 
 enum AccountStatus {
-  PENDING     // Default for new registrations
-  APPROVED    // Unlocks the dashboard
+  PENDING             // Default for new registrations
+  AWAITING_SIGNATURE  // Vehicle assigned, waiting for owner to sign
+  ACTIVE              // Fully operational dashboard
+  APPROVED            
   REJECTED
   SUSPENDED
 }
@@ -75,6 +77,7 @@ model VerificationToken {
 // --- CORE APPLICATION MODELS ---
 model User {
   id               String        @id @default(cuid())
+  
   // Standard NextAuth fields
   name             String?       // Can be auto-populated as firstName + lastName
   email            String?       @unique
@@ -98,17 +101,18 @@ model User {
   
   // KYC 
   nin              String?
-  bvn              String?       // NEW
-  passportUrl      String?       // NEW (Cloudinary)
-  utilityBillUrl   String?       // NEW (Cloudinary)
+  bvn              String?       
+  passportUrl      String?       
+  utilityBillUrl   String?       
+  signatureUrl     String?       // NEW: Stores the virtual agreement signature
   
   // Next of Kin
   nokFirstName     String?
   nokLastName      String?
   nokRelationship  String?
   nokPhone         String?
-  nokAddress       String?       // NEW
-  nokIdNumber      String?       // NEW (NIN or BVN)
+  nokAddress       String?       
+  nokIdNumber      String?       
   
   // Financial Routing
   bankName         String?
@@ -122,7 +126,7 @@ model User {
 
   // Authorization & Roles
   role             Role          @default(ASSET_OWNER)
-  accountStatus    AccountStatus @default(PENDING) // Locks them out until admin approves
+  accountStatus    AccountStatus @default(PENDING) 
 
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
@@ -145,7 +149,7 @@ model Vehicle {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
-  ownerId            String?       // Changed from investorId
+  ownerId            String?       
   owner              User?         @relation("AssetOwnerVehicles", fields: [ownerId], references: [id])
   
   riderId            String?       @unique
@@ -157,12 +161,12 @@ model Vehicle {
 
 model Contract {
   id                   String   @id @default(cuid())
-  ownerId              String   // Changed from investorId
+  ownerId              String   
   vehicleId            String   @unique
-  weeklyRemittance     Float    // SEC Compliant: Changed from guaranteedWeeklyReturn
+  weeklyRemittance     Float    
   agreedDurationMonths Int
   isActive             Boolean  @default(true)
-  signedDocumentUrl    String?  // URL to the AWS/Cloudinary PDF
+  signedDocumentUrl    String?  
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
@@ -179,7 +183,7 @@ model Ledger {
   date        DateTime @default(now())
   
   vehicleId   String
-  ownerId     String   // Changed from investorId
+  ownerId     String   
 
   vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
   owner       User     @relation(fields: [ownerId], references: [id])
