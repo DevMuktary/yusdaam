@@ -2,27 +2,26 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
 import { ShieldAlert, Loader2, CheckCircle2, Clock } from "lucide-react";
+import VirtualAgreement from "./VirtualAgreement";
 
 const prisma = new PrismaClient();
 
 export default async function DashboardHome() {
   const session = await getServerSession(authOptions);
   
-  // Fetch fresh data from DB to ensure real-time status updates
   const user = await prisma.user.findUnique({
     where: { id: session?.user?.id },
-    select: { accountStatus: true, firstName: true }
+    select: { accountStatus: true, firstName: true, lastName: true }
   });
 
-  // Safely cast the status to a standard string to bypass Prisma's strict Enum typing
   const currentStatus = String(user?.accountStatus);
+  const fullName = `${user?.firstName} ${user?.lastName}`;
 
   // --- STATE 1: PENDING KYC ---
   if (currentStatus === "PENDING" || currentStatus === "undefined" || !user?.accountStatus) {
     return (
       <div className="max-w-3xl mx-auto mt-10">
         <div className="bg-void-light/5 border border-cobalt/30 p-8 sm:p-12 rounded-2xl relative overflow-hidden shadow-2xl">
-          {/* Background Glow */}
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-signal-red/20 blur-[100px] rounded-full pointer-events-none" />
           
           <ShieldAlert className="w-16 h-16 text-cobalt mb-6" />
@@ -36,7 +35,7 @@ export default async function DashboardHome() {
               <CheckCircle2 className="text-emerald-400 shrink-0" size={24} />
               <div>
                 <h4 className="font-bold text-sm uppercase tracking-wider text-emerald-400">Profile Submitted</h4>
-                <p className="text-xs text-slate-light">Data securely received and encrypted.</p>
+                <p className="text-xs text-slate-light">Data received and encrypted.</p>
               </div>
             </div>
             
@@ -65,9 +64,8 @@ export default async function DashboardHome() {
   // --- STATE 2: VIRTUAL AGREEMENT READY ---
   if (currentStatus === "AWAITING_SIGNATURE") {
     return (
-      <div className="max-w-3xl mx-auto mt-10">
-        <h1 className="text-3xl font-black uppercase mb-4 text-signal-red">Signature Required</h1>
-        <p className="text-slate-light">We will build the Virtual Agreement Digital Signature module here next!</p>
+      <div className="py-6">
+        <VirtualAgreement ownerName={fullName} />
       </div>
     );
   }
@@ -76,7 +74,7 @@ export default async function DashboardHome() {
   return (
     <div className="max-w-6xl mx-auto">
       <h1 className="text-3xl font-black uppercase mb-8">Asset Overview</h1>
-      <p className="text-slate-light">We will build the actual data grids, charts, and fleet tables here!</p>
+      <p className="text-slate-light">Active Dashboard coming next.</p>
     </div>
   );
 }
