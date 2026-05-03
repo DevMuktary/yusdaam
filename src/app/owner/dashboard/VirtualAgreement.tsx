@@ -78,7 +78,7 @@ export default function VirtualAgreement(props: AgreementProps) {
       // @ts-ignore
       const html2pdf = (await import("html2pdf.js")).default;
       const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5], // Top, Left, Bottom, Right margins
+        margin: [0.5, 0.5, 0.5, 0.5],
         filename: `YUSDAAM_Agreement_${props.ownerName.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
@@ -93,7 +93,6 @@ export default function VirtualAgreement(props: AgreementProps) {
     }
   };
 
-  // The actual legal text abstracted to keep the code clean and reusable for both UI and PDF
   const LegalDocument = ({ isPdf = false }: { isPdf?: boolean }) => {
     const fallback = "[Pending Admin Input]";
     const textStyle = isPdf ? "text-[11px] leading-relaxed text-black font-serif" : "text-sm text-slate-light leading-relaxed font-sans";
@@ -101,8 +100,6 @@ export default function VirtualAgreement(props: AgreementProps) {
 
     return (
       <div className={textStyle}>
-        
-        {/* LETTERHEAD */}
         <div className={`text-center ${isPdf ? "border-b-2 border-[#001232] pb-4 mb-6" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
           <h1 className={`${isPdf ? "text-3xl text-[#001232]" : "text-3xl text-crisp-white"} font-black tracking-widest mb-1`}>
             YUSDAAM<span className="text-[#FFB902]">.</span>
@@ -205,12 +202,10 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         <p className="mb-8 font-bold italic">IN WITNESS WHEREOF parties have executed this Agreement the day and year first above written.</p>
 
-        {/* SIGNATURE BLOCKS */}
         <div className={`grid grid-cols-2 gap-8 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
           <div>
             <p className="font-bold mb-6">SIGNED by the within-named ADMINISTRATOR</p>
             <div className="h-16 mb-2">
-               {/* Place an official signature image here eventually */}
                <div className={`w-32 border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
             <p className="font-bold">Yussuf Dare Orelaja</p>
@@ -251,7 +246,6 @@ export default function VirtualAgreement(props: AgreementProps) {
     );
   };
 
-  // --- SUCCESS VIEW ---
   if (isSuccess) {
     return (
       <div className="max-w-2xl mx-auto mt-10 bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500">
@@ -273,7 +267,6 @@ export default function VirtualAgreement(props: AgreementProps) {
           </button>
         </div>
 
-        {/* Hidden Render for PDF Generation */}
         <div className="hidden">
           <div ref={contractRef} className="bg-white p-12 w-[800px]">
             <LegalDocument isPdf={true} />
@@ -283,7 +276,6 @@ export default function VirtualAgreement(props: AgreementProps) {
     );
   }
 
-  // --- SIGNATURE VIEW ---
   return (
     <div className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl overflow-hidden shadow-2xl">
       <div className="h-[500px] overflow-y-auto p-8 sm:p-12 bg-void-navy/50 custom-scrollbar">
@@ -314,3 +306,4 @@ export default function VirtualAgreement(props: AgreementProps) {
       </div>
     </div>
   );
+}
