@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { useRouter } from "next/navigation";
-import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2, User, MapPin } from "lucide-react";
+import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export interface AgreementProps {
   ownerName: string;
@@ -33,12 +33,19 @@ export interface AgreementProps {
 export default function VirtualAgreement(props: AgreementProps) {
   const router = useRouter();
   
-  // 1 = HPA, 2 = POA, 3 = SUCCESS
+  // Prevent iOS Safari pinch-zoom by injecting meta tag on mount
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
+    document.head.appendChild(meta);
+    return () => { document.head.removeChild(meta); };
+  }, []);
+
   const [step, setStep] = useState(1); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Step 1 State (HPA)
   const hpaOwnerSigCanvas = useRef<SignatureCanvas>(null);
   const hpaWitnessSigCanvas = useRef<SignatureCanvas>(null);
   const [hpaAgreed, setHpaAgreed] = useState(false);
@@ -47,12 +54,10 @@ export default function VirtualAgreement(props: AgreementProps) {
   const [hpaOwnerSig, setHpaOwnerSig] = useState<string | null>(null);
   const [hpaWitnessSig, setHpaWitnessSig] = useState<string | null>(null);
 
-  // Step 2 State (POA)
   const poaOwnerSigCanvas = useRef<SignatureCanvas>(null);
   const [poaAgreed, setPoaAgreed] = useState(false);
   const [poaOwnerSig, setPoaOwnerSig] = useState<string | null>(null);
 
-  // PDF Refs
   const hpaContractRef = useRef<HTMLDivElement>(null);
   const poaContractRef = useRef<HTMLDivElement>(null);
   const [isDownloadingHpa, setIsDownloadingHpa] = useState(false);
@@ -71,7 +76,7 @@ export default function VirtualAgreement(props: AgreementProps) {
     setHpaWitnessSig(hpaWitnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null);
     
     setStep(2);
-    setErrorMsg("");
+    window.scrollTo(0, 0); // Scroll back to top for next step
   };
 
   const handleSubmitAll = async () => {
@@ -88,12 +93,12 @@ export default function VirtualAgreement(props: AgreementProps) {
       const res = await fetch("/api/owner/agreement/sign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // We save the main HPA owner signature to the DB profile
         body: JSON.stringify({ signature: hpaOwnerSig }), 
       });
 
       if (!res.ok) throw new Error("Failed to process agreements.");
       setStep(3);
+      window.scrollTo(0, 0);
     } catch (err: any) {
       setErrorMsg(err.message);
     } finally {
@@ -223,7 +228,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-2">10.1 <strong>Lock-in Period:</strong> The Owner shall not terminate this Agreement within the first twenty-six (26) weeks of the Tenure, except in the event of a proven material breach of contract by the Administrator.</p>
         <p className="mb-2">10.2 <strong>Standard Termination:</strong> Subsequent to Week 26, the Owner may terminate this Agreement by providing thirty (30) days’ written notice. Upon such termination, the Administrator shall hand over all Rider agreements, GPS access credentials, and repossession rights to the Owner.</p>
         <p className="mb-2">10.3 <strong>Termination for Administrator Default:</strong> If the Administrator fails to enforce or remit collected payments for four (4) consecutive weeks (excluding Force Majeure events), the Owner may revoke the Power of Attorney with seven (7) days’ written notice and assume direct management of the Asset.</p>
-        <p className="mb-6">10.4 <strong>Rider Default:</strong> In the event the Rider permanently defaults or fails to complete the Tenure, full control of the Asset shall revert to the Owner. The Administrator shall deliver the Asset, keys, relevant documents, and a formal repossession report to the Owner within seven (7) days of the Rider's termination.</p>
+        <p className="mb-2">10.4 <strong>Rider Default:</strong> In the event the Rider permanently defaults or fails to complete the Tenure, full control of the Asset shall revert to the Owner. The Administrator shall deliver the Asset, keys, relevant documents, and a formal repossession report to the Owner within seven (7) days of the Rider's termination.</p>
 
         <h3 className={headingStyle}>11. FORCE MAJEURE</h3>
         <p className="mb-2">11.1 Neither Party shall be deemed in breach of this Agreement or otherwise liable for any delay or failure in performance arising from circumstances beyond their reasonable control (a "Force Majeure Event"). Such events include, but are not limited to, acts of God, war, nationwide strikes, government bans on specific vehicle types, pandemic lockdowns, or natural disasters.</p>
@@ -250,7 +255,6 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         {/* SIGNATURE BLOCKS */}
         <div className={`grid grid-cols-2 gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
-          
           {/* Administrator Side */}
           <div className="space-y-4">
             <p className="font-bold underline text-xs">SIGNED by the within-named ADMINISTRATOR</p>
@@ -376,7 +380,6 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-10 font-bold italic uppercase">IN WITNESS WHEREOF, I have hereunto set my hand and seal this ____ day of _______________, 2026.</p>
 
         <div className={`grid grid-cols-2 gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
-          
           {/* Donor Side */}
           <div className="space-y-4">
             <p className="font-bold underline text-xs">SIGNED, SEALED, AND DELIVERED by the within-named DONOR:</p>
@@ -420,7 +423,6 @@ export default function VirtualAgreement(props: AgreementProps) {
             <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Designation: Managing Director</p>
             <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Date: ___________________</p>
           </div>
-
         </div>
       </div>
     );
@@ -429,7 +431,7 @@ export default function VirtualAgreement(props: AgreementProps) {
   // --- SUCCESS VIEW (STEP 3) ---
   if (step === 3) {
     return (
-      <div className="max-w-3xl mx-auto mt-10 bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500">
+      <div className="max-w-3xl mx-auto mt-10 bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full overflow-x-hidden">
         <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle2 size={40} className="text-emerald-400" />
         </div>
@@ -464,17 +466,17 @@ export default function VirtualAgreement(props: AgreementProps) {
   // --- STEP 2: POA VIEW ---
   if (step === 2) {
     return (
-      <div className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl overflow-hidden shadow-2xl animate-in slide-in-from-right-8 duration-500">
-        <div className="h-[500px] overflow-y-auto p-8 sm:p-12 bg-void-navy/50 custom-scrollbar">
+      <div className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-right-8 duration-500 w-full overflow-x-hidden">
+        <div className="p-8 sm:p-12 bg-void-navy/50">
           <PoaDocument isPdf={false} />
         </div>
 
         <div className="p-8 border-t border-cobalt/30 bg-void-navy">
           {errorMsg && <p className="text-signal-red text-sm font-bold mb-4">{errorMsg}</p>}
           
-          <div className="mb-6">
-            <label className="flex items-center gap-2 text-xs font-bold text-slate-light uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Donor Signature</label>
-            <div className="bg-crisp-white rounded-lg border-2 border-cobalt/30 overflow-hidden">
+          <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
+            <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Donor Signature</label>
+            <div className="bg-crisp-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
               <SignatureCanvas ref={poaOwnerSigCanvas} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
             </div>
             <div className="flex justify-end mt-2">
@@ -487,7 +489,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">I, {props.ownerName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.</span>
           </label>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <button onClick={() => setStep(1)} className="px-8 py-4 bg-void-light/10 text-slate-light text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/20 transition">
               Back
             </button>
@@ -502,8 +504,8 @@ export default function VirtualAgreement(props: AgreementProps) {
 
   // --- STEP 1: HPA VIEW ---
   return (
-    <div className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-8 duration-500">
-      <div className="h-[500px] overflow-y-auto p-8 sm:p-12 bg-void-navy/50 custom-scrollbar">
+    <div className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-x-hidden">
+      <div className="p-8 sm:p-12 bg-void-navy/50">
         <HpaDocument isPdf={false} />
       </div>
 
@@ -515,16 +517,16 @@ export default function VirtualAgreement(props: AgreementProps) {
           <div className="md:col-span-2"><h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Owner's Witness Details</h4></div>
           <div>
             <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Full Name</label>
-            <input type="text" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="Jane Doe" />
+            <input type="text" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-base md:text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="Jane Doe" />
           </div>
           <div>
             <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Address</label>
-            <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street, Lagos" />
+            <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-base md:text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street, Lagos" />
           </div>
           <div className="md:col-span-2">
             <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
-            <div className="bg-crisp-white rounded-lg border-2 border-cobalt/30 overflow-hidden">
-              <SignatureCanvas ref={hpaWitnessSigCanvas} penColor="#001232" canvasProps={{ className: "w-full h-32 cursor-crosshair" }} />
+            <div className="bg-crisp-white rounded-lg border-2 border-cobalt/30 overflow-hidden shadow-inner">
+              <SignatureCanvas ref={hpaWitnessSigCanvas} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
             </div>
             <div className="flex justify-end mt-2">
               <button type="button" onClick={() => hpaWitnessSigCanvas.current?.clear()} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Witness Canvas</button>
@@ -548,7 +550,7 @@ export default function VirtualAgreement(props: AgreementProps) {
           <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">I, {props.ownerName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.</span>
         </label>
 
-        <button onClick={handleNextToPoa} className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition">
+        <button onClick={handleNextToPoa} className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
           Next: Review Power of Attorney <ArrowRight size={16} />
         </button>
       </div>
