@@ -105,6 +105,8 @@ model User {
   passportUrl      String?       
   utilityBillUrl   String?       
   signatureUrl     String?       // NEW: Stores the virtual agreement signature
+  hpaAgreementUrl String?
+  poaAgreementUrl String?
   
   // Next of Kin
   nokFirstName     String?
