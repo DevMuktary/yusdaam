@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import { ShieldCheck, FileText, FileSignature, Lock, Download, FileBadge, CheckCircle2, CarFront } from "lucide-react";
+import { ShieldCheck, Lock, CarFront, CheckCircle2, FileSignature, Download } from "lucide-react";
+import VaultDocumentManager from "./VaultDocumentManager";
 
 const prisma = new PrismaClient();
 
@@ -9,20 +10,41 @@ export default async function LegalVaultPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
 
-  // Fetch the user's status to verify if documents are fully executed
+  // Fetch all required user and vehicle data
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { accountStatus: true, updatedAt: true }
+    include: {
+      ownedVehicles: {
+        include: { contract: true },
+        orderBy: { createdAt: 'desc' }
+      }
+    }
   });
 
-  // Fetch vehicles to list their specific insurance/allocation documents
-  const vehicles = await prisma.vehicle.findMany({
-    where: { ownerId: session.user.id },
-    orderBy: { createdAt: 'desc' }
-  });
+  if (!user) return null;
 
-  const isExecuted = user?.accountStatus === "ACTIVE";
-  const executionDate = user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : "Pending";
+  const isExecuted = user.accountStatus === "ACTIVE";
+  const executionDate = user.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : "Pending";
+  const primaryVehicle = user.ownedVehicles[0]; // Used for agreement template injection
+
+  const agreementData = {
+    ownerName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+    bvn: user.bvn || "",
+    nin: user.nin || "",
+    ownerAddress: user.streetAddress || "",
+    ownerEmail: user.email || "",
+    ownerPhone: user.phoneNumber || "",
+    ownerId: user.id,
+    vehicleType: primaryVehicle?.type || "",
+    makeModel: "TBD",
+    year: "TBD",
+    engineNo: "TBD",
+    chassisNo: "TBD",
+    plateNo: primaryVehicle?.registrationNumber || "",
+    targetWeeklyRemittance: primaryVehicle?.contract?.weeklyRemittance?.toString() || "",
+    ownerBank: user.bankName || "",
+    ownerAcctNo: user.accountNumber || "",
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -51,81 +73,33 @@ export default async function LegalVaultPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
         
-        {/* PRIMARY AGREEMENTS */}
+        {/* PRIMARY AGREEMENTS (Client Component) */}
         <div className="space-y-6">
           <h3 className="font-bold uppercase tracking-wider flex items-center gap-2 text-sm text-crisp-white border-b border-cobalt/20 pb-3">
             <FileSignature size={18} className="text-signal-red" /> Master Agreements
           </h3>
-
-          {/* HPA Document Card */}
-          <div className="bg-void-navy/50 border border-cobalt/30 p-6 rounded-xl hover:bg-void-light/5 transition duration-300 shadow-md group">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-void-dark rounded-lg border border-cobalt/20 group-hover:border-signal-red/30 transition">
-                <FileText size={24} className="text-cobalt group-hover:text-signal-red transition" />
-              </div>
-              {isExecuted ? (
-                <span className="inline-flex items-center gap-1.5 bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest">
-                  <CheckCircle2 size={12} /> Executed
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 bg-amber-400/10 text-amber-400 border border-amber-400/20 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest">
-                  Pending
-                </span>
-              )}
-            </div>
-            <h4 className="text-lg font-black text-crisp-white mb-1">Hire Purchase Administration Agreement</h4>
-            <p className="text-xs text-slate-light mb-6">Governs the strict financial and operational management of your assigned fleet.</p>
-            
-            <div className="flex items-center justify-between pt-4 border-t border-cobalt/20">
-              <p className="text-[10px] text-slate-light font-mono uppercase tracking-widest">Dated: {executionDate}</p>
-              <button disabled={!isExecuted} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-signal-red hover:text-crisp-white transition disabled:opacity-30 disabled:cursor-not-allowed">
-                <Download size={14} /> Download PDF
-              </button>
-            </div>
-          </div>
-
-          {/* POA Document Card */}
-          <div className="bg-void-navy/50 border border-cobalt/30 p-6 rounded-xl hover:bg-void-light/5 transition duration-300 shadow-md group">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-void-dark rounded-lg border border-cobalt/20 group-hover:border-signal-red/30 transition">
-                <FileBadge size={24} className="text-cobalt group-hover:text-signal-red transition" />
-              </div>
-              {isExecuted ? (
-                <span className="inline-flex items-center gap-1.5 bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest">
-                  <CheckCircle2 size={12} /> Executed
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 bg-amber-400/10 text-amber-400 border border-amber-400/20 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest">
-                  Pending
-                </span>
-              )}
-            </div>
-            <h4 className="text-lg font-black text-crisp-white mb-1">Specific Power of Attorney</h4>
-            <p className="text-xs text-slate-light mb-6">Grants YUSDAAM the legal authority to sign riders, enforce GPS rules, and execute repossessions.</p>
-            
-            <div className="flex items-center justify-between pt-4 border-t border-cobalt/20">
-              <p className="text-[10px] text-slate-light font-mono uppercase tracking-widest">Dated: {executionDate}</p>
-              <button disabled={!isExecuted} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-signal-red hover:text-crisp-white transition disabled:opacity-30 disabled:cursor-not-allowed">
-                <Download size={14} /> Download PDF
-              </button>
-            </div>
-          </div>
+          <VaultDocumentManager 
+            isExecuted={isExecuted} 
+            executionDate={executionDate} 
+            ownerSignature={user.signatureUrl}
+            agreementData={agreementData}
+          />
         </div>
 
-        {/* ASSET SPECIFIC DOCUMENTS */}
+        {/* ASSET SPECIFIC DOCUMENTS (Server Component) */}
         <div className="space-y-6">
           <h3 className="font-bold uppercase tracking-wider flex items-center gap-2 text-sm text-crisp-white border-b border-cobalt/20 pb-3">
             <ShieldCheck size={18} className="text-cobalt" /> Asset Certificates
           </h3>
 
-          {vehicles.length === 0 ? (
+          {user.ownedVehicles.length === 0 ? (
             <div className="bg-void-navy/30 border border-cobalt/10 border-dashed rounded-xl p-8 text-center">
               <CarFront size={32} className="text-cobalt/30 mx-auto mb-3" />
               <p className="text-sm font-bold text-slate-light uppercase tracking-wider">No Assets Allocated</p>
               <p className="text-xs text-slate-light/60 mt-2">Vehicle insurance and allocation certificates will appear here once your fleet is deployed.</p>
             </div>
           ) : (
-            vehicles.map((vehicle) => (
+            user.ownedVehicles.map((vehicle) => (
               <div key={vehicle.id} className="bg-void-navy/50 border border-cobalt/30 p-5 rounded-xl hover:bg-void-light/5 transition duration-300 shadow-md">
                 <div className="flex items-start justify-between mb-3">
                   <div>
