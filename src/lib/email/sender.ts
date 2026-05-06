@@ -5,14 +5,14 @@ interface SendEmailParams {
   toName: string;
   subject: string;
   htmlBody: string;
+  attachments?: Array<{ content: string; mime_type: string; name: string }>;
 }
 
-export const sendSystemEmail = async ({ toEmail, toName, subject, htmlBody }: SendEmailParams) => {
+export const sendSystemEmail = async ({ toEmail, toName, subject, htmlBody, attachments }: SendEmailParams) => {
   const zeptoUrl = "api.zeptomail.com/";
   const zeptoToken = process.env.ZEPTO_MAIL_TOKEN;
   const senderEmail = process.env.ZEPTO_SENDER_EMAIL || "noreply@yusdaamautos.com";
   
-  // ZeptoMail requires a bounce address. We will fallback to the sender email if a specific bounce email isn't set in your .env
   const bounceEmail = process.env.ZEPTO_BOUNCE_EMAIL || senderEmail; 
 
   if (!zeptoToken) {
@@ -23,8 +23,8 @@ export const sendSystemEmail = async ({ toEmail, toName, subject, htmlBody }: Se
   const client = new SendMailClient({ url: zeptoUrl, token: zeptoToken });
 
   try {
-    await client.sendMail({
-      bounce_address: bounceEmail, // <-- THIS IS THE FIX
+    const payload: any = {
+      bounce_address: bounceEmail, 
       from: { 
         address: senderEmail, 
         name: "YUSDAAM AUTOS" 
@@ -39,8 +39,14 @@ export const sendSystemEmail = async ({ toEmail, toName, subject, htmlBody }: Se
       ],
       subject: subject,
       htmlbody: htmlBody,
-    });
-    
+    };
+
+    // Inject attachments if they exist
+    if (attachments && attachments.length > 0) {
+      payload.attachments = attachments;
+    }
+
+    await client.sendMail(payload);
     return true;
   } catch (error) {
     console.error("❌ Failed to send email via ZeptoMail:", error);
