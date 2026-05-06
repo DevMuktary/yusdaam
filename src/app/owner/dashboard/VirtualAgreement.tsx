@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { useRouter } from "next/navigation";
-import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2, MailCheck } from "lucide-react";
 
 export interface AgreementProps {
   ownerName: string;
@@ -31,6 +31,7 @@ export interface AgreementProps {
 
 export default function VirtualAgreement(props: AgreementProps) {
   const router = useRouter();
+  const topRef = useRef<HTMLDivElement>(null);
   
   // Prevent iOS Safari pinch-zoom by injecting meta tag on mount
   useEffect(() => {
@@ -61,6 +62,10 @@ export default function VirtualAgreement(props: AgreementProps) {
   const poaContractRef = useRef<HTMLDivElement>(null);
   const [isDownloadingHpa, setIsDownloadingHpa] = useState(false);
   const [isDownloadingPoa, setIsDownloadingPoa] = useState(false);
+  
+  // Step 3 Background Dispatch State
+  const [isDispatching, setIsDispatching] = useState(false);
+  const [dispatchComplete, setDispatchComplete] = useState(false);
 
   // Dynamic Date Helpers
   const today = new Date();
@@ -78,11 +83,8 @@ export default function VirtualAgreement(props: AgreementProps) {
     if (hpaWitnessSigCanvas.current?.isEmpty()) return setErrorMsg("Please provide your witness signature.");
     if (!hpaAgreed) return setErrorMsg("You must check the agreement box to proceed.");
 
-    setHpaOwnerSig(hpaOwnerSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null);
-    setHpaWitnessSig(hpaWitnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null);
-    
     setStep(2);
-    window.scrollTo(0, 0); // Scroll back to top for next step
+    setTimeout(() => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   };
 
   const handleSubmitAll = async () => {
@@ -91,9 +93,6 @@ export default function VirtualAgreement(props: AgreementProps) {
     if (!poaAgreed) return setErrorMsg("You must check the agreement box to proceed.");
 
     setIsSubmitting(true);
-    
-    const finalPoaSig = poaOwnerSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null;
-    setPoaOwnerSig(finalPoaSig);
 
     try {
       const res = await fetch("/api/owner/agreement/sign", {
@@ -103,8 +102,10 @@ export default function VirtualAgreement(props: AgreementProps) {
       });
 
       if (!res.ok) throw new Error("Failed to process agreements.");
+      
       setStep(3);
-      window.scrollTo(0, 0);
+      setIsDispatching(true);
+      setTimeout(() => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } catch (err: any) {
       setErrorMsg(err.message);
     } finally {
@@ -112,6 +113,45 @@ export default function VirtualAgreement(props: AgreementProps) {
     }
   };
 
+  // BACKGROUND TASK: Compile PDFs and Email them
+  useEffect(() => {
+    if (step === 3 && isDispatching && !dispatchComplete) {
+      const compileAndSend = async () => {
+        try {
+          // @ts-ignore
+          const html2pdf = (await import("html2pdf.js")).default;
+          const opt = {
+            margin: [0.5, 0.5, 0.5, 0.5],
+            image: { type: 'jpeg', quality: 0.8 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+          };
+
+          const hpaDataUri = await html2pdf().set({ ...opt, filename: 'HPA.pdf' }).from(hpaContractRef.current).output('datauristring');
+          const poaDataUri = await html2pdf().set({ ...opt, filename: 'POA.pdf' }).from(poaContractRef.current).output('datauristring');
+
+          const hpaBase64 = hpaDataUri.split(',')[1];
+          const poaBase64 = poaDataUri.split(',')[1];
+
+          await fetch("/api/owner/agreement/dispatch-docs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ hpaBase64, poaBase64 })
+          });
+
+        } catch (error) {
+          console.error("Background dispatch failed", error);
+        } finally {
+          setIsDispatching(false);
+          setDispatchComplete(true);
+        }
+      };
+      compileAndSend();
+    }
+  }, [step, isDispatching, dispatchComplete]);
+
+  // Safari-safe Blob Download
   const handleDownloadPDF = async (ref: React.RefObject<HTMLDivElement>, filename: string, setLoader: (val: boolean) => void) => {
     if (!ref.current) return;
     setLoader(true);
@@ -120,12 +160,22 @@ export default function VirtualAgreement(props: AgreementProps) {
       const html2pdf = (await import("html2pdf.js")).default;
       const opt = {
         margin: [0.5, 0.5, 0.5, 0.5],
-        filename: `${filename}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
-      await html2pdf().set(opt).from(ref.current).save();
+
+      const pdfBlob = await html2pdf().set(opt).from(ref.current).output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${filename}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+
     } catch (error) {
       console.error("PDF Generation failed", error);
     } finally {
@@ -257,7 +307,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-2">14.3 <strong>Notices:</strong> Official notices shall be sent to the email addresses provided herein and shall be legally deemed received twenty-four (24) hours after successful transmission.</p>
         <p className="mb-6">14.4 <strong>Stamp Duty:</strong> Any applicable stamp duties associated with this Agreement shall be borne by the Administrator.</p>
 
-        <p className="mb-8 font-bold italic uppercase">IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
+        <p className="mb-10 font-bold italic uppercase">IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
 
         {/* SIGNATURE BLOCKS */}
         <div className={`grid grid-cols-2 gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
@@ -289,11 +339,11 @@ export default function VirtualAgreement(props: AgreementProps) {
 
           <div>
             <p className="font-bold mb-6">SIGNED by the within-named OWNER</p>
-            <div className="h-16 mb-2">
+            <div className="relative h-20 w-48 mt-4 mb-2">
               {hpaOwnerSig ? (
-                <img src={hpaOwnerSig} alt="Owner Signature" className="h-full object-contain" />
+                <img src={hpaOwnerSig} alt="Owner Signature" className="absolute left-0 bottom-0 h-20 object-contain" />
               ) : (
-                <div className={`w-32 border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+                <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
               )}
             </div>
             <p className="font-bold text-xs uppercase">Name: {props.ownerName}</p>
@@ -308,8 +358,9 @@ export default function VirtualAgreement(props: AgreementProps) {
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
                {hpaWitnessSig ? (
                  <img src={hpaWitnessSig} alt="Witness Signature" className="absolute left-16 bottom-0 h-12 object-contain" />
-               ) : null}
-               <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+               ) : (
+                 <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+               )}
             </div>
             <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {formattedDate}</p>
           </div>
@@ -390,8 +441,9 @@ export default function VirtualAgreement(props: AgreementProps) {
             <div className="relative h-20 w-48 mt-4 mb-2">
               {poaOwnerSig ? (
                 <img src={poaOwnerSig} alt="Donor Signature" className="absolute left-0 bottom-0 h-20 object-contain" />
-              ) : null}
-              <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+              ) : (
+                <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+              )}
             </div>
             
             <p className="font-bold text-xs uppercase">Name: {props.ownerName}</p>
@@ -406,8 +458,9 @@ export default function VirtualAgreement(props: AgreementProps) {
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
                {hpaWitnessSig ? (
                  <img src={hpaWitnessSig} alt="Witness Signature" className="absolute left-16 bottom-0 h-12 object-contain" />
-               ) : null}
-               <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+               ) : (
+                 <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+               )}
             </div>
             <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
           </div>
@@ -434,29 +487,41 @@ export default function VirtualAgreement(props: AgreementProps) {
   // --- SUCCESS VIEW (STEP 3) ---
   if (step === 3) {
     return (
-      <div className="max-w-3xl mx-auto mt-10 bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full overflow-x-hidden">
-        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 size={40} className="text-emerald-400" />
-        </div>
-        <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreements Executed</h2>
-        <p className="text-slate-light leading-relaxed mb-10">
-          Your digital signatures have been permanently attached to your profile. Copies of the finalized agreements have been automatically dispatched to your registered email address.
-        </p>
+      <div ref={topRef} className="max-w-3xl mx-auto mt-10 bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full overflow-x-hidden">
+        
+        {isDispatching ? (
+          <div className="flex flex-col items-center justify-center py-10">
+            <Loader2 size={48} className="text-emerald-400 animate-spin mb-6" />
+            <h2 className="text-2xl font-black uppercase tracking-wider text-crisp-white mb-2">Finalizing Documents</h2>
+            <p className="text-slate-light">Please wait while we encrypt your signatures and securely dispatch the PDF copies to your registered email...</p>
+          </div>
+        ) : (
+          <>
+            <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 size={40} className="text-emerald-400" />
+            </div>
+            <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreements Executed</h2>
+            <p className="text-slate-light leading-relaxed mb-10">
+              Your digital signatures have been permanently attached. Copies of the finalized agreements have been automatically dispatched to your registered email address.
+            </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button onClick={() => handleDownloadPDF(hpaContractRef, `HPA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingHpa)} disabled={isDownloadingHpa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
-            {isDownloadingHpa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download HPA</>}
-          </button>
-          
-          <button onClick={() => handleDownloadPDF(poaContractRef, `POA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingPoa)} disabled={isDownloadingPoa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
-            {isDownloadingPoa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download POA</>}
-          </button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button onClick={() => handleDownloadPDF(hpaContractRef, `HPA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingHpa)} disabled={isDownloadingHpa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
+                {isDownloadingHpa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download HPA</>}
+              </button>
+              
+              <button onClick={() => handleDownloadPDF(poaContractRef, `POA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingPoa)} disabled={isDownloadingPoa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
+                {isDownloadingPoa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download POA</>}
+              </button>
 
-          <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
-            Access Dashboard <ArrowRight size={16} />
-          </button>
-        </div>
+              <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
+                Access Dashboard <ArrowRight size={16} />
+              </button>
+            </div>
+          </>
+        )}
 
+        {/* Hidden Render for PDF Generation */}
         <div className="hidden">
           <div ref={hpaContractRef} className="bg-white p-12 w-[800px]"><HpaDocument isPdf={true} /></div>
           <div ref={poaContractRef} className="bg-white p-12 w-[800px]"><PoaDocument isPdf={true} /></div>
@@ -468,7 +533,7 @@ export default function VirtualAgreement(props: AgreementProps) {
   // --- STEP 2: POA VIEW ---
   if (step === 2) {
     return (
-      <div className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-right-8 duration-500 w-full overflow-x-hidden">
+      <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-right-8 duration-500 w-full overflow-x-hidden">
         <div className="p-8 sm:p-12 bg-void-navy/50">
           <PoaDocument isPdf={false} />
         </div>
@@ -479,10 +544,16 @@ export default function VirtualAgreement(props: AgreementProps) {
           <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
             <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Donor Signature</label>
             <div className="bg-crisp-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
-              <SignatureCanvas ref={poaOwnerSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
+              <SignatureCanvas 
+                ref={poaOwnerSigCanvas} 
+                clearOnResize={false} 
+                penColor="#001232" 
+                canvasProps={{ className: "w-full h-40 cursor-crosshair" }} 
+                onEnd={() => setPoaOwnerSig(poaOwnerSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)}
+              />
             </div>
             <div className="flex justify-end mt-2">
-              <button type="button" onClick={() => poaOwnerSigCanvas.current?.clear()} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Canvas</button>
+              <button type="button" onClick={() => { poaOwnerSigCanvas.current?.clear(); setPoaOwnerSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Canvas</button>
             </div>
           </div>
 
@@ -492,7 +563,7 @@ export default function VirtualAgreement(props: AgreementProps) {
           </label>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <button onClick={() => { setStep(1); window.scrollTo(0,0); }} className="px-8 py-4 bg-void-light/10 text-slate-light text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/20 transition">
+            <button onClick={() => { setStep(1); setTimeout(() => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }} className="px-8 py-4 bg-void-light/10 text-slate-light text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/20 transition">
               Back
             </button>
             <button onClick={handleSubmitAll} disabled={isSubmitting} className="flex-1 flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition disabled:opacity-50">
@@ -506,7 +577,7 @@ export default function VirtualAgreement(props: AgreementProps) {
 
   // --- STEP 1: HPA VIEW ---
   return (
-    <div className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-x-hidden">
+    <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-x-hidden">
       <div className="p-8 sm:p-12 bg-void-navy/50">
         <HpaDocument isPdf={false} />
       </div>
@@ -528,10 +599,16 @@ export default function VirtualAgreement(props: AgreementProps) {
           <div className="md:col-span-2">
             <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
             <div className="bg-crisp-white rounded-lg border-2 border-cobalt/30 overflow-hidden shadow-inner">
-              <SignatureCanvas ref={hpaWitnessSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
+              <SignatureCanvas 
+                ref={hpaWitnessSigCanvas} 
+                clearOnResize={false} 
+                penColor="#001232" 
+                canvasProps={{ className: "w-full h-40 cursor-crosshair" }} 
+                onEnd={() => setHpaWitnessSig(hpaWitnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)}
+              />
             </div>
             <div className="flex justify-end mt-2">
-              <button type="button" onClick={() => hpaWitnessSigCanvas.current?.clear()} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Witness Canvas</button>
+              <button type="button" onClick={() => { hpaWitnessSigCanvas.current?.clear(); setHpaWitnessSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Witness Canvas</button>
             </div>
           </div>
         </div>
@@ -540,10 +617,16 @@ export default function VirtualAgreement(props: AgreementProps) {
         <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
           <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Owner Signature</label>
           <div className="bg-crisp-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
-            <SignatureCanvas ref={hpaOwnerSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
+            <SignatureCanvas 
+              ref={hpaOwnerSigCanvas} 
+              clearOnResize={false} 
+              penColor="#001232" 
+              canvasProps={{ className: "w-full h-40 cursor-crosshair" }} 
+              onEnd={() => setHpaOwnerSig(hpaOwnerSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)}
+            />
           </div>
           <div className="flex justify-end mt-2">
-            <button type="button" onClick={() => hpaOwnerSigCanvas.current?.clear()} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Owner Canvas</button>
+            <button type="button" onClick={() => { hpaOwnerSigCanvas.current?.clear(); setHpaOwnerSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Owner Canvas</button>
           </div>
         </div>
 
