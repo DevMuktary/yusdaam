@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import { CarFront, AlertCircle, CheckCircle2, Wrench, Search, MapPin } from "lucide-react";
+import { CarFront, AlertCircle, CheckCircle2, Wrench, Search, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 const prisma = new PrismaClient();
@@ -10,19 +10,20 @@ export default async function FleetPortfolioPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
 
-  // 1. Fetch all vehicles owned by this user, including their assigned rider and active contract
+  // PRIVACY FIREWALL: We only select the rider's ID to know if the vehicle is deployed.
+  // We strictly DO NOT fetch firstName, lastName, or phoneNumber to protect rider privacy.
   const vehicles = await prisma.vehicle.findMany({
     where: { ownerId: session.user.id },
     include: {
       rider: {
-        select: { firstName: true, lastName: true, phoneNumber: true }
+        select: { id: true } 
       },
       contract: true,
     },
     orderBy: { createdAt: 'desc' }
   });
 
-  // 2. Calculate Fleet Metrics
+  // Calculate Fleet Metrics
   const totalVehicles = vehicles.length;
   const activeVehicles = vehicles.filter(v => v.status === "ACTIVE").length;
   const maintenanceVehicles = vehicles.filter(v => v.status === "MAINTENANCE").length;
@@ -75,7 +76,6 @@ export default async function FleetPortfolioPage() {
             <CarFront size={18} className="text-cobalt" /> Allocated Units
           </h3>
           
-          {/* Optional Search/Filter stub for future expansion */}
           <div className="hidden sm:flex items-center gap-2 bg-void-dark border border-cobalt/30 rounded-lg px-3 py-1.5">
             <Search size={14} className="text-slate-light" />
             <input type="text" placeholder="Search plates..." className="bg-transparent text-xs text-crisp-white focus:outline-none w-32 placeholder:text-slate-light/50" disabled />
@@ -90,12 +90,12 @@ export default async function FleetPortfolioPage() {
               <p className="text-xs text-slate-light/70 mt-2">Assets will appear here once your KYC and initial purchase are cleared.</p>
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
                 <tr className="bg-void-dark/50 text-[10px] uppercase tracking-widest text-slate-light border-b border-cobalt/30">
                   <th className="p-4 font-bold">Asset ID / Plate</th>
                   <th className="p-4 font-bold">Type</th>
-                  <th className="p-4 font-bold">Assigned Rider</th>
+                  <th className="p-4 font-bold">Deployment</th>
                   <th className="p-4 font-bold">Target Weekly</th>
                   <th className="p-4 font-bold text-right">Status</th>
                 </tr>
@@ -123,12 +123,16 @@ export default async function FleetPortfolioPage() {
                       </td>
                       <td className="p-4">
                         {vehicle.rider ? (
-                          <>
-                            <p className="font-bold text-xs text-crisp-white uppercase">{vehicle.rider.firstName} {vehicle.rider.lastName}</p>
-                            <p className="text-[10px] text-slate-light mt-1">{vehicle.rider.phoneNumber}</p>
-                          </>
+                          <div className="flex items-center gap-1.5">
+                            <ShieldCheck size={14} className="text-emerald-400" />
+                            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
+                              Deployed
+                            </span>
+                          </div>
                         ) : (
-                          <span className="text-xs italic text-slate-light/50">Unassigned</span>
+                          <span className="text-[10px] font-bold text-slate-light/50 uppercase tracking-widest">
+                            In Garage
+                          </span>
                         )}
                       </td>
                       <td className="p-4">
