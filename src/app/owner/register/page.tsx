@@ -40,6 +40,15 @@ export default function OwnerRegistration() {
     nokFirstName: "", nokLastName: "", nokRelationship: "", nokRelationshipOther: "", nokPhone: "", nokAddress: "", nokIdNumber: ""
   });
 
+  // Prevent iOS Safari auto-zoom on input focus
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
+    document.head.appendChild(meta);
+    return () => { document.head.removeChild(meta); };
+  }, []);
+
   const countries = useMemo(() => Country.getAllCountries(), []);
   const availableStates = useMemo(() => State.getStatesOfCountry(formData.countryIso), [formData.countryIso]);
 
@@ -173,7 +182,7 @@ export default function OwnerRegistration() {
     );
   }
 
-  const inputStyle = "w-full bg-void-light/5 border border-signal-red/60 rounded-lg px-4 py-3.5 text-[16px] text-crisp-white focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/40 transition-all placeholder:text-slate-light/40 shadow-[0_0_10px_rgba(233,69,96,0.05)]";
+  const inputStyle = "w-full bg-void-light/5 border border-signal-red/60 rounded-lg px-4 py-3.5 text-base text-crisp-white focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/40 transition-all placeholder:text-slate-light/40 shadow-[0_0_10px_rgba(233,69,96,0.05)]";
   const labelStyle = "flex items-center text-[10px] sm:text-xs font-bold text-slate-light/70 uppercase tracking-widest mb-1.5 sm:mb-2";
 
   return (
