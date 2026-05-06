@@ -59,15 +59,14 @@ export const getRegistrationReceivedEmail = (data: RegistrationEmailData) => {
       </div>
 
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
-        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS INVESTMENT MANAGEMENT NIG LTD (RC-9335611)</strong></p>
-        <p style="margin: 0 0 15px 0;">84, Addo Road, Oke-Ira Kekere, Ajah, Lagos | 0906 500 0860</p>
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9335611)</strong></p>
+        <p style="margin: 0 0 15px 0;">18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos.</p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}. If you received this in error, please disregard it.</p>
       </div>
     </div>
   `;
 };
 
-// --- NEW AGREEMENT EMAIL TEMPLATE ---
 export interface AgreementSignedEmailData {
   firstName: string;
   email: string;
@@ -84,14 +83,14 @@ export const getAgreementSignedEmail = (data: AgreementSignedEmailData) => {
       
       <div style="font-size: 15px;">
         <p>Hi ${data.firstName},</p>
-        <p>Your digital signature has been successfully applied to your Hire Purchase Administration Agreement.</p>
+        <p>Your digital signatures have been successfully applied to your <strong>Hire Purchase Administration Agreement</strong> and <strong>Specific Power of Attorney</strong>.</p>
         
         <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
           <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Your Asset is Active</h3>
           <p style="margin: 0; font-size: 14px; color: #4a4a4a;">Your dashboard is now fully unlocked. You can monitor your vehicle deployment and track your remittance history in real-time.</p>
         </div>
 
-        <p>A finalized, countersigned PDF copy of your agreement is available for download at any time within the "Vault & Legal" section of your portal.</p>
+        <p>Finalized, countersigned PDF copies of both legal documents have been automatically emailed to you and are also available for download at any time within the "Vault & Legal" section of your portal.</p>
         
         <p style="margin-top: 35px; margin-bottom: 0;">
           Welcome to the Fleet,<br>
@@ -100,8 +99,8 @@ export const getAgreementSignedEmail = (data: AgreementSignedEmailData) => {
       </div>
 
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
-        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS INVESTMENT MANAGEMENT NIG LTD (RC-9335611)</strong></p>
-        <p style="margin: 0 0 15px 0;">84, Addo Road, Oke-Ira Kekere, Ajah, Lagos | 0906 500 0860</p>
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9335611)</strong></p>
+        <p style="margin: 0 0 15px 0;">18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos.</p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
       </div>
     </div>
