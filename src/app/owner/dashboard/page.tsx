@@ -12,13 +12,35 @@ export default async function DashboardHome() {
   
   if (!session?.user?.id) return null;
 
+  // FETCH EVERYTHING NEEDED FOR THE AGREEMENT
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { accountStatus: true, firstName: true, lastName: true }
+    select: { 
+      id: true,
+      accountStatus: true, 
+      firstName: true, 
+      lastName: true,
+      email: true,
+      phoneNumber: true,
+      bvn: true,
+      nin: true,
+      streetAddress: true,
+      bankName: true,
+      accountNumber: true,
+      ownedVehicles: {
+        include: {
+          contract: true
+        }
+      }
+    }
   });
 
   const currentStatus = String(user?.accountStatus);
-  const fullName = `${user?.firstName} ${user?.lastName}`;
+  const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
+  
+  // Grab the first assigned vehicle and its contract if they exist
+  const assignedVehicle = user?.ownedVehicles?.[0];
+  const assignedContract = assignedVehicle?.contract;
 
   // --- STATE 1: PENDING KYC ---
   if (currentStatus === "PENDING" || currentStatus === "undefined" || !user?.accountStatus) {
@@ -67,15 +89,26 @@ export default async function DashboardHome() {
   // --- STATE 2: VIRTUAL AGREEMENT READY ---
   if (currentStatus === "AWAITING_SIGNATURE") {
     return (
-      <div className="py-6">
-        <VirtualAgreement ownerName={fullName} />
+      <div className="py-6 overflow-x-hidden">
+        <VirtualAgreement 
+          ownerName={fullName} 
+          ownerId={user?.id}
+          ownerEmail={user?.email || ""}
+          ownerPhone={user?.phoneNumber || ""}
+          bvn={user?.bvn || ""}
+          nin={user?.nin || ""}
+          ownerAddress={user?.streetAddress || ""}
+          ownerBank={user?.bankName || ""}
+          ownerAcctNo={user?.accountNumber || ""}
+          vehicleType={assignedVehicle?.type || ""}
+          plateNo={assignedVehicle?.registrationNumber || ""}
+          targetWeeklyRemittance={assignedContract?.weeklyRemittance?.toString() || ""}
+        />
       </div>
     );
   }
 
   // --- STATE 3: FULLY ACTIVE DASHBOARD ---
-  
-  // We only run these database queries if the user is fully active to save server resources.
   const vehicles = await prisma.vehicle.findMany({
     where: { ownerId: session.user.id },
   });
@@ -83,22 +116,20 @@ export default async function DashboardHome() {
   const ledgers = await prisma.ledger.findMany({
     where: { ownerId: session.user.id, type: "OWNER_REMITTANCE" },
     orderBy: { date: 'desc' },
-    take: 5 // Only fetch the 5 most recent for the overview widget
+    take: 5 
   });
 
   const activeFleetCount = vehicles.filter(v => v.status === "ACTIVE").length;
   const totalRemitted = ledgers.reduce((sum, tx) => sum + tx.amount, 0);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden">
       
-      {/* Overview Header */}
       <div className="border-b border-cobalt/20 pb-6">
         <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-wide mb-2">Operational Overview</h1>
         <p className="text-slate-light">Welcome back, {user?.firstName}. Here is your real-time asset performance.</p>
       </div>
 
-      {/* KPI Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="bg-void-light/5 border border-cobalt/20 p-6 rounded-xl relative overflow-hidden shadow-lg">
           <div className="flex justify-between items-start mb-4">
@@ -125,10 +156,7 @@ export default async function DashboardHome() {
         </div>
       </div>
 
-      {/* Tables & Lists */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
-        
-        {/* Recent Remittances Widget */}
         <div className="bg-void-navy/50 border border-cobalt/20 rounded-xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-6 border-b border-cobalt/20 pb-4">
             <h3 className="font-bold uppercase tracking-wider flex items-center gap-2">
@@ -158,7 +186,6 @@ export default async function DashboardHome() {
           </div>
         </div>
 
-        {/* Fleet Status Widget */}
         <div className="bg-void-navy/50 border border-cobalt/20 rounded-xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-6 border-b border-cobalt/20 pb-4">
             <h3 className="font-bold uppercase tracking-wider flex items-center gap-2">
