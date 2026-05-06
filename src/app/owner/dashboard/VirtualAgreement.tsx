@@ -27,7 +27,6 @@ export interface AgreementProps {
   grossRemittance?: string;
   adminCharge?: string;
   policyNo?: string;
-  poaDate?: string;
 }
 
 export default function VirtualAgreement(props: AgreementProps) {
@@ -63,7 +62,14 @@ export default function VirtualAgreement(props: AgreementProps) {
   const [isDownloadingHpa, setIsDownloadingHpa] = useState(false);
   const [isDownloadingPoa, setIsDownloadingPoa] = useState(false);
 
-  const fallback = "______________________";
+  // Dynamic Date Helpers
+  const today = new Date();
+  const currentDay = today.getDate();
+  const currentMonth = today.toLocaleString('default', { month: 'long' });
+  const currentYear = today.getFullYear();
+  const formattedDate = today.toLocaleDateString();
+
+  const fallback = "[Pending Admin Input]";
 
   const handleNextToPoa = () => {
     setErrorMsg("");
@@ -143,7 +149,7 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-6" : "text-lg text-signal-red mb-8"}`}>HIRE PURCHASE ADMINISTRATION AGREEMENT</h2>
 
-        <p className="mb-4"><strong>THIS AGREEMENT</strong> is made this <strong>____</strong> day of <strong>_______________</strong>, 2026.</p>
+        <p className="mb-4"><strong>THIS AGREEMENT</strong> is made this <strong>{currentDay}</strong> day of <strong>{currentMonth}</strong>, <strong>{currentYear}</strong>.</p>
 
         <p className="mb-2 font-bold">BETWEEN</p>
         <p className="mb-6"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company duly incorporated under the Companies and Allied Matters Act (CAMA) with RC: 9335611, having its registered office at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos., Nigeria, Email: admin@yusdaamautos.com (hereinafter referred to as the <strong>“Administrator”</strong>, which expression shall, where the context so admits, include its successors-in-title and assigns) of the first part;</p>
@@ -228,7 +234,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-2">10.1 <strong>Lock-in Period:</strong> The Owner shall not terminate this Agreement within the first twenty-six (26) weeks of the Tenure, except in the event of a proven material breach of contract by the Administrator.</p>
         <p className="mb-2">10.2 <strong>Standard Termination:</strong> Subsequent to Week 26, the Owner may terminate this Agreement by providing thirty (30) days’ written notice. Upon such termination, the Administrator shall hand over all Rider agreements, GPS access credentials, and repossession rights to the Owner.</p>
         <p className="mb-2">10.3 <strong>Termination for Administrator Default:</strong> If the Administrator fails to enforce or remit collected payments for four (4) consecutive weeks (excluding Force Majeure events), the Owner may revoke the Power of Attorney with seven (7) days’ written notice and assume direct management of the Asset.</p>
-        <p className="mb-2">10.4 <strong>Rider Default:</strong> In the event the Rider permanently defaults or fails to complete the Tenure, full control of the Asset shall revert to the Owner. The Administrator shall deliver the Asset, keys, relevant documents, and a formal repossession report to the Owner within seven (7) days of the Rider's termination.</p>
+        <p className="mb-6">10.4 <strong>Rider Default:</strong> In the event the Rider permanently defaults or fails to complete the Tenure, full control of the Asset shall revert to the Owner. The Administrator shall deliver the Asset, keys, relevant documents, and a formal repossession report to the Owner within seven (7) days of the Rider's termination.</p>
 
         <h3 className={headingStyle}>11. FORCE MAJEURE</h3>
         <p className="mb-2">11.1 Neither Party shall be deemed in breach of this Agreement or otherwise liable for any delay or failure in performance arising from circumstances beyond their reasonable control (a "Force Majeure Event"). Such events include, but are not limited to, acts of God, war, nationwide strikes, government bans on specific vehicle types, pandemic lockdowns, or natural disasters.</p>
@@ -251,13 +257,12 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-2">14.3 <strong>Notices:</strong> Official notices shall be sent to the email addresses provided herein and shall be legally deemed received twenty-four (24) hours after successful transmission.</p>
         <p className="mb-6">14.4 <strong>Stamp Duty:</strong> Any applicable stamp duties associated with this Agreement shall be borne by the Administrator.</p>
 
-        <p className="mb-10 font-bold italic uppercase">IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
+        <p className="mb-8 font-bold italic uppercase">IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
 
         {/* SIGNATURE BLOCKS */}
         <div className={`grid grid-cols-2 gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
-          {/* Administrator Side */}
-          <div className="space-y-4">
-            <p className="font-bold underline text-xs">SIGNED by the within-named ADMINISTRATOR</p>
+          <div>
+            <p className="font-bold mb-6">SIGNED by the within-named ADMINISTRATOR</p>
             <p className="font-bold text-xs uppercase">YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
             
             <div className="relative h-20 w-48 mt-4 mb-2">
@@ -267,7 +272,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             
             <p className="font-bold text-xs">Name: Yussuf Dare Orelaja</p>
             <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Designation: Managing Director</p>
-            <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Date: ___________________</p>
+            <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
             <p className="italic text-[10px] text-gray-500 mt-1">(COMPANY SEAL)</p>
             
             <p className="mt-8 font-bold underline text-xs">In the presence of WITNESS 1 (For the Administrator):</p>
@@ -279,22 +284,20 @@ export default function VirtualAgreement(props: AgreementProps) {
                <img src="/images/aisha_signature.png" alt="Witness Signature" className="absolute left-16 bottom-0 h-12 object-contain" />
                <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
-            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: ___________________</p>
+            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {formattedDate}</p>
           </div>
 
-          {/* Owner Side */}
-          <div className="space-y-4">
-            <p className="font-bold underline text-xs">SIGNED by the within-named OWNER</p>
-            
-            <div className="relative h-20 w-48 mt-4 mb-2">
+          <div>
+            <p className="font-bold mb-6">SIGNED by the within-named OWNER</p>
+            <div className="h-16 mb-2">
               {hpaOwnerSig ? (
-                <img src={hpaOwnerSig} alt="Owner Signature" className="absolute left-0 bottom-0 h-20 object-contain" />
-              ) : null}
-              <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+                <img src={hpaOwnerSig} alt="Owner Signature" className="h-full object-contain" />
+              ) : (
+                <div className={`w-32 border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+              )}
             </div>
-            
             <p className="font-bold text-xs uppercase">Name: {props.ownerName}</p>
-            <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Date: {new Date().toLocaleDateString()}</p>
+            <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
             <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>THUMBPRINT: [Digitally Captured]</p>
 
             <p className="mt-8 font-bold underline text-xs">In the presence of WITNESS 2 (For the Owner):</p>
@@ -308,7 +311,7 @@ export default function VirtualAgreement(props: AgreementProps) {
                ) : null}
                <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
-            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {new Date().toLocaleDateString()}</p>
+            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {formattedDate}</p>
           </div>
         </div>
 
@@ -372,12 +375,12 @@ export default function VirtualAgreement(props: AgreementProps) {
         </ul>
 
         <h3 className={headingStyle}>DURATION AND REVOCABILITY</h3>
-        <p className="mb-6">This Power of Attorney is issued pursuant to the Hire Purchase Administration Agreement executed between the Donor and the Donee on ____________, 2026. It shall remain valid and operational for the duration of the agreed Tenure. It is irrevocable during the first twenty-six (26) weeks of the Tenure except in the event of a material breach by the Donee, after which it may be revoked subject to the termination clauses of the primary Administration Agreement.</p>
+        <p className="mb-6">This Power of Attorney is issued pursuant to the Hire Purchase Administration Agreement executed between the Donor and the Donee on {formattedDate}. It shall remain valid and operational for the duration of the agreed Tenure. It is irrevocable during the first twenty-six (26) weeks of the Tenure except in the event of a material breach by the Donee, after which it may be revoked subject to the termination clauses of the primary Administration Agreement.</p>
 
         <h3 className={headingStyle}>RATIFICATION</h3>
         <p className="mb-8">I HEREBY AGREE to ratify and confirm all lawful actions that my said Attorney shall do, or cause to be done, by virtue of this Power of Attorney, provided such actions are within the scope of the powers granted herein and align with the governing Hire Purchase Administration Agreement.</p>
 
-        <p className="mb-10 font-bold italic uppercase">IN WITNESS WHEREOF, I have hereunto set my hand and seal this ____ day of _______________, 2026.</p>
+        <p className="mb-10 font-bold italic uppercase">IN WITNESS WHEREOF, I have hereunto set my hand and seal this {currentDay} day of {currentMonth}, {currentYear}.</p>
 
         <div className={`grid grid-cols-2 gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
           {/* Donor Side */}
@@ -392,7 +395,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             </div>
             
             <p className="font-bold text-xs uppercase">Name: {props.ownerName}</p>
-            <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Date: {new Date().toLocaleDateString()}</p>
+            <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
             <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>THUMBPRINT: [Digitally Captured]</p>
 
             <p className="mt-8 font-bold underline text-xs">In the presence of WITNESS (For the Donor):</p>
@@ -406,7 +409,7 @@ export default function VirtualAgreement(props: AgreementProps) {
                ) : null}
                <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
-            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {new Date().toLocaleDateString()}</p>
+            <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
           </div>
 
           {/* Donee Side */}
@@ -421,7 +424,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             
             <p className="font-bold text-xs">Name: Yussuf Dare Orelaja</p>
             <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Designation: Managing Director</p>
-            <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Date: ___________________</p>
+            <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Date: {formattedDate}</p>
           </div>
         </div>
       </div>
@@ -454,7 +457,6 @@ export default function VirtualAgreement(props: AgreementProps) {
           </button>
         </div>
 
-        {/* Hidden Render for PDF Generation */}
         <div className="hidden">
           <div ref={hpaContractRef} className="bg-white p-12 w-[800px]"><HpaDocument isPdf={true} /></div>
           <div ref={poaContractRef} className="bg-white p-12 w-[800px]"><PoaDocument isPdf={true} /></div>
@@ -477,7 +479,7 @@ export default function VirtualAgreement(props: AgreementProps) {
           <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
             <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Donor Signature</label>
             <div className="bg-crisp-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
-              <SignatureCanvas ref={poaOwnerSigCanvas} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
+              <SignatureCanvas ref={poaOwnerSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
             </div>
             <div className="flex justify-end mt-2">
               <button type="button" onClick={() => poaOwnerSigCanvas.current?.clear()} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Canvas</button>
@@ -490,7 +492,7 @@ export default function VirtualAgreement(props: AgreementProps) {
           </label>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <button onClick={() => setStep(1)} className="px-8 py-4 bg-void-light/10 text-slate-light text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/20 transition">
+            <button onClick={() => { setStep(1); window.scrollTo(0,0); }} className="px-8 py-4 bg-void-light/10 text-slate-light text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/20 transition">
               Back
             </button>
             <button onClick={handleSubmitAll} disabled={isSubmitting} className="flex-1 flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition disabled:opacity-50">
@@ -526,7 +528,7 @@ export default function VirtualAgreement(props: AgreementProps) {
           <div className="md:col-span-2">
             <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
             <div className="bg-crisp-white rounded-lg border-2 border-cobalt/30 overflow-hidden shadow-inner">
-              <SignatureCanvas ref={hpaWitnessSigCanvas} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
+              <SignatureCanvas ref={hpaWitnessSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
             </div>
             <div className="flex justify-end mt-2">
               <button type="button" onClick={() => hpaWitnessSigCanvas.current?.clear()} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Witness Canvas</button>
@@ -538,7 +540,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
           <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Owner Signature</label>
           <div className="bg-crisp-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
-            <SignatureCanvas ref={hpaOwnerSigCanvas} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
+            <SignatureCanvas ref={hpaOwnerSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} />
           </div>
           <div className="flex justify-end mt-2">
             <button type="button" onClick={() => hpaOwnerSigCanvas.current?.clear()} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Owner Canvas</button>
