@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { useRouter } from "next/navigation";
-import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2, MailCheck } from "lucide-react";
+import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export interface AgreementProps {
   ownerName: string;
@@ -307,7 +307,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-2">14.3 <strong>Notices:</strong> Official notices shall be sent to the email addresses provided herein and shall be legally deemed received twenty-four (24) hours after successful transmission.</p>
         <p className="mb-6">14.4 <strong>Stamp Duty:</strong> Any applicable stamp duties associated with this Agreement shall be borne by the Administrator.</p>
 
-        <p className="mb-10 font-bold italic uppercase">IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
+        <p className="mb-8 font-bold italic uppercase">IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
 
         {/* SIGNATURE BLOCKS */}
         <div className={`grid grid-cols-2 gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
@@ -331,7 +331,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             
             <div className="relative h-12 mt-2 w-48">
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
-               <img src="/images/aisha_signature.png" alt="Witness Signature" className="absolute left-16 bottom-0 h-12 object-contain" />
+               <img src="/images/aisha_signature.png" alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
                <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
             <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {formattedDate}</p>
@@ -341,23 +341,22 @@ export default function VirtualAgreement(props: AgreementProps) {
             <p className="font-bold mb-6">SIGNED by the within-named OWNER</p>
             <div className="relative h-20 w-48 mt-4 mb-2">
               {hpaOwnerSig ? (
-                <img src={hpaOwnerSig} alt="Owner Signature" className="absolute left-0 bottom-0 h-20 object-contain" />
+                <img src={hpaOwnerSig} alt="Owner Signature" className={`absolute left-0 bottom-0 h-20 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
               ) : (
                 <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
               )}
             </div>
             <p className="font-bold text-xs uppercase">Name: {props.ownerName}</p>
             <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
-            <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>THUMBPRINT: [Digitally Captured]</p>
 
             <p className="mt-8 font-bold underline text-xs">In the presence of WITNESS 2 (For the Owner):</p>
-            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Name: {witnessName || fallback}</p>
-            <p className={isPdf ? "text-[10px] mt-2 leading-tight" : "text-xs text-slate-light mt-2 leading-tight"}>Address: {witnessAddress || fallback}</p>
+            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Name: {witnessName || "______________________"}</p>
+            <p className={isPdf ? "text-[10px] mt-2 leading-tight" : "text-xs text-slate-light mt-2 leading-tight"}>Address: {witnessAddress || "______________________"}</p>
             
             <div className="relative h-12 mt-2 w-48">
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
                {hpaWitnessSig ? (
-                 <img src={hpaWitnessSig} alt="Witness Signature" className="absolute left-16 bottom-0 h-12 object-contain" />
+                 <img src={hpaWitnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
                ) : (
                  <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
                )}
@@ -440,7 +439,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             
             <div className="relative h-20 w-48 mt-4 mb-2">
               {poaOwnerSig ? (
-                <img src={poaOwnerSig} alt="Donor Signature" className="absolute left-0 bottom-0 h-20 object-contain" />
+                <img src={poaOwnerSig} alt="Donor Signature" className={`absolute left-0 bottom-0 h-20 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
               ) : (
                 <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
               )}
@@ -448,16 +447,15 @@ export default function VirtualAgreement(props: AgreementProps) {
             
             <p className="font-bold text-xs uppercase">Name: {props.ownerName}</p>
             <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
-            <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>THUMBPRINT: [Digitally Captured]</p>
 
             <p className="mt-8 font-bold underline text-xs">In the presence of WITNESS (For the Donor):</p>
-            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Name: {witnessName || fallback}</p>
-            <p className={isPdf ? "text-[10px] mt-2 leading-tight" : "text-xs text-slate-light mt-2 leading-tight"}>Address: {witnessAddress || fallback}</p>
+            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Name: {witnessName || "______________________"}</p>
+            <p className={isPdf ? "text-[10px] mt-2 leading-tight" : "text-xs text-slate-light mt-2 leading-tight"}>Address: {witnessAddress || "______________________"}</p>
             
             <div className="relative h-12 mt-2 w-48">
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
                {hpaWitnessSig ? (
-                 <img src={hpaWitnessSig} alt="Witness Signature" className="absolute left-16 bottom-0 h-12 object-contain" />
+                 <img src={hpaWitnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
                ) : (
                  <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
                )}
