@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       const emailSent = await sendSystemEmail({
         toEmail: user.email,
         toName: ownerFullName,
-        subject: "Your Asset Agreement is Active",
+        subject: "Executed Agreements: YUSDAAM Autos",
         htmlBody: getAgreementSignedEmail({ 
           firstName: user.firstName || "Asset Owner", 
           email: user.email 
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ message: "Agreement signed and processed successfully" }, { status: 200 });
+    return NextResponse.json({ message: "Agreements signed and processed successfully" }, { status: 200 });
   } catch (error) {
     console.error("Signature Processing Error:", error);
     return NextResponse.json({ error: "Internal server error during processing" }, { status: 500 });
