@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import { UserCog, ShieldCheck, Mail, Phone, MapPin, Building2, CreditCard, Lock, AlertCircle } from "lucide-react";
+import { UserCog, ShieldCheck, Mail, Phone, MapPin, Building2, CreditCard, Lock, AlertCircle, Users, BadgeInfo } from "lucide-react";
 
 const prisma = new PrismaClient();
 
@@ -41,14 +41,14 @@ export default async function ProfileSettingsPage() {
         <div>
           <h3 className="font-bold text-crisp-white uppercase tracking-wider text-sm mb-1">Data Locked for Compliance</h3>
           <p className="text-xs text-slate-light leading-relaxed">
-            Your KYC data and remittance details are tied directly to your legally binding Hire Purchase Administration Agreement. To prevent fraud, any modifications to your bank routing or identity documents must be processed manually through your assigned Account Manager.
+            Your KYC data and remittance details are tied directly to your legally binding Hire Purchase Administration Agreement. To prevent fraud, any modifications to your bank routing, identity documents, or succession plan must be processed manually through your assigned Account Manager.
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-2">
         
-        {/* PERSONAL DETAILS CARD */}
+        {/* PERSONAL & SUCCESSION DETAILS CARD */}
         <div className="bg-void-navy/50 border border-cobalt/20 rounded-xl overflow-hidden shadow-lg">
           <div className="p-6 border-b border-cobalt/20 bg-void-light/5">
             <h3 className="font-bold uppercase tracking-wider flex items-center gap-2 text-sm text-crisp-white">
@@ -77,6 +77,37 @@ export default async function ProfileSettingsPage() {
               <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1 flex items-center gap-1.5"><MapPin size={12} /> Residential Address</p>
               <p className="text-sm font-medium text-crisp-white leading-relaxed">{user.streetAddress || "NOT PROVIDED"}</p>
               {user.state && <p className="text-xs text-slate-light mt-1 uppercase tracking-wider">{user.state}, {user.country || "NIGERIA"}</p>}
+            </div>
+
+            {/* Next of Kin (Succession) Section */}
+            <div className="pt-6 mt-6 border-t border-cobalt/20">
+              <h4 className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Users size={14} /> Succession: Next of Kin
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1">Full Name</p>
+                  <p className="text-sm font-medium text-crisp-white uppercase">
+                    {user.nokFirstName ? `${user.nokFirstName} ${user.nokLastName || ""}` : "NOT PROVIDED"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1">Relationship</p>
+                  <p className="text-sm font-medium text-crisp-white uppercase">{user.nokRelationship || "NOT PROVIDED"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1 flex items-center gap-1.5"><Phone size={12} /> Phone Number</p>
+                  <p className="text-sm font-medium text-crisp-white">{user.nokPhone || "NOT PROVIDED"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1 flex items-center gap-1.5"><BadgeInfo size={12} /> ID Number</p>
+                  <p className="text-sm font-mono text-crisp-white tracking-widest">{maskString(user.nokIdNumber)}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1 flex items-center gap-1.5"><MapPin size={12} /> NOK Address</p>
+                  <p className="text-sm font-medium text-crisp-white leading-relaxed">{user.nokAddress || "NOT PROVIDED"}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
