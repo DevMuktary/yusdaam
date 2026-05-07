@@ -38,6 +38,13 @@ enum VehicleStatus {
   UNASSIGNED
 }
 
+enum GuarantorStatus {
+  PENDING     // Link generated, waiting for guarantor to fill
+  SUBMITTED   // Guarantor filled it, waiting for admin review
+  VERIFIED    // Admin approved this guarantor
+  REJECTED    // Admin rejected this guarantor
+}
+
 // --- NEXTAUTH MODELS ---
 model Account {
   id                String  @id @default(cuid())
@@ -105,8 +112,16 @@ model User {
   passportUrl      String?       
   utilityBillUrl   String?       
   signatureUrl     String?       // NEW: Stores the virtual agreement signature
-  hpaAgreementUrl String?
-  poaAgreementUrl String?
+  hpaAgreementUrl  String?
+  poaAgreementUrl  String?
+
+  // --- NEW: RIDER LICENSING & OPS DATA ---
+  driversLicenseNo       String?
+  lasdriNo               String?
+  driversLicenseUrl      String?
+  drivingExperienceYears String?
+  rideHailingActive      Boolean? @default(false)
+  previousHPExperience   Boolean? @default(false)
   
   // Next of Kin
   nokFirstName     String?
@@ -141,6 +156,48 @@ model User {
   assignedTrip     Vehicle?      @relation("RiderVehicle")
   contracts        Contract[]
   transactions     Ledger[]
+  guarantors       Guarantor[]   // NEW: Link to their guarantors
+}
+
+// --- NEW: GUARANTOR MODEL ---
+model Guarantor {
+  id               String          @id @default(cuid())
+  riderId          String
+  rider            User            @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  
+  // Link Tracking
+  token            String          @unique // e.g. /guarantor/abc123xyz
+  status           GuarantorStatus @default(PENDING)
+  
+  // Initial Data (Provided by Rider)
+  firstName        String
+  lastName         String
+  phone            String
+  relationship     String
+  
+  // Full Data (Provided by Guarantor later via link)
+  email            String?
+  altPhone         String?
+  nin              String?
+  passportUrl      String?
+  
+  // Traceability
+  address          String?
+  residentialStatus String?      // e.g., Landlord, Tenant
+  utilityBillUrl   String?
+  
+  // Occupational Capacity
+  employmentStatus String?
+  employerName     String?
+  officeAddress    String?
+  
+  // Legal
+  signatureUrl     String?       // The digital signature from the deed
+  signedAt         DateTime?     // Exact timestamp of signing
+  ipAddress        String?       // Legal trail
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }
 
 model Vehicle {
