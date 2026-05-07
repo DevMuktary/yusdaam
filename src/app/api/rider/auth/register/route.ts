@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const prisma = new PrismaClient();
 
@@ -10,37 +18,53 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
       firstName, lastName, email, password, phoneNumber, phoneCountryCode,
-      nin, bvn, passportUrl, 
-      country, state, streetAddress, utilityBillUrl, 
-      driversLicenseNo, lasdriNo, driversLicenseUrl,
-      preferredAssetClass, drivingExperienceYears, rideHailingActive, previousHPExperience,
+      nin, bvn, country, state, lga, streetAddress,
+      driversLicenseNo, lasdriNo, preferredAssetClass, drivingExperienceYears, 
+      rideHailingActive, previousHPExperience,
       g1FirstName, g1LastName, g1Phone, g1Relationship,
-      g2FirstName, g2LastName, g2Phone, g2Relationship
+      g2FirstName, g2LastName, g2Phone, g2Relationship,
+      // Base64 file data
+      passportBase64, utilityBillBase64, driversLicenseBase64
     } = body;
 
-    // 1. Validation checks
-    if (!email || !password || !nin || !bvn) {
-      return NextResponse.json({ error: "Missing required core fields." }, { status: 400 });
+    if (!email || !password || !nin || !bvn || !passportBase64) {
+      return NextResponse.json({ error: "Missing required core fields or files." }, { status: 400 });
     }
 
     const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ email }, { phoneNumber }, { nin }, { bvn }]
-      }
+      where: { OR: [{ email }, { phoneNumber }, { nin }, { bvn }] }
     });
 
     if (existingUser) {
       return NextResponse.json({ error: "An account with this Email, Phone, NIN, or BVN already exists." }, { status: 409 });
     }
 
-    // 2. Hash Password
+    // Hash Password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // 3. Generate Secure Tokens for Guarantors
+    // Securely Upload Files to Cloudinary
+    const uploadToCloudinary = async (base64Str: string, folder: string) => {
+      try {
+        const result = await cloudinary.uploader.upload(`data:image/jpeg;base64,${base64Str}`, {
+          folder: `yusdaam_${folder}`,
+          resource_type: "auto",
+        });
+        return result.secure_url;
+      } catch (e) {
+        console.error(`Failed to upload ${folder}`, e);
+        throw new Error(`Failed to process ${folder} document`);
+      }
+    };
+
+    const passportUrl = await uploadToCloudinary(passportBase64, "passports");
+    const utilityBillUrl = await uploadToCloudinary(utilityBillBase64, "utility_bills");
+    const driversLicenseUrl = await uploadToCloudinary(driversLicenseBase64, "licenses");
+
+    // Generate Secure Tokens for Guarantors
     const g1Token = crypto.randomUUID();
     const g2Token = crypto.randomUUID();
 
-    // 4. Create the Rider and attach Guarantors in one transaction
+    // Create the Rider and attach Guarantors in one transaction
     const newRider = await prisma.user.create({
       data: {
         role: "RIDER",
@@ -57,17 +81,16 @@ export async function POST(req: Request) {
         passportUrl,
         country,
         state,
-        streetAddress,
+        streetAddress: `${streetAddress}, ${lga}`, // Append LGA to street address
         utilityBillUrl,
         driversLicenseNo,
         lasdriNo,
         driversLicenseUrl,
         preferredAssetClass,
         drivingExperienceYears,
-        rideHailingActive: rideHailingActive === "true" || rideHailingActive === true,
-        previousHPExperience: previousHPExperience === "true" || previousHPExperience === true,
+        rideHailingActive: rideHailingActive === "true",
+        previousHPExperience: previousHPExperience === "true",
         
-        // Nested write to create the guarantors instantly
         guarantors: {
           create: [
             {
@@ -91,13 +114,10 @@ export async function POST(req: Request) {
       }
     });
 
-    return NextResponse.json({ 
-      message: "Rider registered successfully", 
-      riderId: newRider.id 
-    }, { status: 201 });
+    return NextResponse.json({ message: "Rider registered successfully" }, { status: 201 });
 
   } catch (error: any) {
     console.error("Rider Registration Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
 }
