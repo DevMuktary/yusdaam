@@ -114,7 +114,16 @@ export async function POST(req: Request) {
       }
     });
 
-    return NextResponse.json({ message: "Rider registered successfully" }, { status: 201 });
+    // RETURN THE TOKENS TO THE FRONTEND FOR THE SUCCESS SCREEN
+    return NextResponse.json({ 
+      message: "Rider registered successfully",
+      tokens: {
+        g1Token,
+        g2Token,
+        g1Name: g1FirstName,
+        g2Name: g2FirstName
+      }
+    }, { status: 201 });
 
   } catch (error: any) {
     console.error("Rider Registration Error:", error);
