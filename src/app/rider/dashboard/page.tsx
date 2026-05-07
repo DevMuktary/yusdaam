@@ -24,7 +24,6 @@ export default async function RiderDashboardOverview() {
   }
 
   // TODO: Once we build the Admin Panel, we will fetch the actual assigned vehicle and contract here.
-  // Example: const vehicle = await prisma.vehicle.findFirst({ where: { riderId: rider.id } });
   const vehicle = null; 
   const contract = null;
 
@@ -41,8 +40,8 @@ export default async function RiderDashboardOverview() {
       rider={rider} 
       guarantors={rider.guarantors} 
       baseUrl={baseUrl} 
-      vehicle={vehicle}     {/* Added missing prop */}
-      contract={contract}   {/* Added missing prop */}
+      vehicle={vehicle}
+      contract={contract}
     />
   );
 }
