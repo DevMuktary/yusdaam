@@ -2,8 +2,18 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import { ChevronRight, ArrowLeft, Loader2, Scale, XCircle, UploadCloud } from "lucide-react";
+import { ChevronRight, ArrowLeft, Loader2, Scale, XCircle, UploadCloud, HelpCircle } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
+
+const Tooltip = ({ text }: { text: string }) => (
+  <div className="group relative inline-flex ml-2 cursor-help">
+    <HelpCircle size={14} className="text-cobalt hover:text-signal-red transition-colors" />
+    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-void-navy border border-cobalt/30 text-[10px] text-slate-light leading-relaxed rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 shadow-xl pointer-events-none">
+      {text}
+      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-void-navy" />
+    </div>
+  </div>
+);
 
 export default function GuarantorExecutionPage() {
   const params = useParams();
@@ -30,7 +40,7 @@ export default function GuarantorExecutionPage() {
   const [formData, setFormData] = useState({
     firstName: "", lastName: "",
     email: "", altPhone: "", nin: "", address: "", residentialStatus: "",
-    employmentStatus: "", employerName: "", officeAddress: "",
+    employmentStatus: "", occupation: "", employerName: "", officeAddress: "",
     passportBase64: "", passportName: "",
     utilityBillBase64: "", utilityBillName: "",
   });
@@ -53,7 +63,6 @@ export default function GuarantorExecutionPage() {
         setGuarantorData(data.guarantor);
         setRiderData(data.guarantor.rider);
         
-        // Pre-fill the names the rider provided so they can confirm/edit them
         setFormData(prev => ({
           ...prev,
           firstName: data.guarantor.firstName || "",
@@ -108,7 +117,7 @@ export default function GuarantorExecutionPage() {
       if (!formData.passportBase64 || !formData.utilityBillBase64) return setErrorMsg("Both Passport and Utility Bill uploads are required.");
     }
     if (step === 2) {
-      if (!formData.employmentStatus || !formData.employerName || !formData.officeAddress) return setErrorMsg("Please complete all occupational fields.");
+      if (!formData.employmentStatus || !formData.occupation || !formData.employerName || !formData.officeAddress) return setErrorMsg("Please complete all occupational fields.");
     }
     setStep(step + 1);
     scrollToTop();
@@ -136,7 +145,12 @@ export default function GuarantorExecutionPage() {
       const signatureDataUrl = sigCanvas.current?.getTrimmedCanvas().toDataURL('image/png');
       const signatureBase64 = signatureDataUrl?.split(',')[1];
 
-      const payload = { ...formData, signatureBase64 };
+      // Combine occupation and employerName so it fits nicely in the existing database schema
+      const payload = { 
+        ...formData, 
+        employerName: `${formData.occupation} at ${formData.employerName}`,
+        signatureBase64 
+      };
 
       const res = await fetch(`/api/guarantor/${params.token}`, {
         method: "POST", 
@@ -187,7 +201,7 @@ export default function GuarantorExecutionPage() {
     );
   }
 
-  const inputStyle = "w-full bg-void-light/5 border border-cobalt/30 rounded-lg px-4 py-3.5 text-base text-crisp-white focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/40 transition-all placeholder:text-slate-light/40";
+  const inputStyle = "w-full bg-void-light/5 border border-signal-red/60 rounded-lg px-4 py-3.5 text-base text-crisp-white focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/40 transition-all placeholder:text-slate-light/40 shadow-[0_0_10px_rgba(233,69,96,0.05)]";
   const labelStyle = "flex items-center text-[10px] sm:text-xs font-bold text-slate-light/70 uppercase tracking-widest mb-1.5 sm:mb-2";
 
   return (
@@ -243,22 +257,22 @@ export default function GuarantorExecutionPage() {
                   <h3 className="text-lg font-bold border-b border-cobalt/20 pb-2 mb-4 uppercase tracking-wider">Part 1: Personal Traceability</h3>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div><label className={labelStyle}>Confirm First Name *</label><input type="text" name="firstName" value={formData.firstName} onChange={handleTextChange} className={inputStyle} required /></div>
-                    <div><label className={labelStyle}>Confirm Last Name *</label><input type="text" name="lastName" value={formData.lastName} onChange={handleTextChange} className={inputStyle} required /></div>
+                    <div><label className={labelStyle}>Confirm First Name * <Tooltip text="Please verify your legal first name."/></label><input type="text" name="firstName" value={formData.firstName} onChange={handleTextChange} className={inputStyle} required /></div>
+                    <div><label className={labelStyle}>Confirm Last Name * <Tooltip text="Please verify your legal last name."/></label><input type="text" name="lastName" value={formData.lastName} onChange={handleTextChange} className={inputStyle} required /></div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div><label className={labelStyle}>Email Address</label><input type="email" name="email" value={formData.email} onChange={handleTextChange} className={inputStyle} /></div>
-                    <div><label className={labelStyle}>Alternate Phone No.</label><input type="text" inputMode="numeric" name="altPhone" value={formData.altPhone} onChange={(e) => handleNumberOnlyChange(e, 11)} className={inputStyle} placeholder="Optional" /></div>
+                    <div><label className={labelStyle}>Email Address <Tooltip text="Optional: Your primary email address."/></label><input type="email" name="email" value={formData.email} onChange={handleTextChange} className={inputStyle} /></div>
+                    <div><label className={labelStyle}>Alternate Phone No. <Tooltip text="Optional: A secondary contact number."/></label><input type="text" inputMode="numeric" name="altPhone" value={formData.altPhone} onChange={(e) => handleNumberOnlyChange(e, 11)} className={inputStyle} placeholder="Optional" /></div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                      <label className={labelStyle}>Your NIN *</label>
+                      <label className={labelStyle}>Your NIN * <Tooltip text="National Identity Number is strictly required to verify your identity."/></label>
                       <input type="text" inputMode="numeric" name="nin" value={formData.nin} onChange={(e) => handleNumberOnlyChange(e, 11)} className={inputStyle} placeholder="Strictly 11 Digits" required />
                     </div>
                     <div>
-                      <label className={labelStyle}>Residential Status *</label>
+                      <label className={labelStyle}>Residential Status * <Tooltip text="Select your current living arrangement."/></label>
                       <select name="residentialStatus" value={formData.residentialStatus} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
                         <option value="" className="bg-void-navy">Select...</option>
                         <option value="Landlord/Owner" className="bg-void-navy">Landlord / Owner</option>
@@ -269,20 +283,20 @@ export default function GuarantorExecutionPage() {
                   </div>
 
                   <div>
-                    <label className={labelStyle}>Full Residential Address *</label>
+                    <label className={labelStyle}>Full Residential Address * <Tooltip text="Provide your complete home address for verification."/></label>
                     <input type="text" name="address" value={formData.address} onChange={handleTextChange} className={inputStyle} placeholder="House Number, Street, City, State" required />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
                     <div>
-                      <label className={labelStyle}>Upload Passport *</label>
+                      <label className={labelStyle}>Upload Passport * <Tooltip text="A clear, recent photograph of your face."/></label>
                       <input type="file" accept="image/*" className="hidden" ref={passportRef} onChange={(e) => handleFileConvert(e, "passport")} />
                       <div onClick={() => passportRef.current?.click()} className={`w-full h-20 border-2 ${formData.passportBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex items-center justify-center transition-all cursor-pointer`}>
                         {formData.passportBase64 ? <span className="text-xs font-bold text-emerald-400">Attached: {formData.passportName}</span> : <span className="text-xs font-bold text-slate-light flex items-center gap-2"><UploadCloud size={16}/> Select Image</span>}
                       </div>
                     </div>
                     <div>
-                      <label className={labelStyle}>Upload Utility Bill *</label>
+                      <label className={labelStyle}>Upload Utility Bill * <Tooltip text="Must be a recent PHCN, LAWMA, or Water bill showing your address."/></label>
                       <input type="file" accept="image/*,application/pdf" className="hidden" ref={utilityRef} onChange={(e) => handleFileConvert(e, "utilityBill")} />
                       <div onClick={() => utilityRef.current?.click()} className={`w-full h-20 border-2 ${formData.utilityBillBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex items-center justify-center transition-all cursor-pointer`}>
                         {formData.utilityBillBase64 ? <span className="text-xs font-bold text-emerald-400 truncate px-2">Attached: {formData.utilityBillName}</span> : <span className="text-xs font-bold text-slate-light flex items-center gap-2"><UploadCloud size={16}/> Select Document</span>}
@@ -297,25 +311,31 @@ export default function GuarantorExecutionPage() {
                 <div className="space-y-6 animate-in fade-in duration-500">
                   <h3 className="text-lg font-bold border-b border-cobalt/20 pb-2 mb-4 uppercase tracking-wider">Part 2: Occupational Capacity</h3>
                   
-                  <div>
-                    <label className={labelStyle}>Employment Status *</label>
-                    <select name="employmentStatus" value={formData.employmentStatus} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
-                      <option value="" className="bg-void-navy">Select...</option>
-                      <option value="Employed (Corporate)" className="bg-void-navy">Employed (Corporate / Private Sector)</option>
-                      <option value="Civil Servant" className="bg-void-navy">Civil Servant</option>
-                      <option value="Business Owner" className="bg-void-navy">Business Owner / Entrepreneur</option>
-                      <option value="Self-Employed" className="bg-void-navy">Self-Employed / Freelance</option>
-                      <option value="Retired" className="bg-void-navy">Retired</option>
-                    </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className={labelStyle}>Employment Status * <Tooltip text="Select your current employment type."/></label>
+                      <select name="employmentStatus" value={formData.employmentStatus} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
+                        <option value="" className="bg-void-navy">Select...</option>
+                        <option value="Employed (Corporate)" className="bg-void-navy">Employed (Corporate / Private Sector)</option>
+                        <option value="Civil Servant" className="bg-void-navy">Civil Servant</option>
+                        <option value="Business Owner" className="bg-void-navy">Business Owner / Entrepreneur</option>
+                        <option value="Self-Employed" className="bg-void-navy">Self-Employed / Freelance</option>
+                        <option value="Retired" className="bg-void-navy">Retired</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelStyle}>Occupation / Job Title * <Tooltip text="What is your specific job role or trade?"/></label>
+                      <input type="text" name="occupation" value={formData.occupation} onChange={handleTextChange} className={inputStyle} placeholder="e.g., Accountant, Trader" required />
+                    </div>
                   </div>
 
                   <div>
-                    <label className={labelStyle}>Employer / Business Name *</label>
+                    <label className={labelStyle}>Employer / Business Name * <Tooltip text="Name of the company you work for, or your business name."/></label>
                     <input type="text" name="employerName" value={formData.employerName} onChange={handleTextChange} className={inputStyle} placeholder="Where do you work or what is your business called?" required />
                   </div>
 
                   <div>
-                    <label className={labelStyle}>Office / Business Address *</label>
+                    <label className={labelStyle}>Office / Business Address * <Tooltip text="Full physical address of your workplace."/></label>
                     <input type="text" name="officeAddress" value={formData.officeAddress} onChange={handleTextChange} className={inputStyle} placeholder="Full address of your workplace or business" required />
                   </div>
                 </div>
