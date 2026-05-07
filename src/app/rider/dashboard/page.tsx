@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { PrismaClient } from "@prisma/client";
 import { redirect } from "next/navigation";
-import { ShieldAlert, CheckCircle2, Clock, Copy, ArrowRight } from "lucide-react";
+import { ShieldAlert, CheckCircle2, Clock, Copy, ArrowRight, WalletCards, CarFront, ShieldCheck } from "lucide-react";
 import { authOptions } from "@/lib/auth"; 
 
 const prisma = new PrismaClient();
