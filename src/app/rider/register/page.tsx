@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X, Eye, EyeOff, UploadCloud, HelpCircle } from "lucide-react";
-import { Country, State, City } from "country-state-city";
+import { Country, State } from "country-state-city";
 
 const Tooltip = ({ text }: { text: string }) => (
   <div className="group relative inline-flex ml-2 cursor-help">
@@ -16,6 +17,9 @@ const Tooltip = ({ text }: { text: string }) => (
 );
 
 export default function RiderRegistration() {
+  const router = useRouter();
+  const topRef = useRef<HTMLDivElement>(null); // Used to auto-scroll to the top
+
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -40,13 +44,12 @@ export default function RiderRegistration() {
     countryIso: "NG", countryName: "Nigeria", state: "", lga: "", streetAddress: "", 
     driversLicenseNo: "", lasdriNo: "", 
     
-    preferredAssetClass: "", drivingExperienceYears: "", rideHailingActive: "false", previousHPExperience: "false",
+    preferredAssetClass: "", preferredAssetClassOther: "",
+    drivingExperienceYears: "", rideHailingActive: "false", previousHPExperience: "false",
     
-    g1FirstName: "", g1LastName: "", g1Phone: "", g1Relationship: "",
-    g2FirstName: "", g2LastName: "", g2Phone: "", g2Relationship: ""
+    g1FirstName: "", g1LastName: "", g1Phone: "", g1Relationship: "", g1RelationshipOther: "",
+    g2FirstName: "", g2LastName: "", g2Phone: "", g2Relationship: "", g2RelationshipOther: ""
   });
-
-  const [selectedStateCode, setSelectedStateCode] = useState("");
 
   // Prevent iOS Safari auto-zoom on input focus
   useEffect(() => {
@@ -59,7 +62,6 @@ export default function RiderRegistration() {
 
   const countries = useMemo(() => Country.getAllCountries(), []);
   const availableStates = useMemo(() => State.getStatesOfCountry(formData.countryIso), [formData.countryIso]);
-  const availableLgas = useMemo(() => City.getCitiesOfState(formData.countryIso, selectedStateCode), [formData.countryIso, selectedStateCode]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -72,9 +74,7 @@ export default function RiderRegistration() {
 
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedStateName = e.target.value;
-    const stateObj = availableStates.find(s => s.name === selectedStateName);
-    setFormData({ ...formData, state: selectedStateName, lga: "" });
-    setSelectedStateCode(stateObj?.isoCode || "");
+    setFormData({ ...formData, state: selectedStateName });
   };
 
   const handleFileConvert = (e: React.ChangeEvent<HTMLInputElement>, fieldPrefix: string) => {
@@ -83,7 +83,6 @@ export default function RiderRegistration() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        // Strip the data:image/jpeg;base64, prefix for the backend
         const base64Data = base64String.split(',')[1]; 
         setFormData(prev => ({
           ...prev, 
@@ -104,6 +103,14 @@ export default function RiderRegistration() {
   const passScore = passwordCriteria.filter(c => c.met).length;
   const isPasswordMatch = formData.password === formData.confirmPassword;
 
+  // Auto-scroll function
+  const scrollToTop = () => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    topRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const nextStep = () => {
     setErrorMsg("");
     
@@ -116,39 +123,57 @@ export default function RiderRegistration() {
       if (!isPasswordMatch) return setErrorMsg("Passwords do not match.");
     }
     if (step === 2) {
-      if (!formData.state || !formData.lga || !formData.streetAddress) return setErrorMsg("Please complete your address and LGA details.");
+      if (!formData.state || !formData.lga || !formData.streetAddress) return setErrorMsg("Please complete your address details.");
       if (!formData.utilityBillBase64) return setErrorMsg("You must upload a valid Utility Bill.");
       if (!formData.driversLicenseNo || !formData.driversLicenseBase64) return setErrorMsg("Driver's License details and upload are mandatory.");
     }
     if (step === 3) {
       if (!formData.preferredAssetClass || !formData.drivingExperienceYears) return setErrorMsg("Please select your operational preferences.");
+      if (formData.preferredAssetClass === "Others" && !formData.preferredAssetClassOther) return setErrorMsg("Please specify your preferred asset.");
     }
 
     setStep(step + 1);
+    scrollToTop();
   };
 
-  const prevStep = () => setStep(step - 1);
+  const prevStep = () => {
+    setStep(step - 1);
+    scrollToTop();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
     
-    if (!formData.g1FirstName || !formData.g1Phone || !formData.g2FirstName || !formData.g2Phone) {
+    if (!formData.g1FirstName || !formData.g1Phone || !formData.g2FirstName || !formData.g2Phone || !formData.g1Relationship || !formData.g2Relationship) {
       return setErrorMsg("Please complete basic details for BOTH Guarantors.");
     }
+    if (formData.g1Relationship === "Others" && !formData.g1RelationshipOther) return setErrorMsg("Please specify the relationship for Guarantor 1.");
+    if (formData.g2Relationship === "Others" && !formData.g2RelationshipOther) return setErrorMsg("Please specify the relationship for Guarantor 2.");
 
     setIsSubmitting(true);
     try {
+      // Map "Others" data into the main payload before sending
+      const payload = {
+        ...formData,
+        preferredAssetClass: formData.preferredAssetClass === "Others" ? formData.preferredAssetClassOther : formData.preferredAssetClass,
+        g1Relationship: formData.g1Relationship === "Others" ? formData.g1RelationshipOther : formData.g1Relationship,
+        g2Relationship: formData.g2Relationship === "Others" ? formData.g2RelationshipOther : formData.g2Relationship,
+      };
+
       const res = await fetch("/api/rider/auth/register", {
         method: "POST", 
         headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
+      
+      scrollToTop();
       setSuccess(true);
     } catch (err: any) { 
       setErrorMsg(err.message); 
+      scrollToTop();
     } finally { 
       setIsSubmitting(false); 
     }
@@ -177,7 +202,7 @@ export default function RiderRegistration() {
   return (
     <main className="min-h-screen bg-void-navy flex flex-col lg:flex-row text-crisp-white">
       
-      {/* LEFT SIDE: Branding */}
+      {/* LEFT SIDE: Branding & Desktop Timeline */}
       <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-cobalt/20 p-5 sm:p-10 lg:p-12 flex flex-col justify-between">
         <div>
           <Link href="/" className="text-xl sm:text-3xl font-black tracking-wider hover:opacity-80 transition block mb-4 lg:mb-12">YUSDAAM<span className="text-signal-red">.</span></Link>
@@ -194,16 +219,26 @@ export default function RiderRegistration() {
       </div>
 
       {/* RIGHT SIDE: Form */}
-      <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-8 lg:p-16 overflow-y-auto">
-        <div className="max-w-2xl w-full">
+      <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-8 lg:p-16 overflow-y-auto relative">
+        {/* Invisible div to scroll to */}
+        <div ref={topRef} className="absolute top-0 left-0 w-full h-1" />
+
+        <div className="max-w-2xl w-full pt-4 sm:pt-0">
           
+          {/* Mobile Progress Bar (Hidden on Desktop) */}
+          <div className="sm:hidden flex items-center justify-between mb-8 px-1">
+            {[1, 2, 3, 4].map(s => (
+              <div key={s} className={`h-1.5 flex-1 mx-1 rounded-full ${step >= s ? 'bg-signal-red shadow-[0_0_8px_rgba(233,69,96,0.6)]' : 'bg-void-light/10'}`} />
+            ))}
+          </div>
+
           <div className="mb-6 sm:mb-12 border-b border-cobalt/20 pb-4 sm:pb-8">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase mb-2">Rider Application</h1>
             <p className="text-xs sm:text-base text-slate-light">Complete your KYC to access commercial fleet assignments.</p>
           </div>
 
           {errorMsg && (
-            <div className="bg-signal-red/10 border border-signal-red text-signal-red px-4 py-3 rounded-lg mb-8 text-sm font-medium flex gap-2 items-start">
+            <div className="bg-signal-red/10 border border-signal-red text-signal-red px-4 py-3 rounded-lg mb-8 text-sm font-medium flex gap-2 items-start animate-in fade-in slide-in-from-top-2">
               <XCircle size={18} className="shrink-0 mt-0.5" /> <p>{errorMsg}</p>
             </div>
           )}
@@ -272,8 +307,10 @@ export default function RiderRegistration() {
                   <div>
                     <label className={labelStyle}>Confirm Password *</label>
                     <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleTextChange} className={`${inputStyle} ${!isPasswordMatch && formData.confirmPassword.length > 0 ? 'border-signal-red/60 focus:ring-signal-red/40' : ''}`} required />
+                    
+                    {/* Password Match Error positioned below the input */}
                     {!isPasswordMatch && formData.confirmPassword.length > 0 && (
-                      <p className="text-[10px] text-signal-red mt-2 font-bold uppercase tracking-wider flex items-center gap-1.5"><XCircle size={12}/> Passwords do not match</p>
+                      <p className="text-[10px] text-signal-red mt-2 font-bold uppercase tracking-wider flex items-center gap-1.5 animate-in slide-in-from-top-1"><XCircle size={12}/> Passwords do not match</p>
                     )}
                   </div>
                 </div>
@@ -293,10 +330,7 @@ export default function RiderRegistration() {
                   </div>
                   <div>
                     <label className={labelStyle}>Local Government Area *</label>
-                    <select name="lga" value={formData.lga} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required disabled={!selectedStateCode}>
-                      <option value="" className="bg-void-navy text-slate-light">{selectedStateCode ? "Select LGA..." : "Select State First"}</option>
-                      {availableLgas.map(c => <option key={c.name} value={c.name} className="bg-void-navy text-crisp-white">{c.name}</option>)}
-                    </select>
+                    <input type="text" name="lga" value={formData.lga} onChange={handleTextChange} className={inputStyle} placeholder="e.g. Ikeja, Alimosho" required />
                   </div>
                 </div>
 
@@ -348,17 +382,39 @@ export default function RiderRegistration() {
                       <option value="CAR_UBER" className="bg-void-navy text-crisp-white">Uber/Bolt Sedan</option>
                       <option value="MINIBUS_KOROPE" className="bg-void-navy text-crisp-white">Mini-Bus (Korope)</option>
                       <option value="TIPPER" className="bg-void-navy text-crisp-white">Tipper Truck</option>
+                      <option value="Others" className="bg-void-navy text-crisp-white">Others (Specify)</option>
                     </select>
                   </div>
-                  <div>
-                    <label className={labelStyle}>Commercial Experience *</label>
-                    <select name="drivingExperienceYears" value={formData.drivingExperienceYears} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
-                      <option value="" className="bg-void-navy">Select...</option>
-                      <option value="0-2 Years" className="bg-void-navy text-crisp-white">0 - 2 Years</option>
-                      <option value="3-5 Years" className="bg-void-navy text-crisp-white">3 - 5 Years</option>
-                      <option value="5+ Years" className="bg-void-navy text-crisp-white">5+ Years</option>
-                    </select>
-                  </div>
+
+                  {formData.preferredAssetClass === "Others" ? (
+                    <div className="animate-in slide-in-from-top-2 duration-300">
+                      <label className={labelStyle}>Specify Asset *</label>
+                      <input type="text" name="preferredAssetClassOther" value={formData.preferredAssetClassOther} onChange={handleTextChange} className={inputStyle} placeholder="e.g. Delivery Van" required />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className={labelStyle}>Commercial Experience *</label>
+                      <select name="drivingExperienceYears" value={formData.drivingExperienceYears} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
+                        <option value="" className="bg-void-navy">Select...</option>
+                        <option value="0-2 Years" className="bg-void-navy text-crisp-white">0 - 2 Years</option>
+                        <option value="3-5 Years" className="bg-void-navy text-crisp-white">3 - 5 Years</option>
+                        <option value="5+ Years" className="bg-void-navy text-crisp-white">5+ Years</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* If 'Others' took up the slot, shift Experience down */}
+                  {formData.preferredAssetClass === "Others" && (
+                    <div className="sm:col-span-2">
+                      <label className={labelStyle}>Commercial Experience *</label>
+                      <select name="drivingExperienceYears" value={formData.drivingExperienceYears} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
+                        <option value="" className="bg-void-navy">Select...</option>
+                        <option value="0-2 Years" className="bg-void-navy text-crisp-white">0 - 2 Years</option>
+                        <option value="3-5 Years" className="bg-void-navy text-crisp-white">3 - 5 Years</option>
+                        <option value="5+ Years" className="bg-void-navy text-crisp-white">5+ Years</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-cobalt/20">
@@ -391,12 +447,12 @@ export default function RiderRegistration() {
                 </div>
 
                 {/* Guarantor 1 */}
-                <div className="p-5 border border-cobalt/30 rounded-xl bg-void-navy/50">
-                  <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-4 border-b border-cobalt/20 pb-2">Primary Guarantor</h4>
+                <div className="p-5 border border-cobalt/30 rounded-xl bg-void-navy/50 space-y-4">
+                  <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest border-b border-cobalt/20 pb-2">Primary Guarantor</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className={labelStyle}>First Name *</label><input type="text" name="g1FirstName" value={formData.g1FirstName} onChange={handleTextChange} className={inputStyle} required /></div>
                     <div><label className={labelStyle}>Last Name *</label><input type="text" name="g1LastName" value={formData.g1LastName} onChange={handleTextChange} className={inputStyle} required /></div>
-                    <div><label className={labelStyle}>Phone Number *</label><input type="text" inputMode="numeric" name="g1Phone" value={formData.g1Phone} onChange={(e) => handleNumberOnlyChange(e, 11)} className={inputStyle} required /></div>
+                    <div><label className={labelStyle}>Phone Number *</label><input type="text" inputMode="numeric" name="g1Phone" value={formData.g1Phone} onChange={(e) => handleNumberOnlyChange(e, 11)} placeholder="080..." className={inputStyle} required /></div>
                     <div>
                       <label className={labelStyle}>Relationship *</label>
                       <select name="g1Relationship" value={formData.g1Relationship} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
@@ -406,18 +462,25 @@ export default function RiderRegistration() {
                         <option value="Spouse" className="bg-void-navy text-crisp-white">Spouse</option>
                         <option value="Uncle/Aunt" className="bg-void-navy text-crisp-white">Uncle / Aunt</option>
                         <option value="Community Leader" className="bg-void-navy text-crisp-white">Community/Religious Leader</option>
+                        <option value="Others" className="bg-void-navy text-crisp-white">Others (Specify)</option>
                       </select>
                     </div>
+                    {formData.g1Relationship === "Others" && (
+                      <div className="sm:col-span-2 animate-in slide-in-from-top-2 duration-300">
+                        <label className={labelStyle}>Specify Relationship *</label>
+                        <input type="text" name="g1RelationshipOther" value={formData.g1RelationshipOther} onChange={handleTextChange} className={inputStyle} placeholder="e.g. Mentor, Cousin" required />
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Guarantor 2 */}
-                <div className="p-5 border border-cobalt/30 rounded-xl bg-void-navy/50">
-                  <h4 className="text-xs font-bold text-cobalt uppercase tracking-widest mb-4 border-b border-cobalt/20 pb-2">Secondary Guarantor</h4>
+                <div className="p-5 border border-cobalt/30 rounded-xl bg-void-navy/50 space-y-4">
+                  <h4 className="text-xs font-bold text-cobalt uppercase tracking-widest border-b border-cobalt/20 pb-2">Secondary Guarantor</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className={labelStyle}>First Name *</label><input type="text" name="g2FirstName" value={formData.g2FirstName} onChange={handleTextChange} className={inputStyle} required /></div>
                     <div><label className={labelStyle}>Last Name *</label><input type="text" name="g2LastName" value={formData.g2LastName} onChange={handleTextChange} className={inputStyle} required /></div>
-                    <div><label className={labelStyle}>Phone Number *</label><input type="text" inputMode="numeric" name="g2Phone" value={formData.g2Phone} onChange={(e) => handleNumberOnlyChange(e, 11)} className={inputStyle} required /></div>
+                    <div><label className={labelStyle}>Phone Number *</label><input type="text" inputMode="numeric" name="g2Phone" value={formData.g2Phone} onChange={(e) => handleNumberOnlyChange(e, 11)} placeholder="080..." className={inputStyle} required /></div>
                     <div>
                       <label className={labelStyle}>Relationship *</label>
                       <select name="g2Relationship" value={formData.g2Relationship} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
@@ -427,8 +490,15 @@ export default function RiderRegistration() {
                         <option value="Spouse" className="bg-void-navy text-crisp-white">Spouse</option>
                         <option value="Uncle/Aunt" className="bg-void-navy text-crisp-white">Uncle / Aunt</option>
                         <option value="Community Leader" className="bg-void-navy text-crisp-white">Community/Religious Leader</option>
+                        <option value="Others" className="bg-void-navy text-crisp-white">Others (Specify)</option>
                       </select>
                     </div>
+                    {formData.g2Relationship === "Others" && (
+                      <div className="sm:col-span-2 animate-in slide-in-from-top-2 duration-300">
+                        <label className={labelStyle}>Specify Relationship *</label>
+                        <input type="text" name="g2RelationshipOther" value={formData.g2RelationshipOther} onChange={handleTextChange} className={inputStyle} placeholder="e.g. Mentor, Cousin" required />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
