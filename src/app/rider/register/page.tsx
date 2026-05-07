@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X, Eye, EyeOff, UploadCloud, HelpCircle } from "lucide-react";
-import { Country, State } from "country-state-city";
-import { CldUploadWidget } from "next-cloudinary";
+import { Country, State, City } from "country-state-city";
 
 const Tooltip = ({ text }: { text: string }) => (
   <div className="group relative inline-flex ml-2 cursor-help">
@@ -18,7 +16,6 @@ const Tooltip = ({ text }: { text: string }) => (
 );
 
 export default function RiderRegistration() {
-  const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -27,18 +24,29 @@ export default function RiderRegistration() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const passportRef = useRef<HTMLInputElement>(null);
+  const utilityRef = useRef<HTMLInputElement>(null);
+  const licenseRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", password: "", confirmPassword: "",
-    phoneCountryCode: "+234", phoneNumber: "", nin: "", bvn: "", passportUrl: "",
+    phoneCountryCode: "+234", phoneNumber: "", nin: "", bvn: "", 
     
-    countryIso: "NG", countryName: "Nigeria", state: "", streetAddress: "", utilityBillUrl: "",
-    driversLicenseNo: "", lasdriNo: "", driversLicenseUrl: "",
+    // File Base64 & Names
+    passportBase64: "", passportName: "",
+    utilityBillBase64: "", utilityBillName: "",
+    driversLicenseBase64: "", driversLicenseName: "",
+    
+    countryIso: "NG", countryName: "Nigeria", state: "", lga: "", streetAddress: "", 
+    driversLicenseNo: "", lasdriNo: "", 
     
     preferredAssetClass: "", drivingExperienceYears: "", rideHailingActive: "false", previousHPExperience: "false",
     
     g1FirstName: "", g1LastName: "", g1Phone: "", g1Relationship: "",
     g2FirstName: "", g2LastName: "", g2Phone: "", g2Relationship: ""
   });
+
+  const [selectedStateCode, setSelectedStateCode] = useState("");
 
   // Prevent iOS Safari auto-zoom on input focus
   useEffect(() => {
@@ -51,6 +59,7 @@ export default function RiderRegistration() {
 
   const countries = useMemo(() => Country.getAllCountries(), []);
   const availableStates = useMemo(() => State.getStatesOfCountry(formData.countryIso), [formData.countryIso]);
+  const availableLgas = useMemo(() => City.getCitiesOfState(formData.countryIso, selectedStateCode), [formData.countryIso, selectedStateCode]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -61,10 +70,29 @@ export default function RiderRegistration() {
     setFormData({ ...formData, [e.target.name]: numericValue });
   };
 
-  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedIso = e.target.value;
-    const countryData = Country.getCountryByCode(selectedIso);
-    setFormData({ ...formData, countryIso: selectedIso, countryName: countryData?.name || "", phoneCountryCode: `+${countryData?.phonecode || ""}`, state: "" });
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedStateName = e.target.value;
+    const stateObj = availableStates.find(s => s.name === selectedStateName);
+    setFormData({ ...formData, state: selectedStateName, lga: "" });
+    setSelectedStateCode(stateObj?.isoCode || "");
+  };
+
+  const handleFileConvert = (e: React.ChangeEvent<HTMLInputElement>, fieldPrefix: string) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        // Strip the data:image/jpeg;base64, prefix for the backend
+        const base64Data = base64String.split(',')[1]; 
+        setFormData(prev => ({
+          ...prev, 
+          [`${fieldPrefix}Base64`]: base64Data,
+          [`${fieldPrefix}Name`]: file.name
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const passwordCriteria = [
@@ -74,6 +102,7 @@ export default function RiderRegistration() {
     { label: "Number", met: /[0-9]/.test(formData.password) }
   ];
   const passScore = passwordCriteria.filter(c => c.met).length;
+  const isPasswordMatch = formData.password === formData.confirmPassword;
 
   const nextStep = () => {
     setErrorMsg("");
@@ -82,14 +111,14 @@ export default function RiderRegistration() {
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.nin || !formData.bvn || !formData.phoneNumber) return setErrorMsg("Please fill all required identity fields.");
       if (formData.nin.length !== 11) return setErrorMsg("NIN must be exactly 11 digits.");
       if (formData.bvn.length !== 11) return setErrorMsg("BVN must be exactly 11 digits.");
-      if (!formData.passportUrl) return setErrorMsg("You must upload a clear Passport Photograph.");
+      if (!formData.passportBase64) return setErrorMsg("You must upload a clear Passport Photograph.");
       if (passScore < 4) return setErrorMsg("Password does not meet security requirements.");
-      if (formData.password !== formData.confirmPassword) return setErrorMsg("Passwords do not match.");
+      if (!isPasswordMatch) return setErrorMsg("Passwords do not match.");
     }
     if (step === 2) {
-      if (!formData.state || !formData.streetAddress) return setErrorMsg("Please complete your address details.");
-      if (!formData.utilityBillUrl) return setErrorMsg("You must upload a valid Utility Bill.");
-      if (!formData.driversLicenseNo || !formData.driversLicenseUrl) return setErrorMsg("Driver's License details and upload are mandatory.");
+      if (!formData.state || !formData.lga || !formData.streetAddress) return setErrorMsg("Please complete your address and LGA details.");
+      if (!formData.utilityBillBase64) return setErrorMsg("You must upload a valid Utility Bill.");
+      if (!formData.driversLicenseNo || !formData.driversLicenseBase64) return setErrorMsg("Driver's License details and upload are mandatory.");
     }
     if (step === 3) {
       if (!formData.preferredAssetClass || !formData.drivingExperienceYears) return setErrorMsg("Please select your operational preferences.");
@@ -204,23 +233,21 @@ export default function RiderRegistration() {
                   <div><label className={labelStyle}>Email Address *</label><input type="email" name="email" value={formData.email} onChange={handleTextChange} className={inputStyle} required /></div>
                   <div className="flex gap-2">
                     <div className="w-1/3"><label className={labelStyle}>Code</label><input type="text" value={formData.phoneCountryCode} readOnly className={`${inputStyle} !bg-void-navy/50 text-slate-light/60 cursor-not-allowed`} /></div>
-                    <div className="w-2/3"><label className={labelStyle}>WhatsApp No. *</label><input type="text" inputMode="numeric" name="phoneNumber" value={formData.phoneNumber} onChange={(e) => handleNumberOnlyChange(e, 15)} className={inputStyle} required /></div>
+                    <div className="w-2/3"><label className={labelStyle}>Phone Number *</label><input type="text" inputMode="numeric" name="phoneNumber" value={formData.phoneNumber} onChange={(e) => handleNumberOnlyChange(e, 11)} placeholder="080..." className={inputStyle} required /></div>
                   </div>
                 </div>
 
+                {/* NATIVE FILE UPLOAD: Passport */}
                 <div>
                   <label className={labelStyle}>Passport Photograph * <Tooltip text="A clear, recent photograph of your face for your driver profile." /></label>
-                  <CldUploadWidget uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET} onSuccess={(r: any) => setFormData({ ...formData, passportUrl: r.info.secure_url })}>
-                    {({ open }) => (
-                      <div onClick={() => open()} className={`w-full h-24 sm:h-32 border-2 ${formData.passportUrl ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
-                        {formData.passportUrl ? (
-                          <><CheckCircle2 size={32} className="mb-2 text-emerald-400" /><span className="text-xs font-bold uppercase tracking-widest text-emerald-400">Passport Attached</span></>
-                        ) : (
-                          <><UploadCloud size={32} className="mb-2 text-cobalt" /><span className="text-xs font-bold uppercase tracking-widest text-slate-light">Click to upload image</span></>
-                        )}
-                      </div>
+                  <input type="file" accept="image/*" className="hidden" ref={passportRef} onChange={(e) => handleFileConvert(e, "passport")} />
+                  <div onClick={() => passportRef.current?.click()} className={`w-full h-24 sm:h-32 border-2 ${formData.passportBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
+                    {formData.passportBase64 ? (
+                      <><CheckCircle2 size={32} className="mb-2 text-emerald-400" /><span className="text-xs font-bold uppercase tracking-widest text-emerald-400 truncate max-w-[80%]">{formData.passportName || "Attached"}</span></>
+                    ) : (
+                      <><UploadCloud size={32} className="mb-2 text-cobalt" /><span className="text-xs font-bold uppercase tracking-widest text-slate-light">Click to upload image</span></>
                     )}
-                  </CldUploadWidget>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-cobalt/20">
@@ -244,7 +271,10 @@ export default function RiderRegistration() {
                   </div>
                   <div>
                     <label className={labelStyle}>Confirm Password *</label>
-                    <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleTextChange} className={inputStyle} required />
+                    <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleTextChange} className={`${inputStyle} ${!isPasswordMatch && formData.confirmPassword.length > 0 ? 'border-signal-red/60 focus:ring-signal-red/40' : ''}`} required />
+                    {!isPasswordMatch && formData.confirmPassword.length > 0 && (
+                      <p className="text-[10px] text-signal-red mt-2 font-bold uppercase tracking-wider flex items-center gap-1.5"><XCircle size={12}/> Passwords do not match</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -256,15 +286,23 @@ export default function RiderRegistration() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className={labelStyle}>State of Residence *</label>
-                    <select name="state" value={formData.state} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required>
+                    <select name="state" value={formData.state} onChange={handleStateChange} className={`${inputStyle} appearance-none cursor-pointer`} required>
                       <option value="" className="bg-void-navy text-slate-light">Select State...</option>
                       {availableStates.map(s => <option key={s.isoCode} value={s.name} className="bg-void-navy text-crisp-white">{s.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className={labelStyle}>Full Street Address *</label>
-                    <input type="text" name="streetAddress" value={formData.streetAddress} onChange={handleTextChange} className={inputStyle} placeholder="Unit, House No, Street" required />
+                    <label className={labelStyle}>Local Government Area *</label>
+                    <select name="lga" value={formData.lga} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required disabled={!selectedStateCode}>
+                      <option value="" className="bg-void-navy text-slate-light">{selectedStateCode ? "Select LGA..." : "Select State First"}</option>
+                      {availableLgas.map(c => <option key={c.name} value={c.name} className="bg-void-navy text-crisp-white">{c.name}</option>)}
+                    </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className={labelStyle}>Full Street Address *</label>
+                  <input type="text" name="streetAddress" value={formData.streetAddress} onChange={handleTextChange} className={inputStyle} placeholder="Unit, House No, Street" required />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-cobalt/20">
@@ -278,26 +316,21 @@ export default function RiderRegistration() {
                   </div>
                 </div>
 
+                {/* NATIVE FILE UPLOADS: License & Utility */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className={labelStyle}>Driver's License Upload *</label>
-                    <CldUploadWidget uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET} onSuccess={(r: any) => setFormData({ ...formData, driversLicenseUrl: r.info.secure_url })}>
-                      {({ open }) => (
-                        <div onClick={() => open()} className={`w-full h-24 border-2 ${formData.driversLicenseUrl ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
-                          {formData.driversLicenseUrl ? <span className="text-xs font-bold text-emerald-400">License Attached</span> : <span className="text-xs font-bold text-slate-light">Upload License</span>}
-                        </div>
-                      )}
-                    </CldUploadWidget>
+                    <label className={labelStyle}>License Upload *</label>
+                    <input type="file" accept="image/*,application/pdf" className="hidden" ref={licenseRef} onChange={(e) => handleFileConvert(e, "driversLicense")} />
+                    <div onClick={() => licenseRef.current?.click()} className={`w-full h-24 border-2 ${formData.driversLicenseBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
+                      {formData.driversLicenseBase64 ? <span className="text-xs font-bold text-emerald-400 truncate px-4">{formData.driversLicenseName}</span> : <span className="text-xs font-bold text-slate-light">Upload License</span>}
+                    </div>
                   </div>
                   <div>
                     <label className={labelStyle}>Utility Bill Upload *</label>
-                    <CldUploadWidget uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET} onSuccess={(r: any) => setFormData({ ...formData, utilityBillUrl: r.info.secure_url })}>
-                      {({ open }) => (
-                        <div onClick={() => open()} className={`w-full h-24 border-2 ${formData.utilityBillUrl ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
-                          {formData.utilityBillUrl ? <span className="text-xs font-bold text-emerald-400">Bill Attached</span> : <span className="text-xs font-bold text-slate-light">Upload Bill</span>}
-                        </div>
-                      )}
-                    </CldUploadWidget>
+                    <input type="file" accept="image/*,application/pdf" className="hidden" ref={utilityRef} onChange={(e) => handleFileConvert(e, "utilityBill")} />
+                    <div onClick={() => utilityRef.current?.click()} className={`w-full h-24 border-2 ${formData.utilityBillBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
+                      {formData.utilityBillBase64 ? <span className="text-xs font-bold text-emerald-400 truncate px-4">{formData.utilityBillName}</span> : <span className="text-xs font-bold text-slate-light">Upload Bill</span>}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -363,7 +396,7 @@ export default function RiderRegistration() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className={labelStyle}>First Name *</label><input type="text" name="g1FirstName" value={formData.g1FirstName} onChange={handleTextChange} className={inputStyle} required /></div>
                     <div><label className={labelStyle}>Last Name *</label><input type="text" name="g1LastName" value={formData.g1LastName} onChange={handleTextChange} className={inputStyle} required /></div>
-                    <div><label className={labelStyle}>Phone Number *</label><input type="text" inputMode="numeric" name="g1Phone" value={formData.g1Phone} onChange={(e) => handleNumberOnlyChange(e, 15)} className={inputStyle} required /></div>
+                    <div><label className={labelStyle}>Phone Number *</label><input type="text" inputMode="numeric" name="g1Phone" value={formData.g1Phone} onChange={(e) => handleNumberOnlyChange(e, 11)} className={inputStyle} required /></div>
                     <div>
                       <label className={labelStyle}>Relationship *</label>
                       <select name="g1Relationship" value={formData.g1Relationship} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
@@ -384,7 +417,7 @@ export default function RiderRegistration() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className={labelStyle}>First Name *</label><input type="text" name="g2FirstName" value={formData.g2FirstName} onChange={handleTextChange} className={inputStyle} required /></div>
                     <div><label className={labelStyle}>Last Name *</label><input type="text" name="g2LastName" value={formData.g2LastName} onChange={handleTextChange} className={inputStyle} required /></div>
-                    <div><label className={labelStyle}>Phone Number *</label><input type="text" inputMode="numeric" name="g2Phone" value={formData.g2Phone} onChange={(e) => handleNumberOnlyChange(e, 15)} className={inputStyle} required /></div>
+                    <div><label className={labelStyle}>Phone Number *</label><input type="text" inputMode="numeric" name="g2Phone" value={formData.g2Phone} onChange={(e) => handleNumberOnlyChange(e, 11)} className={inputStyle} required /></div>
                     <div>
                       <label className={labelStyle}>Relationship *</label>
                       <select name="g2Relationship" value={formData.g2Relationship} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
