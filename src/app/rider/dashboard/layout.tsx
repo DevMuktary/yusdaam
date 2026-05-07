@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { signOut, useSession, SessionProvider } from "next-auth/react";
 import { 
   LayoutDashboard, 
   WalletCards, 
@@ -16,7 +16,8 @@ import {
   User as UserIcon
 } from "lucide-react";
 
-export default function RiderDashboardLayout({ children }: { children: React.ReactNode }) {
+// 1. We extract the layout UI into an internal component so it can consume the session
+function RiderDashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -115,5 +116,14 @@ export default function RiderDashboardLayout({ children }: { children: React.Rea
       </main>
 
     </div>
+  );
+}
+
+// 2. We wrap it in the SessionProvider before exporting
+export default function RiderDashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <RiderDashboardContent>{children}</RiderDashboardContent>
+    </SessionProvider>
   );
 }
