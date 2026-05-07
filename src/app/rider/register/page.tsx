@@ -3,10 +3,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X, Eye, EyeOff, UploadCloud, HelpCircle } from "lucide-react";
+import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X, Eye, EyeOff, UploadCloud, HelpCircle, Copy } from "lucide-react";
 import { Country, State } from "country-state-city";
 
-// --- COMPLETE NIGERIAN LGA DIRECTORY ---
 const NIGERIA_LGAS: Record<string, string[]> = {
   "Abia": ["Aba North", "Aba South", "Arochukwu", "Bende", "Ikwuano", "Isiala Ngwa North", "Isiala Ngwa South", "Isuikwuato", "Obi Ngwa", "Ohafia", "Osisioma", "Ugwunagbo", "Ukwa East", "Ukwa West", "Umuahia North", "Umuahia South", "Umunneochi"],
   "Adamawa": ["Demsa", "Fufure", "Ganye", "Gayuk", "Gombi", "Grie", "Hong", "Jada", "Lamurde", "Madagali", "Maiha", "Mayo Belwa", "Michika", "Mubi North", "Mubi South", "Numan", "Shelleng", "Song", "Toungo", "Yola North", "Yola South"],
@@ -47,7 +46,6 @@ const NIGERIA_LGAS: Record<string, string[]> = {
   "Zamfara": ["Anka", "Bakura", "Birnin Magaji/Kiyaw", "Bukkuyum", "Bungudu", "Gummi", "Gusau", "Kaura Namoda", "Maradun", "Maru", "Shinkafi", "Talata Mafara", "Chafe", "Zurmi"]
 };
 
-// --- REUSABLE TOOLTIP COMPONENT ---
 const Tooltip = ({ text }: { text: string }) => (
   <div className="group relative inline-flex ml-2 cursor-help">
     <HelpCircle size={14} className="text-cobalt hover:text-signal-red transition-colors" />
@@ -66,6 +64,10 @@ export default function RiderRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [success, setSuccess] = useState(false);
+  
+  // State to hold generated URLs from the backend
+  const [guarantorLinks, setGuarantorLinks] = useState<{g1Name: string, g1Link: string, g2Name: string, g2Link: string} | null>(null);
+  const [copiedObj, setCopiedObj] = useState<number | null>(null);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -117,7 +119,6 @@ export default function RiderRegistration() {
 
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedStateName = e.target.value;
-    // Strip words like "State" to match the LGA dictionary
     const cleanStateName = selectedStateName.replace(" State", ""); 
     const lgas = NIGERIA_LGAS[cleanStateName] || NIGERIA_LGAS[selectedStateName] || [];
     
@@ -156,6 +157,12 @@ export default function RiderRegistration() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     topRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const copyToClipboard = (text: string, index: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedObj(index);
+    setTimeout(() => setCopiedObj(null), 2000);
   };
 
   const nextStep = () => {
@@ -215,6 +222,15 @@ export default function RiderRegistration() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
       
+      // Build the URLs based on the current domain
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      setGuarantorLinks({
+        g1Name: data.tokens.g1Name,
+        g1Link: `${baseUrl}/guarantor/${data.tokens.g1Token}`,
+        g2Name: data.tokens.g2Name,
+        g2Link: `${baseUrl}/guarantor/${data.tokens.g2Token}`,
+      });
+      
       scrollToTop();
       setSuccess(true);
     } catch (err: any) { 
@@ -225,24 +241,58 @@ export default function RiderRegistration() {
     }
   };
 
-  if (success) {
+  if (success && guarantorLinks) {
     return (
-      <main className="min-h-screen bg-void-navy flex items-center justify-center p-4 text-crisp-white">
-        <div className="max-w-lg w-full bg-void-light/5 border border-cobalt/30 p-12 rounded-2xl text-center shadow-2xl">
-          <ShieldCheck className="w-16 h-16 text-emerald-400 mx-auto mb-6" />
-          <h2 className="text-3xl font-black mb-4 uppercase tracking-wider">Profile Created</h2>
-          <p className="text-slate-light leading-relaxed mb-8">
-            Your foundational Rider profile is secure. However, your account is locked until both of your nominated guarantors fulfill their legal requirements. Log in to track their progress.
-          </p>
-          <Link href="/rider/login" className="inline-flex items-center justify-center px-8 py-4 bg-emerald-500 hover:bg-emerald-600 font-bold rounded-xl w-full text-sm uppercase tracking-wider transition">
-            Access Dashboard
+      <main className="min-h-screen bg-void-navy flex flex-col items-center justify-center p-4 sm:p-8 text-crisp-white">
+        <div className="max-w-xl w-full bg-void-light/5 border border-cobalt/30 p-8 sm:p-12 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-500">
+          <div className="text-center mb-8">
+            <ShieldCheck className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
+            <h2 className="text-2xl sm:text-3xl font-black mb-2 uppercase tracking-wider">Profile Locked</h2>
+            <p className="text-sm text-slate-light leading-relaxed">
+              Your foundational Rider profile is secure. To activate your account and proceed to fleet assignment, <strong className="text-crisp-white">you must send the links below to your nominated guarantors</strong> for them to complete their legal attestations.
+            </p>
+          </div>
+
+          <div className="space-y-4 mb-8">
+            {/* Guarantor 1 Link Box */}
+            <div className="bg-void-navy/80 border border-signal-red/30 p-5 rounded-xl flex items-center justify-between">
+              <div className="pr-4 overflow-hidden">
+                <p className="text-[10px] font-bold text-signal-red uppercase tracking-widest mb-1">Guarantor 1: {guarantorLinks.g1Name}</p>
+                <p className="text-sm text-slate-light font-mono truncate">{guarantorLinks.g1Link}</p>
+              </div>
+              <button 
+                onClick={() => copyToClipboard(guarantorLinks.g1Link, 1)} 
+                className="shrink-0 p-3 bg-void-light/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition"
+              >
+                {copiedObj === 1 ? <Check size={20} /> : <Copy size={20} />}
+              </button>
+            </div>
+
+            {/* Guarantor 2 Link Box */}
+            <div className="bg-void-navy/80 border border-signal-red/30 p-5 rounded-xl flex items-center justify-between">
+              <div className="pr-4 overflow-hidden">
+                <p className="text-[10px] font-bold text-signal-red uppercase tracking-widest mb-1">Guarantor 2: {guarantorLinks.g2Name}</p>
+                <p className="text-sm text-slate-light font-mono truncate">{guarantorLinks.g2Link}</p>
+              </div>
+              <button 
+                onClick={() => copyToClipboard(guarantorLinks.g2Link, 2)} 
+                className="shrink-0 p-3 bg-void-light/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition"
+              >
+                {copiedObj === 2 ? <Check size={20} /> : <Copy size={20} />}
+              </button>
+            </div>
+          </div>
+
+          <Link href="/rider/login" className="flex items-center justify-center gap-2 px-8 py-4 bg-signal-red hover:bg-signal-red/90 font-bold rounded-xl w-full text-sm uppercase tracking-wider transition">
+            Proceed to Login <ChevronRight size={16} />
           </Link>
         </div>
       </main>
     );
   }
 
-  const inputStyle = "w-full bg-void-light/5 border border-cobalt/30 rounded-lg px-4 py-3.5 text-base text-crisp-white focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/40 transition-all placeholder:text-slate-light/40";
+  // THE RESTORED RED GLOW INPUT STYLE
+  const inputStyle = "w-full bg-void-light/5 border border-signal-red/60 rounded-lg px-4 py-3.5 text-base text-crisp-white focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/40 transition-all placeholder:text-slate-light/40 shadow-[0_0_10px_rgba(233,69,96,0.05)]";
   const labelStyle = "flex items-center text-[10px] sm:text-xs font-bold text-slate-light/70 uppercase tracking-widest mb-1.5 sm:mb-2";
 
   return (
