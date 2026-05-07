@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, XCircle, Eye, EyeOff, SteeringWheel, ArrowRight } from "lucide-react";
+import { Loader2, XCircle, Eye, EyeOff, CarFront, ArrowRight } from "lucide-react";
 
 export default function RiderLogin() {
   const router = useRouter();
@@ -65,7 +65,8 @@ export default function RiderLogin() {
             YUSDAAM<span className="text-signal-red">.</span>
           </Link>
           <div className="hidden sm:block mt-12">
-            <SteeringWheel size={48} className="text-cobalt mb-6 opacity-50" />
+            {/* Swapped to CarFront here */}
+            <CarFront size={48} className="text-cobalt mb-6 opacity-50" />
             <h2 className="text-lg font-bold mb-2">Fleet Operations Portal</h2>
             <p className="text-xs text-slate-light leading-relaxed">
               Access your operations dashboard. Track your guarantor status, monitor your weekly remittance targets, and review your journey to asset ownership.
