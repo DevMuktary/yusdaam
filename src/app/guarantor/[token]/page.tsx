@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
-import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, UploadCloud, AlertTriangle, Scale } from "lucide-react";
+import { ChevronRight, ArrowLeft, Loader2, Scale, XCircle, UploadCloud } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 
 export default function GuarantorExecutionPage() {
@@ -16,12 +15,11 @@ export default function GuarantorExecutionPage() {
   const [guarantorData, setGuarantorData] = useState<any>(null);
   const [riderData, setRiderData] = useState<any>(null);
 
-  const [step, setStep] = useState(0); // 0 = Intro, 1 = Traceability, 2 = Capacity, 3 = The Trap
+  const [step, setStep] = useState(0); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Contract Checkboxes
   const [checkLiability, setCheckLiability] = useState(false);
   const [checkLawEnforcement, setCheckLawEnforcement] = useState(false);
   const [checkDigitalExecution, setCheckDigitalExecution] = useState(false);
@@ -30,13 +28,13 @@ export default function GuarantorExecutionPage() {
   const utilityRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
+    firstName: "", lastName: "",
     email: "", altPhone: "", nin: "", address: "", residentialStatus: "",
     employmentStatus: "", employerName: "", officeAddress: "",
     passportBase64: "", passportName: "",
     utilityBillBase64: "", utilityBillName: "",
   });
 
-  // Prevent iOS Safari auto-zoom
   useEffect(() => {
     const meta = document.createElement('meta');
     meta.name = 'viewport';
@@ -45,7 +43,6 @@ export default function GuarantorExecutionPage() {
     return () => { document.head.removeChild(meta); };
   }, []);
 
-  // Fetch initial link data
   useEffect(() => {
     const fetchLinkData = async () => {
       try {
@@ -55,6 +52,13 @@ export default function GuarantorExecutionPage() {
         
         setGuarantorData(data.guarantor);
         setRiderData(data.guarantor.rider);
+        
+        // Pre-fill the names the rider provided so they can confirm/edit them
+        setFormData(prev => ({
+          ...prev,
+          firstName: data.guarantor.firstName || "",
+          lastName: data.guarantor.lastName || ""
+        }));
       } catch (err: any) {
         setLoadError(err.message);
       } finally {
@@ -98,6 +102,7 @@ export default function GuarantorExecutionPage() {
   const nextStep = () => {
     setErrorMsg("");
     if (step === 1) {
+      if (!formData.firstName || !formData.lastName) return setErrorMsg("Please confirm your full legal name.");
       if (!formData.nin || !formData.address || !formData.residentialStatus) return setErrorMsg("Please complete all required traceability fields.");
       if (formData.nin.length !== 11) return setErrorMsg("NIN must be exactly 11 digits.");
       if (!formData.passportBase64 || !formData.utilityBillBase64) return setErrorMsg("Both Passport and Utility Bill uploads are required.");
@@ -128,7 +133,6 @@ export default function GuarantorExecutionPage() {
 
     setIsSubmitting(true);
     try {
-      // Extract signature without the prefix
       const signatureDataUrl = sigCanvas.current?.getTrimmedCanvas().toDataURL('image/png');
       const signatureBase64 = signatureDataUrl?.split(',')[1];
 
@@ -198,7 +202,6 @@ export default function GuarantorExecutionPage() {
 
         <div className="bg-void-navy border border-cobalt/30 rounded-2xl shadow-2xl overflow-hidden">
           
-          {/* Header Bar */}
           <div className="bg-void-dark/80 p-6 border-b border-cobalt/30 text-center">
             <h2 className="text-xl sm:text-2xl font-black uppercase tracking-wider mb-2">Deed of Guarantee</h2>
             <p className="text-sm text-slate-light">Nominated by <strong className="text-crisp-white">{riderData.firstName} {riderData.lastName}</strong></p>
@@ -239,6 +242,11 @@ export default function GuarantorExecutionPage() {
                 <div className="space-y-6 animate-in fade-in duration-500">
                   <h3 className="text-lg font-bold border-b border-cobalt/20 pb-2 mb-4 uppercase tracking-wider">Part 1: Personal Traceability</h3>
                   
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div><label className={labelStyle}>Confirm First Name *</label><input type="text" name="firstName" value={formData.firstName} onChange={handleTextChange} className={inputStyle} required /></div>
+                    <div><label className={labelStyle}>Confirm Last Name *</label><input type="text" name="lastName" value={formData.lastName} onChange={handleTextChange} className={inputStyle} required /></div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div><label className={labelStyle}>Email Address</label><input type="email" name="email" value={formData.email} onChange={handleTextChange} className={inputStyle} /></div>
                     <div><label className={labelStyle}>Alternate Phone No.</label><input type="text" inputMode="numeric" name="altPhone" value={formData.altPhone} onChange={(e) => handleNumberOnlyChange(e, 11)} className={inputStyle} placeholder="Optional" /></div>
@@ -329,7 +337,7 @@ export default function GuarantorExecutionPage() {
                       <input type="checkbox" checked={checkLiability} onChange={(e) => setCheckLiability(e.target.checked)} className="mt-1 w-5 h-5 accent-signal-red" />
                       <div className="text-sm text-slate-light leading-relaxed">
                         <strong className="text-crisp-white block mb-1">Unconditional Assumption of Liability</strong>
-                        I acknowledge that the aforementioned rider is being entrusted with a commercial transport asset by YUSDAAM Autos. I hereby unconditionally accept primary financial and legal responsibility. Should the rider abscond, commit theft, cause malicious damage, or default, I agree to indemnify YUSDAAM Autos and be held fully liable for the outstanding Total Hire Purchase Price.
+                        I, <strong>{formData.firstName} {formData.lastName}</strong>, acknowledge that the aforementioned rider is being entrusted with a commercial transport asset by YUSDAAM Autos. I hereby unconditionally accept primary financial and legal responsibility. Should the rider abscond, commit theft, cause malicious damage, or default, I agree to indemnify YUSDAAM Autos and be held fully liable for the outstanding Total Hire Purchase Price.
                       </div>
                     </label>
 
@@ -337,7 +345,7 @@ export default function GuarantorExecutionPage() {
                       <input type="checkbox" checked={checkLawEnforcement} onChange={(e) => setCheckLawEnforcement(e.target.checked)} className="mt-1 w-5 h-5 accent-signal-red" />
                       <div className="text-sm text-slate-light leading-relaxed">
                         <strong className="text-crisp-white block mb-1">Law Enforcement & Credit Bureau Consent</strong>
-                        I explicitly authorize YUSDAAM Autos and its recovery agents to engage the Nigerian Police Force, the NFIU, and National Credit Bureaus to recover any financial losses directly from me, my accounts, or my estate should I fail to produce the rider or the asset upon demand.
+                        I, <strong>{formData.firstName} {formData.lastName}</strong>, explicitly authorize YUSDAAM Autos and its recovery agents to engage the Nigerian Police Force, the NFIU, and National Credit Bureaus to recover any financial losses directly from me, my accounts, or my estate should I fail to produce the rider or the asset upon demand.
                       </div>
                     </label>
 
@@ -345,7 +353,7 @@ export default function GuarantorExecutionPage() {
                       <input type="checkbox" checked={checkDigitalExecution} onChange={(e) => setCheckDigitalExecution(e.target.checked)} className="mt-1 w-5 h-5 accent-signal-red" />
                       <div className="text-sm text-slate-light leading-relaxed">
                         <strong className="text-signal-red uppercase tracking-widest block mb-1">Digital Execution Consent</strong>
-                        I fully understand and agree that by checking this box and affixing my digital signature below, I am legally executing this document. In accordance with the Nigerian Evidence Act 2011, I acknowledge that this electronic signature carries the exact same legal weight, validity, and binding authority as my physical, handwritten signature on a paper deed.
+                        I, <strong>{formData.firstName} {formData.lastName}</strong>, fully understand and agree that by checking this box and affixing my digital signature below, I am legally executing this document. In accordance with the Nigerian Evidence Act 2011, I acknowledge that this electronic signature carries the exact same legal weight, validity, and binding authority as my physical, handwritten signature on a paper deed.
                       </div>
                     </label>
                   </div>
