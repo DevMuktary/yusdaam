@@ -6,6 +6,48 @@ import { useRouter } from "next/navigation";
 import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X, Eye, EyeOff, UploadCloud, HelpCircle } from "lucide-react";
 import { Country, State } from "country-state-city";
 
+// --- COMPLETE NIGERIAN LGA DIRECTORY ---
+const NIGERIA_LGAS: Record<string, string[]> = {
+  "Abia": ["Aba North", "Aba South", "Arochukwu", "Bende", "Ikwuano", "Isiala Ngwa North", "Isiala Ngwa South", "Isuikwuato", "Obi Ngwa", "Ohafia", "Osisioma", "Ugwunagbo", "Ukwa East", "Ukwa West", "Umuahia North", "Umuahia South", "Umunneochi"],
+  "Adamawa": ["Demsa", "Fufure", "Ganye", "Gayuk", "Gombi", "Grie", "Hong", "Jada", "Lamurde", "Madagali", "Maiha", "Mayo Belwa", "Michika", "Mubi North", "Mubi South", "Numan", "Shelleng", "Song", "Toungo", "Yola North", "Yola South"],
+  "Akwa Ibom": ["Abak", "Eastern Obolo", "Eket", "Esit Eket", "Essien Udim", "Etim Ekpo", "Etinan", "Ibeno", "Ibesikpo Asutan", "Ibiono-Ibom", "Ika", "Ikono", "Ikot Abasi", "Ikot Ekpene", "Ini", "Itu", "Mbo", "Mkpat-Enin", "Nsit-Atai", "Nsit-Ibom", "Nsit-Ubium", "Obot Akara", "Okobo", "Onna", "Oron", "Oruk Anam", "Udung-Uko", "Ukanafun", "Uruan", "Urue-Offong/Oruko", "Uyo"],
+  "Anambra": ["Aguata", "Anambra East", "Anambra West", "Anaocha", "Awka North", "Awka South", "Ayamelum", "Dunukofia", "Ekwusigo", "Idemili North", "Idemili South", "Ihiala", "Njikoka", "Nnewi North", "Nnewi South", "Ogbaru", "Onitsha North", "Onitsha South", "Orumba North", "Orumba South", "Oyi"],
+  "Bauchi": ["Alkaleri", "Bauchi", "Bogoro", "Damban", "Darazo", "Dass", "Gamawa", "Ganjuwa", "Giade", "Itas/Gadau", "Jama'are", "Katagum", "Kirfi", "Misau", "Ningi", "Shira", "Tafawa Balewa", "Toro", "Warji", "Zaki"],
+  "Bayelsa": ["Brass", "Ekeremor", "Kolokuma/Opokuma", "Nembe", "Ogbia", "Sagbama", "Southern Ijaw", "Yenagoa"],
+  "Benue": ["Ado", "Agatu", "Apa", "Buruku", "Gboko", "Guma", "Gwer East", "Gwer West", "Katsina-Ala", "Konshisha", "Kwande", "Logo", "Makurdi", "Obi", "Ogbadibo", "Ohimini", "Oju", "Okpokwu", "Otukpo", "Tarka", "Ukum", "Ushongo", "Vandeikya"],
+  "Borno": ["Abadam", "Askira/Uba", "Bama", "Bayo", "Biu", "Chibok", "Damboa", "Dikwa", "Gubio", "Guzamala", "Gwoza", "Hawul", "Jere", "Kaga", "Kala/Balge", "Konduga", "Kukawa", "Kwaya Kusar", "Mafa", "Magumeri", "Maiduguri", "Marte", "Mobbar", "Monguno", "Ngala", "Nganzai", "Shani"],
+  "Cross River": ["Abi", "Akamkpa", "Akpabuyo", "Bakassi", "Bekwarra", "Biase", "Boki", "Calabar Municipal", "Calabar South", "Etung", "Ikom", "Obanliku", "Obubra", "Obudu", "Odukpani", "Ogoja", "Yakuur", "Yala"],
+  "Delta": ["Aniocha North", "Aniocha South", "Bomadi", "Burutu", "Ethiope East", "Ethiope West", "Ika North East", "Ika South", "Isoko North", "Isoko South", "Ndokwa East", "Ndokwa West", "Okpe", "Oshimili North", "Oshimili South", "Patani", "Sapele", "Udu", "Ughelli North", "Ughelli South", "Ukwuani", "Uvwie", "Warri North", "Warri South", "Warri South West"],
+  "Ebonyi": ["Abakaliki", "Afikpo North", "Afikpo South", "Ebonyi", "Ezza North", "Ezza South", "Ikwo", "Ishielu", "Ivo", "Izzi", "Ohaozara", "Ohaukwu", "Onicha"],
+  "Edo": ["Akoko-Edo", "Egor", "Esan Central", "Esan North-East", "Esan South-East", "Esan West", "Etsako Central", "Etsako East", "Etsako West", "Igueben", "Ikpoba Okha", "Orhionmwon", "Oredo", "Ovia North-East", "Ovia South-West", "Owan East", "Owan West", "Uhunmwonde"],
+  "Ekiti": ["Ado Ekiti", "Efon", "Ekiti East", "Ekiti South-West", "Ekiti West", "Emure", "Gbonyin", "Ido Osi", "Ijero", "Ikere", "Ikole", "Ilejemeje", "Irepodun/Ifelodun", "Ise/Orun", "Moba", "Oye"],
+  "Enugu": ["Aninri", "Awgu", "Enugu East", "Enugu North", "Enugu South", "Ezeagu", "Igbo Etiti", "Igbo Eze North", "Igbo Eze South", "Isi Uzo", "Nkanu East", "Nkanu West", "Nsukka", "Oji River", "Udenu", "Udi", "Uzo Uwani"],
+  "Federal Capital Territory": ["Abaji", "Bwari", "Gwagwalada", "Kuje", "Kwali", "Municipal Area Council"],
+  "Gombe": ["Akko", "Balanga", "Billiri", "Dukku", "Funakaye", "Gombe", "Kaltungo", "Kwami", "Nafada", "Shongom", "Yamaltu/Deba"],
+  "Imo": ["Aboh Mbaise", "Ahiazu Mbaise", "Ehime Mbano", "Ezinihitte", "Ideato North", "Ideato South", "Ihitte/Uboma", "Ikeduru", "Isiala Mbano", "Isu", "Mbaitoli", "Ngor Okpala", "Njaba", "Nkwerre", "Nwangele", "Obowo", "Oguta", "Ohaji/Egbema", "Okigwe", "Orlu", "Orsu", "Oru East", "Oru West", "Owerri Municipal", "Owerri North", "Owerri West", "Unuimo"],
+  "Jigawa": ["Auyo", "Babura", "Biriniwa", "Birnin Kudu", "Buji", "Dutse", "Gagarawa", "Garki", "Gumel", "Guri", "Gwaram", "Gwiwa", "Hadejia", "Jahun", "Kafin Hausa", "Kaugama", "Kazaure", "Kiri Kasama", "Kiyawa", "Kaugama", "Maigatari", "Malam Madori", "Miga", "Ringim", "Roni", "Sule Tankarkar", "Taura", "Yankwashi"],
+  "Kaduna": ["Birnin Gwari", "Chikun", "Giwa", "Igabi", "Ikara", "Jaba", "Jema'a", "Kachia", "Kaduna North", "Kaduna South", "Kagarko", "Kajuru", "Kaura", "Kauru", "Kubau", "Kudan", "Lere", "Makarfi", "Sabon Gari", "Sanga", "Soba", "Zangon Kataf", "Zaria"],
+  "Kano": ["Ajingi", "Albasu", "Bagwai", "Bebeji", "Bichi", "Bunkure", "Dala", "Dambatta", "Dawakin Kudu", "Dawakin Tofa", "Doguwa", "Fagge", "Gabasawa", "Garko", "Garun Mallam", "Gaya", "Gezawa", "Gwale", "Gwarzo", "Kabo", "Kano Municipal", "Karaye", "Kibiya", "Kiru", "Kumbotso", "Kunchi", "Kura", "Madobi", "Makoda", "Minjibir", "Nasarawa", "Rano", "Rimin Gado", "Rogo", "Shanono", "Sumaila", "Takai", "Tarauni", "Tofa", "Tsanyawa", "Tudun Wada", "Ungogo", "Warawa", "Wudil"],
+  "Katsina": ["Bakori", "Batagarawa", "Batsari", "Baure", "Bindawa", "Charanchi", "Dandume", "Danja", "Dan Musa", "Daura", "Dutsi", "Dutsin Ma", "Faskari", "Funtua", "Ingawa", "Jibia", "Kafur", "Kaita", "Kankara", "Kankia", "Katsina", "Kurfi", "Kusada", "Mai'Adua", "Malumfashi", "Mani", "Mashi", "Matazu", "Musawa", "Rimi", "Sabuwa", "Safana", "Sandamu", "Zango"],
+  "Kebbi": ["Aleiro", "Arewa Dandi", "Argungu", "Augie", "Bagudo", "Birnin Kebbi", "Bunza", "Dandi", "Fakai", "Gwandu", "Jega", "Kalgo", "Koko/Besse", "Maiyama", "Ngaski", "Sakaba", "Shanga", "Suru", "Wasagu/Danko", "Yauri", "Zuru"],
+  "Kogi": ["Adavi", "Ajaokuta", "Ankpa", "Bassa", "Dekina", "Ibaji", "Idah", "Igalamela Odolu", "Ijumu", "Kabba/Bunu", "Kogi", "Lokoja", "Mopa Muro", "Ofu", "Ogori/Magongo", "Okehi", "Okene", "Olamaboro", "Omala", "Yagba East", "Yagba West"],
+  "Kwara": ["Asa", "Baruten", "Edu", "Ekiti", "Ifelodun", "Ilorin East", "Ilorin South", "Ilorin West", "Irepodun", "Isin", "Kaiama", "Moro", "Offa", "Oke Ero", "Oyun", "Pategi"],
+  "Lagos": ["Agege", "Ajeromi-Ifelodun", "Alimosho", "Amuwo-Odofin", "Apapa", "Badagry", "Epe", "Eti Osa", "Ibeju-Lekki", "Ifako-Ijaiye", "Ikeja", "Ikorodu", "Kosofe", "Lagos Island", "Lagos Mainland", "Mushin", "Ojo", "Oshodi-Isolo", "Shomolu", "Surulere"],
+  "Nasarawa": ["Akwanga", "Awe", "Doma", "Karu", "Keana", "Keffi", "Kokona", "Lafia", "Nasarawa", "Nasarawa Egon", "Obi", "Toto", "Wamba"],
+  "Niger": ["Agaie", "Agwara", "Bida", "Borgu", "Bosso", "Chanchaga", "Edati", "Gbako", "Gurara", "Katcha", "Kontagora", "Lapai", "Lavun", "Magama", "Mariga", "Mashegu", "Mokwa", "Moya", "Paikoro", "Rafi", "Rijau", "Shiroro", "Suleja", "Tafa", "Wushishi"],
+  "Ogun": ["Abeokuta North", "Abeokuta South", "Ado-Odo/Ota", "Egbado North", "Egbado South", "Ewekoro", "Ifo", "Ijebu East", "Ijebu North", "Ijebu North East", "Ijebu Ode", "Ikenne", "Imeko Afon", "Ipokia", "Obafemi Owode", "Odeda", "Odogbolu", "Ogun Waterside", "Remo North", "Shagamu"],
+  "Ondo": ["Akoko North-East", "Akoko North-West", "Akoko South-East", "Akoko South-West", "Akure North", "Akure South", "Ese Odo", "Idanre", "Ifedore", "Ilaje", "Ile Oluji/Okeigbo", "Irele", "Odigbo", "Okitipupa", "Ondo East", "Ondo West", "Ose", "Owo"],
+  "Osun": ["Aiyedire", "Atakunmosa East", "Atakunmosa West", "Boluwaduro", "Boripe", "Ede North", "Ede South", "Egbedore", "Ejigbo", "Ife Central", "Ife East", "Ife North", "Ife South", "Ifedayo", "Ifelodun", "Ila", "Ilesa East", "Ilesa West", "Irepodun", "Irewole", "Isokan", "Iwo", "Obokun", "Odo Otin", "Ola Oluwa", "Olorunda", "Oriade", "Orolu", "Osogbo"],
+  "Oyo": ["Afijio", "Akinyele", "Atiba", "Atisbo", "Egbeda", "Ibadan North", "Ibadan North-East", "Ibadan North-West", "Ibadan South-East", "Ibadan South-West", "Ibarapa Central", "Ibarapa East", "Ibarapa North", "Ido", "Irepo", "Iseyin", "Itesiwaju", "Iwajowa", "Kajola", "Lagelu", "Ogbomosho North", "Ogbomosho South", "Ogo Oluwa", "Olorunsogo", "Oluyole", "Ona Ara", "Orelope", "Ori Ire", "Oyo", "Oyo East", "Saki East", "Saki West", "Surulere"],
+  "Plateau": ["Bokkos", "Barkin Ladi", "Bassa", "Jos East", "Jos North", "Jos South", "Kanam", "Kanke", "Langtang North", "Langtang South", "Mangu", "Mikang", "Pankshin", "Qua'an Pan", "Riyom", "Shendam", "Wase"],
+  "Rivers": ["Abua/Odual", "Ahoada East", "Ahoada West", "Akuku-Toru", "Andoni", "Asari-Toru", "Bonny", "Degema", "Eleme", "Emuoha", "Etche", "Gokana", "Ikwerre", "Khana", "Obio/Akpor", "Ogba/Egbema/Ndoni", "Ogu/Bolo", "Okrika", "Omuma", "Opobo/Nkoro", "Oyigbo", "Port Harcourt", "Tai"],
+  "Sokoto": ["Binji", "Bodinga", "Dange Shuni", "Gada", "Goronyo", "Gudu", "Gwadabawa", "Illela", "Isa", "Kebbe", "Kware", "Rabah", "Sabon Birni", "Shagari", "Silame", "Sokoto North", "Sokoto South", "Tambuwal", "Tangaza", "Tureta", "Wamako", "Wurno", "Yabo"],
+  "Taraba": ["Ardo Kola", "Bali", "Donga", "Gashaka", "Gassol", "Ibi", "Jalingo", "Karim Lamido", "Kumi", "Lau", "Sardauna", "Takum", "Ussa", "Wukari", "Yorro", "Zing"],
+  "Yobe": ["Bade", "Bursari", "Damaturu", "Fika", "Fune", "Geidam", "Gujba", "Gulani", "Jakusko", "Karasuwa", "Machina", "Nangere", "Nguru", "Potiskum", "Tarmuwa", "Yunusari", "Yusufari"],
+  "Zamfara": ["Anka", "Bakura", "Birnin Magaji/Kiyaw", "Bukkuyum", "Bungudu", "Gummi", "Gusau", "Kaura Namoda", "Maradun", "Maru", "Shinkafi", "Talata Mafara", "Chafe", "Zurmi"]
+};
+
+// --- REUSABLE TOOLTIP COMPONENT ---
 const Tooltip = ({ text }: { text: string }) => (
   <div className="group relative inline-flex ml-2 cursor-help">
     <HelpCircle size={14} className="text-cobalt hover:text-signal-red transition-colors" />
@@ -18,7 +60,7 @@ const Tooltip = ({ text }: { text: string }) => (
 
 export default function RiderRegistration() {
   const router = useRouter();
-  const topRef = useRef<HTMLDivElement>(null); // Used to auto-scroll to the top
+  const topRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,6 +93,8 @@ export default function RiderRegistration() {
     g2FirstName: "", g2LastName: "", g2Phone: "", g2Relationship: "", g2RelationshipOther: ""
   });
 
+  const [availableLgas, setAvailableLgas] = useState<string[]>([]);
+
   // Prevent iOS Safari auto-zoom on input focus
   useEffect(() => {
     const meta = document.createElement('meta');
@@ -60,8 +104,7 @@ export default function RiderRegistration() {
     return () => { document.head.removeChild(meta); };
   }, []);
 
-  const countries = useMemo(() => Country.getAllCountries(), []);
-  const availableStates = useMemo(() => State.getStatesOfCountry(formData.countryIso), [formData.countryIso]);
+  const availableStates = useMemo(() => State.getStatesOfCountry("NG"), []);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -74,7 +117,12 @@ export default function RiderRegistration() {
 
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedStateName = e.target.value;
-    setFormData({ ...formData, state: selectedStateName });
+    // Strip words like "State" to match the LGA dictionary
+    const cleanStateName = selectedStateName.replace(" State", ""); 
+    const lgas = NIGERIA_LGAS[cleanStateName] || NIGERIA_LGAS[selectedStateName] || [];
+    
+    setAvailableLgas(lgas);
+    setFormData({ ...formData, state: selectedStateName, lga: "" });
   };
 
   const handleFileConvert = (e: React.ChangeEvent<HTMLInputElement>, fieldPrefix: string) => {
@@ -103,7 +151,6 @@ export default function RiderRegistration() {
   const passScore = passwordCriteria.filter(c => c.met).length;
   const isPasswordMatch = formData.password === formData.confirmPassword;
 
-  // Auto-scroll function
   const scrollToTop = () => {
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -153,7 +200,6 @@ export default function RiderRegistration() {
 
     setIsSubmitting(true);
     try {
-      // Map "Others" data into the main payload before sending
       const payload = {
         ...formData,
         preferredAssetClass: formData.preferredAssetClass === "Others" ? formData.preferredAssetClassOther : formData.preferredAssetClass,
@@ -209,6 +255,7 @@ export default function RiderRegistration() {
           <div className="hidden sm:block space-y-10 border-l border-cobalt/20 ml-2">
             {[1, 2, 3, 4].map((s) => (
               <div key={s} className={`relative pl-8 transition-opacity duration-500 ${step === s ? 'opacity-100' : 'opacity-40'}`}>
+                {/* The Red Dot Timeline Indicator */}
                 <span className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${step === s ? 'bg-signal-red shadow-[0_0_10px_rgba(233,69,96,0.8)]' : 'bg-cobalt'}`} />
                 <div className="text-[10px] font-bold text-signal-red uppercase mb-1">Phase 0{s}</div>
                 <h3 className="font-bold text-sm">{s === 1 ? 'Core Identity' : s === 2 ? 'Licensing & Docs' : s === 3 ? 'Operations' : 'Guarantors'}</h3>
@@ -220,12 +267,10 @@ export default function RiderRegistration() {
 
       {/* RIGHT SIDE: Form */}
       <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-8 lg:p-16 overflow-y-auto relative">
-        {/* Invisible div to scroll to */}
         <div ref={topRef} className="absolute top-0 left-0 w-full h-1" />
 
         <div className="max-w-2xl w-full pt-4 sm:pt-0">
           
-          {/* Mobile Progress Bar (Hidden on Desktop) */}
           <div className="sm:hidden flex items-center justify-between mb-8 px-1">
             {[1, 2, 3, 4].map(s => (
               <div key={s} className={`h-1.5 flex-1 mx-1 rounded-full ${step >= s ? 'bg-signal-red shadow-[0_0_8px_rgba(233,69,96,0.6)]' : 'bg-void-light/10'}`} />
@@ -272,7 +317,6 @@ export default function RiderRegistration() {
                   </div>
                 </div>
 
-                {/* NATIVE FILE UPLOAD: Passport */}
                 <div>
                   <label className={labelStyle}>Passport Photograph * <Tooltip text="A clear, recent photograph of your face for your driver profile." /></label>
                   <input type="file" accept="image/*" className="hidden" ref={passportRef} onChange={(e) => handleFileConvert(e, "passport")} />
@@ -308,7 +352,6 @@ export default function RiderRegistration() {
                     <label className={labelStyle}>Confirm Password *</label>
                     <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleTextChange} className={`${inputStyle} ${!isPasswordMatch && formData.confirmPassword.length > 0 ? 'border-signal-red/60 focus:ring-signal-red/40' : ''}`} required />
                     
-                    {/* Password Match Error positioned below the input */}
                     {!isPasswordMatch && formData.confirmPassword.length > 0 && (
                       <p className="text-[10px] text-signal-red mt-2 font-bold uppercase tracking-wider flex items-center gap-1.5 animate-in slide-in-from-top-1"><XCircle size={12}/> Passwords do not match</p>
                     )}
@@ -330,7 +373,10 @@ export default function RiderRegistration() {
                   </div>
                   <div>
                     <label className={labelStyle}>Local Government Area *</label>
-                    <input type="text" name="lga" value={formData.lga} onChange={handleTextChange} className={inputStyle} placeholder="e.g. Ikeja, Alimosho" required />
+                    <select name="lga" value={formData.lga} onChange={handleTextChange} className={`${inputStyle} appearance-none cursor-pointer`} required disabled={availableLgas.length === 0}>
+                      <option value="" className="bg-void-navy text-slate-light">{availableLgas.length > 0 ? "Select LGA..." : "Select State First"}</option>
+                      {availableLgas.map(lga => <option key={lga} value={lga} className="bg-void-navy text-crisp-white">{lga}</option>)}
+                    </select>
                   </div>
                 </div>
 
@@ -350,17 +396,16 @@ export default function RiderRegistration() {
                   </div>
                 </div>
 
-                {/* NATIVE FILE UPLOADS: License & Utility */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className={labelStyle}>License Upload *</label>
+                    <label className={labelStyle}>License Upload * <Tooltip text="Upload a clear picture of your valid Driver's License." /></label>
                     <input type="file" accept="image/*,application/pdf" className="hidden" ref={licenseRef} onChange={(e) => handleFileConvert(e, "driversLicense")} />
                     <div onClick={() => licenseRef.current?.click()} className={`w-full h-24 border-2 ${formData.driversLicenseBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
                       {formData.driversLicenseBase64 ? <span className="text-xs font-bold text-emerald-400 truncate px-4">{formData.driversLicenseName}</span> : <span className="text-xs font-bold text-slate-light">Upload License</span>}
                     </div>
                   </div>
                   <div>
-                    <label className={labelStyle}>Utility Bill Upload *</label>
+                    <label className={labelStyle}>Utility Bill Upload * <Tooltip text="Must be a recent PHCN, LAWMA, or Water bill showing your address." /></label>
                     <input type="file" accept="image/*,application/pdf" className="hidden" ref={utilityRef} onChange={(e) => handleFileConvert(e, "utilityBill")} />
                     <div onClick={() => utilityRef.current?.click()} className={`w-full h-24 border-2 ${formData.utilityBillBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
                       {formData.utilityBillBase64 ? <span className="text-xs font-bold text-emerald-400 truncate px-4">{formData.utilityBillName}</span> : <span className="text-xs font-bold text-slate-light">Upload Bill</span>}
@@ -403,7 +448,6 @@ export default function RiderRegistration() {
                     </div>
                   )}
 
-                  {/* If 'Others' took up the slot, shift Experience down */}
                   {formData.preferredAssetClass === "Others" && (
                     <div className="sm:col-span-2">
                       <label className={labelStyle}>Commercial Experience *</label>
