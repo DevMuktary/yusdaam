@@ -2,8 +2,7 @@ import { getServerSession } from "next-auth";
 import { PrismaClient } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { ShieldAlert, CheckCircle2, Clock, Copy, ArrowRight } from "lucide-react";
-// Adjust the import path for your authOptions depending on your NextAuth setup
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; 
+import { authOptions } from "@/lib/auth"; 
 
 const prisma = new PrismaClient();
 
