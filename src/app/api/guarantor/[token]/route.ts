@@ -41,6 +41,7 @@ export async function POST(req: Request, { params }: { params: { token: string }
   try {
     const body = await req.json();
     const {
+      firstName, lastName, // <-- Added these fields
       email, altPhone, nin, address, residentialStatus,
       employmentStatus, employerName, officeAddress,
       passportBase64, utilityBillBase64, signatureBase64
@@ -68,13 +69,14 @@ export async function POST(req: Request, { params }: { params: { token: string }
     const utilityBillUrl = await uploadToCloudinary(utilityBillBase64, "utility_bills");
     const signatureUrl = await uploadToCloudinary(signatureBase64, "signatures");
 
-    // Capture user IP for legal traceability (from headers)
+    // Capture user IP for legal traceability
     const ipAddress = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "Unknown IP";
 
     // Update the record and lock it
     await prisma.guarantor.update({
       where: { id: guarantor.id },
       data: {
+        firstName, lastName, // <-- Overwrite with guarantor's confirmed spelling
         email, altPhone, nin, address, residentialStatus,
         employmentStatus, employerName, officeAddress,
         passportUrl, utilityBillUrl, signatureUrl,
@@ -83,9 +85,6 @@ export async function POST(req: Request, { params }: { params: { token: string }
         status: "SUBMITTED"
       }
     });
-
-    // NOTE: Optionally, here you can check if BOTH guarantors for this rider are now "SUBMITTED".
-    // If so, you could update the Rider's accountStatus from PENDING to APPROVED.
     
     return NextResponse.json({ message: "Deed of Guarantee Executed Successfully" }, { status: 200 });
 
