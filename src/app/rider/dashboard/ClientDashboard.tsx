@@ -2,8 +2,21 @@
 
 import { useState } from "react";
 import { ShieldAlert, CheckCircle2, Clock, Copy, Lock, CarFront, WalletCards, ShieldCheck, Check, MessageCircle, Hourglass } from "lucide-react";
+import RiderVirtualAgreement from "./RiderVirtualAgreement";
 
-export default function ClientDashboard({ rider, guarantors, baseUrl }: { rider: any, guarantors: any[], baseUrl: string }) {
+export default function ClientDashboard({ 
+  rider, 
+  guarantors, 
+  baseUrl, 
+  vehicle, 
+  contract 
+}: { 
+  rider: any, 
+  guarantors: any[], 
+  baseUrl: string, 
+  vehicle: any, 
+  contract: any 
+}) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const g1 = guarantors[0];
@@ -16,7 +29,10 @@ export default function ClientDashboard({ rider, guarantors, baseUrl }: { rider:
   const isPendingReview = allGuarantorsSubmitted && rider.accountStatus === "PENDING";
   const isApproved = rider.accountStatus === "APPROVED";
   const isActive = rider.accountStatus === "ACTIVE";
-  const isFullyApproved = isApproved || isActive;
+  const isAwaitingSignature = rider.accountStatus === "AWAITING_SIGNATURE";
+  
+  // They are fully approved if they are in any of these post-review states
+  const isFullyApproved = isApproved || isActive || isAwaitingSignature;
 
   const copyToClipboard = (text: string, id: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -34,6 +50,16 @@ export default function ClientDashboard({ rider, guarantors, baseUrl }: { rider:
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
       
+      {/* VIRTUAL AGREEMENT MODAL */}
+      {isAwaitingSignature && (
+        <RiderVirtualAgreement 
+          rider={rider} 
+          vehicle={vehicle} 
+          contract={contract} 
+          guarantors={guarantors} 
+        />
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-wider mb-2">Command Center</h1>
@@ -72,12 +98,12 @@ export default function ClientDashboard({ rider, guarantors, baseUrl }: { rider:
 
             {/* Step 3: Fleet Allocation */}
             <div className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-3 bg-void-dark pr-4 md:pr-0">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 ${isActive ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-void-light/5 border-void-light/10 text-slate-light/40'}`}>
-                {isActive ? <CarFront size={24} /> : <Lock size={20} />}
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 ${isActive ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : isAwaitingSignature ? 'bg-signal-red/20 border-signal-red text-signal-red shadow-[0_0_15px_rgba(233,69,96,0.3)]' : 'bg-void-light/5 border-void-light/10 text-slate-light/40'}`}>
+                {isActive ? <CarFront size={24} /> : isAwaitingSignature ? <ShieldCheck size={24} /> : <Lock size={20} />}
               </div>
               <div className="text-left md:text-center">
-                <p className={`text-xs font-bold uppercase tracking-widest ${isActive ? 'text-crisp-white' : 'text-slate-light/40'}`}>Phase 3</p>
-                <p className={`text-[10px] uppercase tracking-wider ${isActive ? 'text-slate-light' : 'text-slate-light/40'}`}>Fleet Allocation</p>
+                <p className={`text-xs font-bold uppercase tracking-widest ${isActive || isAwaitingSignature ? 'text-crisp-white' : 'text-slate-light/40'}`}>Phase 3</p>
+                <p className={`text-[10px] uppercase tracking-wider ${isActive ? 'text-slate-light' : isAwaitingSignature ? 'text-signal-red' : 'text-slate-light/40'}`}>{isAwaitingSignature ? 'Sign Agreement' : 'Fleet Allocation'}</p>
               </div>
             </div>
 
@@ -161,7 +187,7 @@ export default function ClientDashboard({ rider, guarantors, baseUrl }: { rider:
         </div>
       )}
 
-      {/* LOCKED DASHBOARD PREVIEW */}
+      {/* DASHBOARD PREVIEW */}
       <div className="relative">
         <h3 className="text-lg font-bold border-b border-cobalt/20 pb-2 mb-6 uppercase tracking-wider">Fleet Operations Overview</h3>
         
@@ -169,7 +195,9 @@ export default function ClientDashboard({ rider, guarantors, baseUrl }: { rider:
         {!isActive && (
           <div className="absolute inset-0 top-12 z-20 flex flex-col items-center justify-center bg-void-navy/60 backdrop-blur-sm rounded-xl border border-void-light/10">
             <Lock size={48} className="text-slate-light mb-4 opacity-50" />
-            <p className="text-sm font-bold uppercase tracking-widest text-slate-light">Dashboard Locked Pending Asset Assignment</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-slate-light text-center px-4">
+              {isAwaitingSignature ? "Action Required: Sign Handover Agreement" : "Dashboard Locked Pending Asset Assignment"}
+            </p>
           </div>
         )}
 
