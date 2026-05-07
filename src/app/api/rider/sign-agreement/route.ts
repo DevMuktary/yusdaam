@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     // Upload PDF to Cloudinary
     const uploadResponse = await cloudinary.uploader.upload(`data:application/pdf;base64,${pdfBase64}`, {
       folder: "yusdaam_agreements/riders",
-      resource_type: "document",
+      resource_type: "auto",
     });
 
     // Update the Rider's status to ACTIVE and save the PDF link
