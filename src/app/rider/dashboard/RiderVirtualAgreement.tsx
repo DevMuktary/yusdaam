@@ -37,12 +37,14 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
 
   const riderSigCanvas = useRef<SignatureCanvas>(null);
   const witnessSigCanvas = useRef<SignatureCanvas>(null);
-  
-  // We use a hidden ref specifically formatted for the PDF generation
   const pdfRef = useRef<HTMLDivElement>(null);
   
   const [witnessName, setWitnessName] = useState("");
   const [witnessAddress, setWitnessAddress] = useState("");
+
+  // States to hold the captured signature images for the PDF
+  const [pdfRiderSig, setPdfRiderSig] = useState<string | null>(null);
+  const [pdfWitnessSig, setPdfWitnessSig] = useState<string | null>(null);
 
   const [handoverData, setHandoverData] = useState({
     fuelLevel: "",
@@ -86,54 +88,63 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     if (!handoverData.fuelLevel) return setErrorMsg("Please select the fuel level.");
 
     setIsSubmitting(true);
+    setLoadingText("Preparing Signatures...");
 
-    try {
-      setLoadingText("Compiling Official Document...");
-      
-      // @ts-ignore
-      const html2pdf = (await import("html2pdf.js")).default;
-      const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] } // This allows us to use CSS page breaks!
-      };
+    // 1. Capture the signatures as base64 images
+    const rSig = riderSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png");
+    const wSig = witnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png");
+    
+    setPdfRiderSig(rSig || null);
+    setPdfWitnessSig(wSig || null);
 
-      // Generate PDF from the HIDDEN element, which is heavily formatted for A4
-      const dataUri = await html2pdf().set(opt).from(pdfRef.current).output('datauristring');
-      const pdfBase64 = dataUri.split(',')[1];
+    // 2. Wait 500ms for React to render the hidden PDF div with the new signature images
+    setTimeout(async () => {
+      try {
+        setLoadingText("Compiling Official Document...");
+        
+        // @ts-ignore
+        const html2pdf = (await import("html2pdf.js")).default;
+        const opt = {
+          margin: [0.5, 0.5, 0.5, 0.5],
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'] } 
+        };
 
-      setLoadingText("Securing in Legal Vault...");
-      const res = await fetch("/api/rider/sign-agreement", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdfBase64 })
-      });
+        // Generate PDF from the HIDDEN element
+        const dataUri = await html2pdf().set(opt).from(pdfRef.current).output('datauristring');
+        const pdfBase64 = dataUri.split(',')[1];
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to process agreement.");
-      
-      // Save the Cloudinary URL!
-      setContractUrl(data.url);
-      setStep(2);
-    } catch (err: any) {
-      setErrorMsg(err.message || "An error occurred during submission.");
-      setIsSubmitting(false);
-    }
+        setLoadingText("Securing in Legal Vault...");
+        const res = await fetch("/api/rider/sign-agreement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pdfBase64 })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to process agreement.");
+        
+        setContractUrl(data.url);
+        setStep(2);
+      } catch (err: any) {
+        setErrorMsg(err.message || "An error occurred during submission.");
+        setIsSubmitting(false);
+      }
+    }, 500);
   };
 
-  // The actual document content, reusable for screen display and PDF compilation
-  const DocumentContent = ({ isPdf = false }: { isPdf?: boolean }) => {
-    const textStyle = isPdf ? "text-[12px] leading-relaxed text-black font-serif" : "text-sm text-black leading-relaxed font-serif";
-    const headingStyle = isPdf ? "font-bold text-[14px] underline mt-6 mb-2 text-black uppercase" : "font-bold text-base mt-6 border-b border-gray-300 pb-1 mb-4 uppercase";
+  // --- RENDER FUNCTION FOR THE DOCUMENT ---
+  // Using a standard function instead of a nested component prevents React from destroying the canvas state!
+  const renderDocument = (isPdf: boolean) => {
+    const headingStyle = "font-bold text-base mt-6 border-b border-gray-300 pb-1 mb-4 uppercase";
 
     return (
-      <div className={textStyle}>
-        
+      <>
         {/* PREMIUM LETTERHEAD */}
         <div className={`text-center ${isPdf ? "border-b-4 border-[#001232] pb-6 mb-8" : "border-b-2 border-gray-300 pb-6 mb-8"}`}>
-          <h1 className={`${isPdf ? "text-4xl text-[#001232]" : "text-3xl text-[#001232]"} font-black tracking-widest mb-2`}>
+          <h1 className={`${isPdf ? "text-4xl" : "text-3xl"} text-[#001232] font-black tracking-widest mb-2`}>
             YUSDAAM<span className="text-[#FFB902]">.</span>
           </h1>
           <p className={`${isPdf ? "text-sm" : "text-xs"} font-bold uppercase tracking-widest text-gray-800`}>YUSDAAM Autos Fleet Management Nigeria Limited</p>
@@ -237,26 +248,19 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
             <span className="text-xs">I confirm that I agree to be bound by the terms.</span></p>
             
             <div className="relative h-24 w-full mb-2">
-              {/* If it's the UI, show the canvas. If it's the PDF, show the image of the canvas */}
-              {!isPdf ? (
-                <div className="border border-dashed border-gray-400 bg-gray-50 w-full h-full relative">
-                  <SignatureCanvas 
-                    ref={riderSigCanvas}
-                    penColor="black"
-                    canvasProps={{ className: "w-full h-full cursor-crosshair absolute top-0 left-0" }}
-                  />
-                  <button type="button" onClick={() => riderSigCanvas.current?.clear()} className="absolute -bottom-6 right-0 text-[10px] font-bold text-red-500 uppercase">Clear</button>
-                </div>
-              ) : (
+              {isPdf ? (
                 <>
-                  {riderSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") && (
-                    <img src={riderSigCanvas.current.getTrimmedCanvas().toDataURL("image/png")} alt="Rider Sig" className="absolute left-0 bottom-0 h-20 object-contain mix-blend-multiply" />
-                  )}
+                  {pdfRiderSig && <img src={pdfRiderSig} alt="Rider Sig" className="absolute left-0 bottom-0 h-20 object-contain mix-blend-multiply" />}
                   <div className="absolute bottom-4 w-full border-b border-black"></div>
                 </>
+              ) : (
+                <div className="border border-dashed border-gray-400 bg-gray-50 w-full h-full relative">
+                  <SignatureCanvas ref={riderSigCanvas} penColor="black" canvasProps={{ className: "w-full h-full cursor-crosshair absolute top-0 left-0" }} />
+                  <button type="button" onClick={() => riderSigCanvas.current?.clear()} className="absolute -bottom-6 right-0 text-[10px] font-bold text-red-500 uppercase">Clear</button>
+                </div>
               )}
             </div>
-            <p className="text-xs"><strong>Name:</strong> {rider?.firstName} {rider?.lastName}</p>
+            <p className="text-xs mt-4"><strong>Name:</strong> {rider?.firstName} {rider?.lastName}</p>
             <p className="text-xs mt-1"><strong>Date:</strong> {formattedDate}</p>
           </div>
         </div>
@@ -324,22 +328,20 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
             </div>
             
             <div className="relative h-24 w-full">
-              {!isPdf ? (
+              {isPdf ? (
+                <>
+                  {pdfWitnessSig && <img src={pdfWitnessSig} alt="Witness Sig" className="absolute left-0 bottom-0 h-20 object-contain mix-blend-multiply" />}
+                  <div className="absolute bottom-4 w-full border-b border-black"></div>
+                </>
+              ) : (
                 <div className="border border-dashed border-gray-400 bg-gray-50 w-full h-full relative">
                   <SignatureCanvas ref={witnessSigCanvas} penColor="black" canvasProps={{ className: "w-full h-full cursor-crosshair absolute top-0 left-0" }} />
                   <button type="button" onClick={() => witnessSigCanvas.current?.clear()} className="absolute -bottom-6 right-0 text-[10px] font-bold text-red-500 uppercase">Clear</button>
                 </div>
-              ) : (
-                <>
-                  {witnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") && (
-                    <img src={witnessSigCanvas.current.getTrimmedCanvas().toDataURL("image/png")} alt="Witness Sig" className="absolute left-0 bottom-0 h-20 object-contain mix-blend-multiply" />
-                  )}
-                  <div className="absolute bottom-4 w-full border-b border-black"></div>
-                </>
               )}
             </div>
           </div>
-          <p className="mt-6"><strong>Date:</strong> {formattedDate}</p>
+          <p className="mt-8"><strong>Date:</strong> {formattedDate}</p>
         </div>
 
         {/* FORCE A PAGE BREAK HERE SO HANDOVER NOTE IS ON ITS OWN CLEAN PAGE */}
@@ -438,8 +440,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
             <div>
               <p className="font-bold text-red-600 uppercase mb-4">DRIVER/RIDER'S SIGNATURE</p>
               <div className="relative h-20 w-full mb-2">
-                {isPdf && riderSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") ? (
-                  <img src={riderSigCanvas.current.getTrimmedCanvas().toDataURL("image/png")} alt="Rider Sig" className="absolute left-0 bottom-0 h-20 object-contain mix-blend-multiply" />
+                {isPdf && pdfRiderSig ? (
+                  <img src={pdfRiderSig} alt="Rider Sig" className="absolute left-0 bottom-0 h-20 object-contain mix-blend-multiply" />
                 ) : null}
                 <div className="absolute bottom-4 w-full border-b border-black"></div>
                 {!isPdf && <p className="absolute bottom-0 text-[10px] text-gray-500 italic">Signature automatically affixed from above.</p>}
@@ -449,20 +451,55 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           </div>
 
         </div>
-
-      </div>
+      </>
     );
   };
 
+  // --- STEP 2: SUCCESS VIEW ---
+  if (step === 2) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-4 h-[100dvh] w-screen overscroll-none">
+        <div className="max-w-3xl mx-auto bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full">
+          <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 size={40} className="text-emerald-400" />
+          </div>
+          <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreement Executed</h2>
+          <p className="text-slate-light leading-relaxed mb-10">
+            Your digital signature and handover condition note have been permanently secured. Your dashboard has been unlocked and your fleet assignment is now active.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            
+            {/* CLOUDINARY DIRECT DOWNLOAD BUTTON */}
+            {contractUrl && (
+              <a 
+                href={`${contractUrl}?fl_attachment=YUSDAAM_HPA_${rider.firstName}_${rider.lastName}.pdf`} 
+                download
+                className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition"
+              >
+                <Download size={16} /> Download Copy
+              </a>
+            )}
+
+            <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-emerald-500 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-emerald-600 transition shadow-lg">
+              Access Dashboard <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- STEP 1: UI VIEW ---
   return (
     <div className="fixed inset-0 z-[100] h-[100dvh] w-screen flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-0 sm:p-6 overscroll-none">
-      <div className="bg-void-dark w-full max-w-4xl h-full sm:max-h-[95dvh] rounded-none sm:rounded-2xl shadow-2xl flex flex-col border-0 sm:border border-signal-red/30 overflow-hidden relative">
+      
+      <div className="bg-gray-100 w-full max-w-5xl h-full sm:max-h-[95dvh] rounded-none sm:rounded-2xl shadow-2xl flex flex-col border-0 sm:border border-gray-400 overflow-hidden relative">
         
         {/* Header */}
-        <div className="bg-signal-red/10 p-4 border-b border-signal-red/30 flex items-center gap-4 shrink-0">
+        <div className="bg-void-navy p-4 border-b border-gray-400 flex items-center gap-4 shrink-0 shadow-md z-10">
           <ShieldCheck size={32} className="text-signal-red shrink-0" />
           <div>
-            <h2 className="text-lg sm:text-xl font-black text-signal-red uppercase tracking-wider">Pending Legal Execution</h2>
+            <h2 className="text-lg sm:text-xl font-black text-crisp-white uppercase tracking-wider">Pending Legal Execution</h2>
             <p className="text-[10px] sm:text-xs text-slate-light font-bold uppercase tracking-widest">Read, complete handover note, and sign below.</p>
           </div>
         </div>
@@ -476,19 +513,20 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           )}
 
           {/* VISIBLE UI FORM */}
-          <DocumentContent isPdf={false} />
-
+          <div className="bg-white p-6 sm:p-12 text-black font-serif text-sm leading-relaxed shadow-2xl mx-auto w-full max-w-4xl">
+            {renderDocument(false)}
+          </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="bg-void-dark p-4 border-t border-signal-red/30 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0">
-          <p className="text-[10px] text-slate-light uppercase tracking-widest text-center sm:text-left flex-1">
+        <div className="bg-white p-4 border-t border-gray-300 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-10">
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest text-center sm:text-left flex-1 font-bold">
             By clicking "Execute Agreement", you digitally sign and bind yourself to this contract.
           </p>
           <button 
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex items-center justify-center gap-2 px-8 py-4 w-full sm:w-auto bg-signal-red text-crisp-white font-bold uppercase tracking-wider rounded-xl shadow-lg hover:bg-signal-red/90 transition disabled:opacity-50 shrink-0"
+            className="flex items-center justify-center gap-2 px-8 py-4 w-full sm:w-auto bg-red-600 text-white font-bold uppercase tracking-wider rounded shadow-lg hover:bg-red-700 transition disabled:opacity-50 shrink-0"
           >
             {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> {loadingText}</> : "Execute Agreement"}
           </button>
@@ -497,7 +535,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         {/* HIDDEN OFF-SCREEN RENDERER FOR PERFECT A4 PDF */}
         <div className="absolute top-[-10000px] left-[-10000px]">
           <div ref={pdfRef} className="bg-white w-[800px] p-[40px]">
-            <DocumentContent isPdf={true} />
+            {renderDocument(true)}
           </div>
         </div>
 
