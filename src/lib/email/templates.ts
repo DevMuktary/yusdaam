@@ -106,3 +106,39 @@ export const getAgreementSignedEmail = (data: AgreementSignedEmailData) => {
     </div>
   `;
 };
+
+// --- NEW RIDER TEMPLATE ---
+export const getRiderAgreementSignedEmail = (data: AgreementSignedEmailData) => {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
+      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px;">
+        <h1 style="margin: 0; font-size: 22px; color: #001232; letter-spacing: 1px;">
+          YUSDAAM<span style="color: #FFB902;">.</span>
+        </h1>
+      </div>
+      
+      <div style="font-size: 15px;">
+        <p>Hi ${data.firstName},</p>
+        <p>Your digital signature has been successfully applied to your <strong>Hire Purchase Agreement</strong> and <strong>Vehicle Handover Note</strong>.</p>
+        
+        <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 25px 0;">
+          <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Your Dashboard is Unlocked</h3>
+          <p style="margin: 0; font-size: 14px; color: #4a4a4a;">Your fleet assignment is now strictly active. You can monitor your vehicle requirements and track your weekly remittances directly from your Command Center.</p>
+        </div>
+
+        <p>A finalized, countersigned PDF copy of your legal document is attached to this email for your records. It is also permanently available in the Legal Vault section of your dashboard.</p>
+        
+        <p style="margin-top: 35px; margin-bottom: 0;">
+          Drive safe,<br>
+          <strong>The YUSDAAM Team</strong>
+        </p>
+      </div>
+
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9335611)</strong></p>
+        <p style="margin: 0 0 15px 0;">18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos.</p>
+        <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
+      </div>
+    </div>
+  `;
+};
