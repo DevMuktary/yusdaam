@@ -496,7 +496,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
 
         {/* HIDDEN OFF-SCREEN RENDERER FOR PERFECT A4 PDF */}
         <div className="absolute top-[-10000px] left-[-10000px]">
-          <div ref={contractRef} className="bg-white w-[800px] p-[40px]">
+          <div ref={pdfRef} className="bg-white w-[800px] p-[40px]">
             <DocumentContent isPdf={true} />
           </div>
         </div>
