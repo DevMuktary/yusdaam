@@ -15,7 +15,11 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     meta.name = 'viewport';
     meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
     document.head.appendChild(meta);
-    return () => { document.head.removeChild(meta); };
+    document.body.style.overflow = "hidden"; // Lock background scroll
+    return () => { 
+      document.head.removeChild(meta); 
+      document.body.style.overflow = "auto";
+    };
   }, []);
 
   const [step, setStep] = useState(1); 
@@ -223,8 +227,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           <div>
             <p className="font-bold mb-4">SIGNED by the DRIVER/RIDER</p>
             <div className="relative h-16 w-48 mb-2">
-              {riderSig && isPdf ? (
-                <img src={riderSig} alt="Rider Signature" className="absolute left-0 bottom-0 h-16 object-contain mix-blend-multiply" />
+              {riderSig ? (
+                <img src={riderSig} alt="Rider Signature" className={`absolute left-0 bottom-0 h-16 object-contain ${!isPdf ? "bg-white p-1 rounded" : "mix-blend-multiply"}`} />
               ) : (
                 <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
               )}
@@ -241,8 +245,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           
           <div className="relative h-12 mt-4 w-48">
              <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
-             {witnessSig && isPdf ? (
-               <img src={witnessSig} alt="Witness Signature" className="absolute left-16 bottom-0 h-12 object-contain mix-blend-multiply" />
+             {witnessSig ? (
+               <img src={witnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white p-1 rounded" : "mix-blend-multiply"}`} />
              ) : (
                <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
              )}
@@ -257,24 +261,26 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   // --- STEP 2: SUCCESS VIEW ---
   if (step === 2) {
     return (
-      <div ref={topRef} className="max-w-3xl mx-auto mt-10 bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full overflow-x-hidden">
-        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 size={40} className="text-emerald-400" />
-        </div>
-        <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreement Executed</h2>
-        <p className="text-slate-light leading-relaxed mb-10">
-          Your digital signature has been permanently attached to the legal document.
-        </p>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-4 h-screen w-screen overflow-y-auto">
+        <div className="max-w-3xl mx-auto bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full my-auto">
+          <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 size={40} className="text-emerald-400" />
+          </div>
+          <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreement Executed</h2>
+          <p className="text-slate-light leading-relaxed mb-10">
+            Your digital signature has been permanently attached to the legal document. Your dashboard is now unlocked.
+          </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          {contractUrl && (
-            <a href={`${contractUrl}?fl_attachment=YUSDAAM_HPA_${rider.firstName}_${rider.lastName}.pdf`} download className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition">
-              <Download size={16} /> Download Agreement
-            </a>
-          )}
-          <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
-            Access Dashboard <ArrowRight size={16} />
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {contractUrl && (
+              <a href={`${contractUrl}?fl_attachment=YUSDAAM_HPA_${rider.firstName}_${rider.lastName}.pdf`} download className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition">
+                <Download size={16} /> Download Agreement
+              </a>
+            )}
+            <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
+              Access Dashboard <ArrowRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -282,65 +288,77 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
 
   // --- STEP 1: UI VIEW ---
   return (
-    <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-x-hidden mb-20">
-      
-      {/* 1. Document Reader */}
-      <div className="p-8 sm:p-12 bg-void-navy/50">
-        <HpaDocument isPdf={false} />
-      </div>
-
-      {/* 2. Form Inputs */}
-      <div className="p-8 border-t border-cobalt/30 bg-void-navy">
-        {errorMsg && <p className="text-signal-red text-sm font-bold mb-6 bg-signal-red/10 border border-signal-red/20 p-4 rounded-lg">{errorMsg}</p>}
+    <div className="fixed inset-0 z-[100] bg-void-navy/95 backdrop-blur-md overflow-y-auto h-screen w-screen px-2 sm:px-6 py-10">
+      <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-hidden relative">
         
-        {/* Witness Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-void-light/5 border border-cobalt/20 rounded-xl">
-          <div className="md:col-span-2"><h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Independent Witness</h4></div>
+        {/* Header */}
+        <div className="bg-void-navy p-6 border-b border-cobalt/30 flex items-center gap-4 shrink-0 shadow-md">
+          <ShieldCheck size={32} className="text-signal-red shrink-0" />
           <div>
-            <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Full Name</label>
-            <input type="text" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="Jane Doe" />
+            <h2 className="text-lg sm:text-xl font-black text-crisp-white uppercase tracking-wider">Pending Legal Execution</h2>
+            <p className="text-[10px] sm:text-xs text-slate-light font-bold uppercase tracking-widest">Read and sign below to unlock your dashboard.</p>
           </div>
-          <div>
-            <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Address</label>
-            <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street, Lagos" />
+        </div>
+
+        {/* 1. Document Reader */}
+        <div className="p-6 sm:p-12 bg-void-navy/50">
+          <HpaDocument isPdf={false} />
+        </div>
+
+        {/* 2. Form Inputs */}
+        <div className="p-6 sm:p-12 border-t border-cobalt/30 bg-void-navy">
+          {errorMsg && <p className="text-signal-red text-sm font-bold mb-6 bg-signal-red/10 border border-signal-red/20 p-4 rounded-lg">{errorMsg}</p>}
+          
+          {/* Witness Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-void-light/5 border border-cobalt/20 rounded-xl">
+            <div className="md:col-span-2"><h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Independent Witness</h4></div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Full Name</label>
+              <input type="text" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="Jane Doe" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Address</label>
+              <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street, Lagos" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
+              {/* WHITE BACKGROUND FOR CANVAS */}
+              <div className="bg-white rounded-lg border-2 border-cobalt/30 overflow-hidden shadow-inner">
+                <SignatureCanvas ref={witnessSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} onEnd={() => setWitnessSig(witnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)} />
+              </div>
+              <div className="flex justify-end mt-2">
+                <button type="button" onClick={() => { witnessSigCanvas.current?.clear(); setWitnessSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red">Clear Witness Canvas</button>
+              </div>
+            </div>
           </div>
-          <div className="md:col-span-2">
-            <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
+
+          {/* Rider Signature */}
+          <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
+            <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Your Signature</label>
             {/* WHITE BACKGROUND FOR CANVAS */}
-            <div className="bg-white rounded-lg border-2 border-cobalt/30 overflow-hidden shadow-inner">
-              <SignatureCanvas ref={witnessSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} onEnd={() => setWitnessSig(witnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)} />
+            <div className="bg-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
+              <SignatureCanvas ref={riderSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} onEnd={() => setRiderSig(riderSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)} />
             </div>
             <div className="flex justify-end mt-2">
-              <button type="button" onClick={() => { witnessSigCanvas.current?.clear(); setWitnessSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red">Clear Witness Canvas</button>
+              <button type="button" onClick={() => { riderSigCanvas.current?.clear(); setRiderSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red">Clear Canvas</button>
             </div>
           </div>
+
+          <label className="flex items-start gap-3 cursor-pointer mb-8 group">
+            <input type="checkbox" className="mt-1 w-4 h-4 accent-signal-red cursor-pointer" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+            <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">I, {rider.firstName} {rider.lastName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.</span>
+          </label>
+
+          <button onClick={handleSubmitAll} disabled={isSubmitting} className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg disabled:opacity-50">
+            {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing Agreement...</> : <><CheckSquare size={16} /> Submit & Execute Agreement</>}
+          </button>
         </div>
 
-        {/* Rider Signature */}
-        <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
-          <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Your Signature</label>
-          {/* WHITE BACKGROUND FOR CANVAS */}
-          <div className="bg-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
-            <SignatureCanvas ref={riderSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} onEnd={() => setRiderSig(riderSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)} />
-          </div>
-          <div className="flex justify-end mt-2">
-            <button type="button" onClick={() => { riderSigCanvas.current?.clear(); setRiderSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red">Clear Canvas</button>
-          </div>
+        {/* Hidden Render for PDF Generation */}
+        <div className="hidden">
+          <div ref={pdfContractRef} className="bg-white p-12 w-[800px]"><HpaDocument isPdf={true} /></div>
         </div>
 
-        <label className="flex items-start gap-3 cursor-pointer mb-8 group">
-          <input type="checkbox" className="mt-1 w-4 h-4 accent-signal-red cursor-pointer" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-          <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">I, {rider.firstName} {rider.lastName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.</span>
-        </label>
-
-        <button onClick={handleSubmitAll} disabled={isSubmitting} className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg disabled:opacity-50">
-          {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing Agreement...</> : <><CheckSquare size={16} /> Submit & Execute Agreement</>}
-        </button>
-      </div>
-
-      {/* Hidden Render for PDF Generation */}
-      <div className="hidden">
-        <div ref={pdfContractRef} className="bg-white p-12 w-[800px]"><HpaDocument isPdf={true} /></div>
       </div>
     </div>
   );
