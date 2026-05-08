@@ -10,16 +10,23 @@ import jsPDF from "jspdf";
 export default function RiderVirtualAgreement({ rider, vehicle, contract, guarantors }: { rider: any, vehicle: any, contract: any, guarantors: any[] }) {
   const router = useRouter();
   
-  // Prevent iOS Safari pinch-zoom & rubber-band scroll
+  // HARD LOCK for iOS Safari pinch-zoom & rubber-band scroll
   useEffect(() => {
     const meta = document.createElement('meta');
     meta.name = 'viewport';
     meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
     document.head.appendChild(meta);
-    document.body.style.overflow = "hidden"; // Lock background scroll
+    
+    // Completely disable background scrolling and bouncing
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none"; 
+    
     return () => { 
       document.head.removeChild(meta); 
-      document.body.style.overflow = "auto";
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
     };
   }, []);
 
@@ -35,9 +42,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   const [witnessName, setWitnessName] = useState("");
   const [witnessAddress, setWitnessAddress] = useState("");
 
-  // Handover Note State
+  // Handover Note State (Odometer removed)
   const [handoverData, setHandoverData] = useState({
-    odometer: "",
     fuelLevel: "",
     frontBumper: "",
     rearBumper: "",
@@ -76,11 +82,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     const element = contractRef.current;
     if (!element) throw new Error("Document reference not found");
 
-    // Hide UI elements (like borders and clear buttons) before taking the screenshot
     element.classList.add("pdf-mode");
-    
     const canvas = await html2canvas(element, { scale: 2, useCORS: true, windowWidth: 800 });
-    
     element.classList.remove("pdf-mode");
 
     const imgData = canvas.toDataURL("image/jpeg", 1.0);
@@ -136,7 +139,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   // --- SUCCESS VIEW (STEP 2) ---
   if (step === 2) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-4 overscroll-none">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-4 h-[100dvh] w-screen overscroll-none">
         <div className="max-w-3xl mx-auto bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full">
           <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 size={40} className="text-emerald-400" />
@@ -160,7 +163,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
 
   // --- STEP 1: HPA SIGNING VIEW ---
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-2 sm:p-6 overscroll-none">
+    <div className="fixed inset-0 z-[100] h-[100dvh] w-screen flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-0 sm:p-6 overscroll-none">
       
       {/* CSS to hide borders and clear buttons during PDF generation */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -169,7 +172,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         .pdf-mode .canvas-container { border: none !important; }
       `}} />
 
-      <div className="bg-void-dark w-full max-w-4xl h-full max-h-[95vh] rounded-2xl shadow-2xl flex flex-col border border-signal-red/30 overflow-hidden relative">
+      <div className="bg-void-dark w-full max-w-4xl h-full sm:max-h-[95dvh] rounded-none sm:rounded-2xl shadow-2xl flex flex-col border-0 sm:border border-signal-red/30 overflow-hidden relative">
         
         {/* Header */}
         <div className="bg-signal-red/10 p-4 border-b border-signal-red/30 flex items-center gap-4 shrink-0">
@@ -180,8 +183,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           </div>
         </div>
 
-        {/* Scrollable Document Area */}
-        <div className="flex-1 overflow-y-auto overscroll-contain bg-gray-200 p-2 sm:p-8">
+        {/* Scrollable Document Area (Touch-pan-y allows inner scrolling while body is locked) */}
+        <div className="flex-1 overflow-y-auto overscroll-none touch-pan-y bg-gray-200 p-2 sm:p-8">
           
           {errorMsg && (
             <div className="sticky top-0 z-10 bg-red-100 border border-red-500 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm font-bold flex items-center gap-2 shadow-lg">
@@ -273,7 +276,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
               <p className="mb-4"><strong>SIGNED by the ADMINISTRATOR</strong><br/>
               <strong>YUSDAAM AUTOS FLEET ADMINISTRATORS NIGERIA LIMITED</strong></p>
               <div className="relative h-20 w-48 mb-2">
-                {/* AUTOMATIC COMPANY STAMP */}
                 <img src="/images/stamp.png" alt="Company Stamp" className="absolute left-0 bottom-0 h-24 object-contain opacity-90" />
               </div>
               <p><strong>Authorized Signature:</strong> Yussuf Dare Orelaja (MD)</p>
@@ -281,11 +283,10 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
             </div>
 
             <div className="mb-8">
-              <p className="mb-4"><strong>SIGNED by the DRIVER/RIDER</strong><br/>
+              <p className="mb-4"><strong>SIGNED by the DRIVER/Rider</strong><br/>
               I confirm that I have read, understood, and agreed to be bound by the terms of this Hire Purchase Agreement.</p>
               <p><strong>Name:</strong> {rider?.firstName} {rider?.lastName}</p>
               
-              {/* INTERACTIVE DRIVER SIGNATURE */}
               <div className="mt-4 mb-2">
                 <span className="font-bold">Signature:</span>
                 <div className="canvas-container border-2 border-dashed border-gray-400 mt-2 bg-gray-50 w-full sm:w-[400px] h-32 relative">
@@ -300,16 +301,14 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
                 </div>
               </div>
               <p className="mt-8"><strong>Date:</strong> {formattedDate}</p>
-              <p className="mt-2"><strong>Thumbprint:</strong> [Digitally Captured & Verified]</p>
             </div>
 
-            {/* AUTOMATIC GUARANTOR INJECTION */}
             <h3 className="text-sm font-bold mb-4">9. GUARANTORS' EXECUTION</h3>
             <div className="mb-6 p-4 border border-black bg-gray-50">
               <p className="text-xs font-bold italic mb-4 text-gray-700">Note: The Guarantors below have previously executed Sworn Guarantor Attestations digitally. Their IP addresses, identity documents, and digital signatures are verified and held by the Administrator. Their signatures are automatically attached below.</p>
               
               <p className="mb-2"><strong>FIRST GUARANTOR</strong><br/>
-              I hereby undertake to be jointly and severally liable for any default, debt, or damage caused by the Driver/Rider during the pendency of this Agreement.</p>
+              I hereby undertake to be jointly and severally liable for any default, debt, theft, or damage caused by the Driver/Rider during the pendency of this Agreement.</p>
               <ul className="list-disc pl-8 mb-4 space-y-1">
                 <li><strong>Full Name:</strong> {g1?.firstName || "_____"} {g1?.lastName || "_____"}</li>
                 <li><strong>NIN:</strong> {g1?.nin || "_____"}</li>
@@ -320,11 +319,10 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
                 <strong>Signature:</strong> 
                 {g1?.signatureUrl ? <img src={g1.signatureUrl} alt="G1 Sig" className="h-12 object-contain mix-blend-multiply" /> : "____________________"}
               </div>
-              <p className="mb-1"><strong>Date:</strong> {g1?.signedAt ? new Date(g1.signedAt).toLocaleDateString('en-GB') : "_____"}</p>
-              <p className="mb-8"><strong>Thumbprint:</strong> [Digitally Verified]</p>
+              <p className="mb-8"><strong>Date:</strong> {g1?.signedAt ? new Date(g1.signedAt).toLocaleDateString('en-GB') : "_____"}</p>
 
               <p className="mb-2"><strong>SECOND GUARANTOR</strong><br/>
-              I hereby undertake to be jointly and severally liable for any default, debt, or damage caused by the Driver/Rider during the pendency of this Agreement.</p>
+              I hereby undertake to be jointly and severally liable for any default, debt, theft, or damage caused by the Driver/Rider during the pendency of this Agreement.</p>
               <ul className="list-disc pl-8 mb-4 space-y-1">
                 <li><strong>Full Name:</strong> {g2?.firstName || "_____"} {g2?.lastName || "_____"}</li>
                 <li><strong>NIN:</strong> {g2?.nin || "_____"}</li>
@@ -335,11 +333,9 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
                 <strong>Signature:</strong> 
                 {g2?.signatureUrl ? <img src={g2.signatureUrl} alt="G2 Sig" className="h-12 object-contain mix-blend-multiply" /> : "____________________"}
               </div>
-              <p className="mb-1"><strong>Date:</strong> {g2?.signedAt ? new Date(g2.signedAt).toLocaleDateString('en-GB') : "_____"}</p>
-              <p className="mb-4"><strong>Thumbprint:</strong> [Digitally Verified]</p>
+              <p className="mb-4"><strong>Date:</strong> {g2?.signedAt ? new Date(g2.signedAt).toLocaleDateString('en-GB') : "_____"}</p>
             </div>
 
-            {/* INTERACTIVE WITNESS SECTION */}
             <div className="mb-8">
               <p className="font-bold mb-4">IN THE PRESENCE OF INDEPENDENT WITNESS:</p>
               <p className="flex items-center gap-2 mb-2"><strong>Name:</strong> <input type="text" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} className="flex-1 border border-gray-300 p-1 text-sm bg-gray-50" placeholder="Type Witness Name..." /></p>
@@ -375,7 +371,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
               </p>
 
               <h3 className="font-bold mb-2">2. CURRENT STATUS AT HANDOVER</h3>
-              <p className="flex items-center gap-2 mb-4"><strong>Odometer/Mileage Reading:</strong> <input type="text" value={handoverData.odometer} onChange={(e) => handleRadio("odometer", e.target.value)} className="border border-gray-300 p-1 w-32 bg-gray-50" placeholder="e.g. 1500" /> km</p>
+              <p className="mb-4"><strong>Odometer/Mileage Reading:</strong> _______________ km <em className="text-xs text-gray-500 hide-on-pdf">(To be filled by Administrator if applicable)</em></p>
+              
               <div className="flex flex-wrap gap-4 mb-6 items-center">
                 <span className="font-bold">Fuel Level:</span>
                 {["Empty", "Quarter", "Half", "Full"].map(level => (
@@ -386,7 +383,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
               </div>
 
               <h3 className="font-bold mb-2">3. EXTERIOR & INTERIOR CONDITION</h3>
-              <p className="italic text-xs mb-4 text-gray-600">(Select 'OK', 'Damaged', or 'N/A' for Keke/Korope without those features).</p>
+              <p className="italic text-xs mb-4 text-gray-600 hide-on-pdf">(Select 'OK', 'Damaged', or 'N/A' for Keke/Korope without those features).</p>
               
               <div className="space-y-3 mb-6">
                 {[
@@ -411,7 +408,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
               </div>
 
               <div className="flex gap-4 mb-8 items-center border-b border-gray-200 pb-4">
-                <span className="font-bold">Air Conditioning (If applicable):</span>
+                <span className="font-bold">Air Conditioning:</span>
                 {["Working", "Not Working", "N/A"].map(status => (
                   <label key={status} className="flex items-center gap-1 cursor-pointer select-none">
                     <input type="radio" name="ac" checked={handoverData.acStatus === status} onChange={() => handleRadio("acStatus", status)} className="w-4 h-4 accent-black" /> {status}
@@ -420,7 +417,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
               </div>
 
               <h3 className="font-bold mb-2">4. ACCESSORIES & TOOLS INCLUDED</h3>
-              <p className="italic text-xs mb-4 text-gray-600">(Check all items physically handed over to the Driver/Rider)</p>
+              <p className="italic text-xs mb-4 text-gray-600 hide-on-pdf">(Check all items physically handed over to the Driver/Rider)</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 <label className="flex items-center gap-2 cursor-pointer p-2 border border-gray-200 rounded hover:bg-gray-50"><input type="checkbox" checked={handoverData.keys} onChange={() => handleCheckbox("keys")} className="w-5 h-5 accent-black" /> Vehicle Ignition Keys</label>
                 <label className="flex items-center gap-2 cursor-pointer p-2 border border-gray-200 rounded hover:bg-gray-50"><input type="checkbox" checked={handoverData.spareTire} onChange={() => handleCheckbox("spareTire")} className="w-5 h-5 accent-black" /> Spare Tire</label>
@@ -466,7 +463,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           <button 
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex items-center justify-center gap-2 px-8 py-4 w-full sm:w-auto bg-signal-red text-crisp-white font-bold uppercase tracking-wider rounded-xl shadow-lg hover:bg-signal-red/90 transition disabled:opacity-50 shrink-0"
+            className="flex items-center justify-center gap-2 px-8 py-4 w-full sm:w-auto bg-signal-red text-crisp-white font-bold uppercase tracking-wider rounded-lg shadow-lg hover:bg-signal-red/90 transition disabled:opacity-50 shrink-0"
           >
             {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> Securing Contract...</> : "Execute Agreement"}
           </button>
