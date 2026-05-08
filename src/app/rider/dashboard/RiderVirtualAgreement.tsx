@@ -163,7 +163,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-2 sm:p-6 overscroll-none">
       
       {/* CSS to hide borders and clear buttons during PDF generation */}
-      <style dangerouslySetWidthInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{__html: `
         .pdf-mode .hide-on-pdf { display: none !important; }
         .pdf-mode input[type="text"] { border: none !important; border-bottom: 1px solid black !important; background: transparent !important; padding: 0 !important; }
         .pdf-mode .canvas-container { border: none !important; }
