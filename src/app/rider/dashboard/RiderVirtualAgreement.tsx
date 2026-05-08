@@ -17,7 +17,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
     document.head.appendChild(meta);
     
-    // Completely disable background scrolling and bouncing
     const originalOverflow = document.body.style.overflow;
     const originalTouchAction = document.body.style.touchAction;
     document.body.style.overflow = "hidden";
@@ -32,8 +31,9 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
 
   const [step, setStep] = useState(1); 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [loadingText, setLoadingText] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
   const riderSigCanvas = useRef<SignatureCanvas>(null);
   const witnessSigCanvas = useRef<SignatureCanvas>(null);
@@ -42,7 +42,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   const [witnessName, setWitnessName] = useState("");
   const [witnessAddress, setWitnessAddress] = useState("");
 
-  // Handover Note State (Odometer removed)
   const [handoverData, setHandoverData] = useState({
     fuelLevel: "",
     frontBumper: "",
@@ -68,7 +67,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     setHandoverData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Dynamic Dates
   const today = new Date();
   const currentDay = today.getDate();
   const currentMonth = today.toLocaleString('default', { month: 'long' });
@@ -83,10 +81,11 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     if (!element) throw new Error("Document reference not found");
 
     element.classList.add("pdf-mode");
-    const canvas = await html2canvas(element, { scale: 2, useCORS: true, windowWidth: 800 });
+    // Scale 1.5 is faster than 2 but maintains excellent text clarity
+    const canvas = await html2canvas(element, { scale: 1.5, useCORS: true, windowWidth: 800 });
     element.classList.remove("pdf-mode");
 
-    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+    const imgData = canvas.toDataURL("image/jpeg", 0.9);
     const pdf = new jsPDF("p", "mm", "a4");
     
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -94,18 +93,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     
     pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
     return pdf;
-  };
-
-  const handleDownloadPDF = async () => {
-    setIsDownloading(true);
-    try {
-      const pdf = await generatePDF();
-      pdf.save(`YUSDAAM_HPA_${rider.firstName}_${rider.lastName}.pdf`);
-    } catch (error) {
-      console.error("PDF Generation failed", error);
-    } finally {
-      setIsDownloading(false);
-    }
   };
 
   const handleSubmit = async () => {
@@ -118,9 +105,16 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     setIsSubmitting(true);
 
     try {
+      setLoadingText("Compiling PDF Document...");
       const pdf = await generatePDF();
+      
+      // Save the generated PDF instantly into memory so Step 2 can download it immediately
+      const blob = pdf.output('blob');
+      setPdfBlobUrl(URL.createObjectURL(blob));
+
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
 
+      setLoadingText("Uploading to Secure Vault...");
       const res = await fetch("/api/rider/sign-agreement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -136,6 +130,16 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     }
   };
 
+  const handleInstantDownload = () => {
+    if (!pdfBlobUrl) return;
+    const a = document.createElement('a');
+    a.href = pdfBlobUrl;
+    a.download = `YUSDAAM_HPA_${rider.firstName}_${rider.lastName}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   // --- SUCCESS VIEW (STEP 2) ---
   if (step === 2) {
     return (
@@ -149,8 +153,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
             Your digital signature and handover condition note have been permanently secured. Your dashboard has been unlocked and your fleet assignment is now active.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button onClick={handleDownloadPDF} disabled={isDownloading} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
-              {isDownloading ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download Copy</>}
+            <button onClick={handleInstantDownload} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition">
+              <Download size={16} /> Download Copy
             </button>
             <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-emerald-500 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-emerald-600 transition shadow-lg">
               Access Dashboard <ArrowRight size={16} />
@@ -463,9 +467,9 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           <button 
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex items-center justify-center gap-2 px-8 py-4 w-full sm:w-auto bg-signal-red text-crisp-white font-bold uppercase tracking-wider rounded-lg shadow-lg hover:bg-signal-red/90 transition disabled:opacity-50 shrink-0"
+            className="flex items-center justify-center gap-2 px-8 py-4 w-full sm:w-auto bg-signal-red text-crisp-white font-bold uppercase tracking-wider rounded-xl shadow-lg hover:bg-signal-red/90 transition disabled:opacity-50 shrink-0"
           >
-            {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> Securing Contract...</> : "Execute Agreement"}
+            {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> {loadingText}</> : "Execute Agreement"}
           </button>
         </div>
 
