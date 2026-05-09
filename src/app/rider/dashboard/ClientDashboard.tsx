@@ -1,225 +1,219 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldAlert, CheckCircle2, Clock, Copy, Lock, CarFront, WalletCards, ShieldCheck, Check, MessageCircle, Hourglass } from "lucide-react";
-import RiderVirtualAgreement from "./RiderVirtualAgreement";
+import { useRouter } from "next/navigation";
+import { Loader2, Copy, Wallet, CarFront, Users, CheckCircle2, Clock, ShieldAlert, CreditCard } from "lucide-react";
 
-export default function ClientDashboard({ 
-  rider, 
-  guarantors, 
-  baseUrl, 
-  vehicle, 
-  contract 
-}: { 
-  rider: any, 
-  guarantors: any[], 
-  baseUrl: string, 
-  vehicle: any, 
-  contract: any 
-}) {
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const g1 = guarantors[0];
-  const g2 = guarantors[1];
-
-  const g1Completed = g1?.status !== "PENDING";
-  const g2Completed = g2?.status !== "PENDING";
-  const allGuarantorsSubmitted = g1Completed && g2Completed;
-
-  const isPendingReview = allGuarantorsSubmitted && rider.accountStatus === "PENDING";
-  const isApproved = rider.accountStatus === "APPROVED";
-  const isActive = rider.accountStatus === "ACTIVE";
-  const isAwaitingSignature = rider.accountStatus === "AWAITING_SIGNATURE";
+export default function ClientDashboard({ rider, guarantors, vehicle, contract, baseUrl }: any) {
+  const router = useRouter();
   
-  // They are fully approved if they are in any of these post-review states
-  const isFullyApproved = isApproved || isActive || isAwaitingSignature;
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const copyToClipboard = (text: string, id: string) => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
+  const handleGenerateAccount = async () => {
+    setIsGenerating(true);
+    setErrorMsg("");
+    try {
+      const res = await fetch("/api/rider/generate-account", { method: "POST" });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error);
+      router.refresh();
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
-  const getWhatsAppLink = (name: string, link: string) => {
-    const text = `Hello ${name}, I have nominated you as a guarantor for my commercial vehicle allocation with YUSDAAM Autos. Please click this secure link to complete your legal attestation: ${link}`;
-    return `https://wa.me/?text=${encodeURIComponent(text)}`;
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-      
-      {/* VIRTUAL AGREEMENT MODAL */}
-      {isAwaitingSignature && (
-        <RiderVirtualAgreement 
-          rider={rider} 
-          vehicle={vehicle} 
-          contract={contract} 
-          guarantors={guarantors} 
-        />
-      )}
-
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-wider mb-2">Command Center</h1>
-        <p className="text-sm text-slate-light">Welcome back, {rider.firstName}. Review your operational status below.</p>
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Premium Header */}
+      <div className="bg-[#001232] px-6 py-10 sm:px-12 lg:px-20 text-white border-b-4 border-[#FFB902] shadow-md">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div>
+            <p className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-1">Rider Command Center</p>
+            <h1 className="text-3xl font-black tracking-tight">Welcome back, {rider.firstName}</h1>
+            <p className="text-sm text-gray-300 mt-2 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Account Status: <strong className="text-emerald-400">ACTIVE</strong>
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* PHASE TRACKER */}
-      {!isActive && (
-        <div className="bg-void-dark border border-cobalt/20 rounded-xl p-6 sm:p-8 shadow-lg">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative">
-            
-            {/* Background Line (Desktop) */}
-            <div className="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-0.5 bg-void-light/10 -translate-y-1/2 z-0"></div>
-
-            {/* Step 1: Guarantors */}
-            <div className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-3 bg-void-dark pr-4 md:pr-0">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 ${allGuarantorsSubmitted ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-signal-red/20 border-signal-red text-signal-red shadow-[0_0_15px_rgba(233,69,96,0.3)]'}`}>
-                {allGuarantorsSubmitted ? <CheckCircle2 size={24} /> : <ShieldAlert size={24} />}
-              </div>
-              <div className="text-left md:text-center">
-                <p className="text-xs font-bold uppercase tracking-widest text-crisp-white">Phase 1</p>
-                <p className="text-[10px] text-slate-light uppercase tracking-wider">{allGuarantorsSubmitted ? 'Guarantors Cleared' : 'Pending Guarantors'}</p>
-              </div>
-            </div>
-
-            {/* Step 2: Admin Review */}
-            <div className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-3 bg-void-dark pr-4 md:pr-0">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 ${isFullyApproved ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : isPendingReview ? 'bg-cobalt/20 border-cobalt text-cobalt shadow-[0_0_15px_rgba(77,148,255,0.3)]' : 'bg-void-light/5 border-void-light/10 text-slate-light/40'}`}>
-                {isFullyApproved ? <CheckCircle2 size={24} /> : isPendingReview ? <Hourglass size={24} /> : <Clock size={24} />}
-              </div>
-              <div className="text-left md:text-center">
-                <p className={`text-xs font-bold uppercase tracking-widest ${isPendingReview || isFullyApproved ? 'text-crisp-white' : 'text-slate-light/40'}`}>Phase 2</p>
-                <p className={`text-[10px] uppercase tracking-wider ${isPendingReview || isFullyApproved ? 'text-slate-light' : 'text-slate-light/40'}`}>Admin Review</p>
-              </div>
-            </div>
-
-            {/* Step 3: Fleet Allocation */}
-            <div className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-3 bg-void-dark pr-4 md:pr-0">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 ${isActive ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : isAwaitingSignature ? 'bg-signal-red/20 border-signal-red text-signal-red shadow-[0_0_15px_rgba(233,69,96,0.3)]' : 'bg-void-light/5 border-void-light/10 text-slate-light/40'}`}>
-                {isActive ? <CarFront size={24} /> : isAwaitingSignature ? <ShieldCheck size={24} /> : <Lock size={20} />}
-              </div>
-              <div className="text-left md:text-center">
-                <p className={`text-xs font-bold uppercase tracking-widest ${isActive || isAwaitingSignature ? 'text-crisp-white' : 'text-slate-light/40'}`}>Phase 3</p>
-                <p className={`text-[10px] uppercase tracking-wider ${isActive ? 'text-slate-light' : isAwaitingSignature ? 'text-signal-red' : 'text-slate-light/40'}`}>{isAwaitingSignature ? 'Sign Agreement' : 'Fleet Allocation'}</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* ADMIN REVIEW BANNER */}
-      {isPendingReview && (
-        <div className="bg-cobalt/10 border border-cobalt/30 p-6 rounded-xl flex flex-col md:flex-row md:items-center gap-6 animate-in slide-in-from-bottom-2">
-          <div className="shrink-0 bg-cobalt/20 p-4 rounded-full text-cobalt">
-            <Hourglass size={32} />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-cobalt uppercase tracking-widest mb-1">Pending Admin Review</h2>
-            <p className="text-sm text-slate-light leading-relaxed">
-              Both of your guarantors have successfully executed their deeds. Your application is currently under final review by Administration. You will be contacted shortly regarding your fleet assignment.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* GUARANTOR ACTION CARDS (Only show if not fully approved) */}
-      {!isFullyApproved && (
-        <div className="bg-void-dark border border-cobalt/20 rounded-xl overflow-hidden shadow-xl">
-          <div className="p-6 border-b border-cobalt/20 bg-void-light/5">
-            <h3 className="text-lg font-bold uppercase tracking-wider">Guarantor Protocol</h3>
-            <p className="text-xs text-slate-light">Forward these unique links to your guarantors to complete your KYC.</p>
-          </div>
-          
-          <div className="divide-y divide-cobalt/20">
-            {[g1, g2].map((g, index) => {
-              if (!g) return null;
-              const link = `${baseUrl}/guarantor/${g.token}`;
-              const isDone = g.status !== "PENDING";
-              
-              return (
-                <div key={g.id} className="p-6 flex flex-col lg:flex-row justify-between lg:items-center gap-6">
-                  
-                  {/* Guarantor Details */}
-                  <div className="flex items-center gap-4">
-                    {isDone ? (
-                      <CheckCircle2 size={32} className="text-emerald-400 shrink-0" />
-                    ) : (
-                      <ShieldAlert size={32} className="text-signal-red shrink-0" />
-                    )}
-                    <div>
-                      <p className="font-bold uppercase tracking-widest text-sm md:text-base">{g.firstName} {g.lastName}</p>
-                      <p className="text-xs text-slate-light uppercase tracking-widest">{g.relationship} • Guarantor {index + 1}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  {!isDone ? (
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-                      <button 
-                        onClick={() => copyToClipboard(link, g.id)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-void-light/5 hover:bg-void-light/10 border border-cobalt/30 text-crisp-white font-bold uppercase tracking-wider text-xs rounded-xl transition-all"
-                      >
-                        {copiedId === g.id ? <><Check size={16} className="text-emerald-400"/> Copied!</> : <><Copy size={16} className="text-cobalt"/> Copy Link</>}
-                      </button>
-                      
-                      <a 
-                        href={getWhatsAppLink(g.firstName, link)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold uppercase tracking-wider text-xs rounded-xl transition-all"
-                      >
-                        <MessageCircle size={16} /> WhatsApp
-                      </a>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold uppercase tracking-wider text-xs rounded-xl w-full lg:w-auto justify-center">
-                      <CheckCircle2 size={16} /> Deed Executed
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* DASHBOARD PREVIEW */}
-      <div className="relative">
-        <h3 className="text-lg font-bold border-b border-cobalt/20 pb-2 mb-6 uppercase tracking-wider">Fleet Operations Overview</h3>
+      {/* Main Dashboard Content */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
         
-        {/* Glassmorphism Lock Overlay */}
-        {!isActive && (
-          <div className="absolute inset-0 top-12 z-20 flex flex-col items-center justify-center bg-void-navy/60 backdrop-blur-sm rounded-xl border border-void-light/10">
-            <Lock size={48} className="text-slate-light mb-4 opacity-50" />
-            <p className="text-sm font-bold uppercase tracking-widest text-slate-light text-center px-4">
-              {isAwaitingSignature ? "Action Required: Sign Handover Agreement" : "Dashboard Locked Pending Asset Assignment"}
-            </p>
+        {errorMsg && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded shadow-sm flex items-center gap-3 text-red-800 text-sm font-bold">
+            <ShieldAlert size={18} /> {errorMsg}
           </div>
         )}
 
-        <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all duration-500 ${!isActive ? "opacity-40 grayscale pointer-events-none" : ""}`}>
-          <div className="bg-void-dark border border-cobalt/20 p-6 rounded-xl">
-            <WalletCards className="text-cobalt mb-4" size={32} />
-            <p className="text-xs text-slate-light font-bold uppercase tracking-widest mb-1">Outstanding Balance</p>
-            <p className="text-2xl font-black font-mono">₦ ---</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* LEFT COLUMN: FINANCIALS & REMITTANCE */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Dedicated Account Fintech Card */}
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+              <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
+                <div className="p-3 bg-[#001232]/5 rounded-xl">
+                  <Wallet size={24} className="text-[#001232]" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-[#001232] uppercase tracking-wide">Weekly Remittance Account</h2>
+                  <p className="text-xs text-gray-500 font-medium">Your dedicated static account for vehicle payments</p>
+                </div>
+              </div>
+
+              {rider.virtualAccountNo ? (
+                <div className="bg-gradient-to-br from-[#001232] to-gray-900 rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl">
+                  <div className="absolute top-0 right-0 p-6 opacity-10">
+                    <Wallet size={120} />
+                  </div>
+                  
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Bank Name</p>
+                  <p className="text-lg font-bold text-[#FFB902] mb-6">{rider.virtualBankName}</p>
+
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Account Number</p>
+                  <div className="flex items-center gap-4 mb-6">
+                    <p className="text-4xl font-black tracking-widest">{rider.virtualAccountNo}</p>
+                    <button 
+                      onClick={() => handleCopy(rider.virtualAccountNo)}
+                      className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
+                      title="Copy Account Number"
+                    >
+                      {copied ? <CheckCircle2 size={20} className="text-emerald-400" /> : <Copy size={20} />}
+                    </button>
+                  </div>
+
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Account Name</p>
+                  <p className="text-sm font-bold uppercase tracking-wider">{rider.virtualAccountName}</p>
+                </div>
+              ) : (
+                <div className="text-center py-10 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  <CreditCard size={48} className="text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-gray-900 font-bold mb-2">No Payment Account Assigned</h3>
+                  <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">Generate your dedicated Paystack virtual account to start making your weekly vehicle remittances securely.</p>
+                  <button 
+                    onClick={handleGenerateAccount}
+                    disabled={isGenerating}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-[#001232] text-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-gray-800 transition shadow-lg disabled:opacity-50 mx-auto"
+                  >
+                    {isGenerating ? <><Loader2 size={16} className="animate-spin" /> Generating Secure Account...</> : "Generate Virtual Account"}
+                  </button>
+                </div>
+              )}
+
+              {rider.virtualAccountNo && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800 font-medium leading-relaxed">
+                  <strong className="text-blue-900 block mb-1">Payment Instructions:</strong>
+                  Transfer your weekly remittance directly into the account details above using any bank app or USSD. Payments reflect instantly and your dashboard will be updated automatically. Cash payments are not allowed.
+                </div>
+              )}
+            </div>
+
+            {/* Contract Summary */}
+            <div className="bg-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+              <h3 className="font-bold text-[#001232] uppercase tracking-wide border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
+                <Clock size={18} className="text-gray-400" /> Contract Status
+              </h3>
+              
+              {!contract ? (
+                <p className="text-sm text-gray-500 italic py-4">Financial contract details are currently being finalized by the Administrator.</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Weekly Due</p>
+                    <p className="text-lg font-black text-[#001232]">₦{contract.weeklyRemittance?.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Total Target</p>
+                    <p className="text-lg font-black text-[#001232]">₦{contract.totalPrice?.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Tenure</p>
+                    <p className="text-lg font-black text-[#001232]">{contract.agreedDurationMonths * 4} <span className="text-xs font-medium">Weeks</span></p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Pay Day</p>
+                    <p className="text-sm font-bold text-red-600 uppercase mt-1">{contract.paymentDay || "Friday"}</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="bg-void-dark border border-cobalt/20 p-6 rounded-xl">
-            <CarFront className="text-cobalt mb-4" size={32} />
-            <p className="text-xs text-slate-light font-bold uppercase tracking-widest mb-1">Assigned Asset</p>
-            <p className="text-2xl font-black">---</p>
-          </div>
-          <div className="bg-void-dark border border-cobalt/20 p-6 rounded-xl">
-            <ShieldCheck className="text-cobalt mb-4" size={32} />
-            <p className="text-xs text-slate-light font-bold uppercase tracking-widest mb-1">Next Remittance</p>
-            <p className="text-2xl font-black font-mono">---</p>
+
+          {/* RIGHT COLUMN: FLEET & GUARANTORS */}
+          <div className="space-y-6">
+            
+            {/* Assigned Vehicle */}
+            <div className="bg-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+              <h3 className="font-bold text-[#001232] uppercase tracking-wide border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
+                <CarFront size={18} className="text-gray-400" /> Fleet Assignment
+              </h3>
+              
+              {!vehicle ? (
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <CarFront size={20} className="text-gray-400" />
+                  </div>
+                  <p className="text-sm font-bold text-gray-900">Awaiting Assignment</p>
+                  <p className="text-xs text-gray-500 mt-1">Your vehicle is being prepped for handover.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Model</p>
+                    <p className="text-sm font-bold text-[#001232]">{vehicle.makeModel}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Plate Number</p>
+                    <p className="text-sm font-bold text-[#001232] bg-gray-100 inline-block px-2 py-1 rounded">{vehicle.registrationNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Chassis No.</p>
+                    <p className="text-xs font-mono text-gray-700">{vehicle.chassisNumber}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Guarantors Status */}
+            <div className="bg-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+              <h3 className="font-bold text-[#001232] uppercase tracking-wide border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
+                <Users size={18} className="text-gray-400" /> Security Sureties
+              </h3>
+              
+              <div className="space-y-4">
+                {guarantors.map((g: any, index: number) => (
+                  <div key={g.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div>
+                      <p className="text-xs font-bold text-[#001232]">{g.firstName} {g.lastName}</p>
+                      <p className="text-[10px] text-gray-500 capitalize">{g.relationship}</p>
+                    </div>
+                    <span className="px-2 py-1 bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase tracking-widest rounded">Verified</span>
+                  </div>
+                ))}
+
+                {guarantors.length === 0 && (
+                  <p className="text-xs text-gray-500 italic">No guarantors found.</p>
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
-
     </div>
   );
 }
