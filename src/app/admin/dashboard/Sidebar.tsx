@@ -8,11 +8,13 @@ import {
   LayoutDashboard, 
   Users, 
   Car, 
-  ShieldCheck, 
   Banknote, 
   LogOut,
   Menu,
-  X
+  X,
+  FileCheck,
+  MessageSquare,
+  ClipboardList
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -21,15 +23,18 @@ export default function Sidebar() {
 
   const navItems = [
     { name: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
-    { name: "Users & KYC", href: "/admin/dashboard/users", icon: Users },
+    { name: "RIDERS KYC", href: "/admin/dashboard/kyc/riders", icon: FileCheck },
+    { name: "OWNERS KYC", href: "/admin/dashboard/kyc/owners", icon: FileCheck },
     { name: "Vehicles", href: "/admin/dashboard/vehicles", icon: Car },
-    { name: "Guarantors", href: "/admin/dashboard/guarantors", icon: ShieldCheck },
     { name: "Ledger", href: "/admin/dashboard/ledger", icon: Banknote },
+    { name: "MESSAGE", href: "/admin/dashboard/messages", icon: MessageSquare },
+    { name: "USERS", href: "/admin/dashboard/users", icon: Users },
+    { name: "ASSIGNMENT", href: "/admin/dashboard/assignment", icon: ClipboardList },
   ];
 
   return (
     <>
-      {/* MOBILE TOP BAR (Hidden on Desktop) */}
+      {/* MOBILE TOP BAR */}
       <div className="lg:hidden fixed top-0 left-0 w-full h-16 bg-void-navy border-b border-white/10 z-40 flex items-center justify-between px-4">
         <Link href="/" className="text-xl font-black tracking-wider text-crisp-white">
           YUSDAAM<span className="text-signal-red">.</span>
@@ -63,14 +68,14 @@ export default function Sidebar() {
           <p className="text-xs text-signal-red font-bold uppercase tracking-widest mt-1">Admin Panel</p>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2 mt-6 lg:mt-2">
+        <nav className="flex-1 px-4 space-y-2 mt-6 lg:mt-2 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={() => setIsOpen(false)} // Close sidebar on mobile after clicking
+                onClick={() => setIsOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
                   isActive 
                     ? "bg-cobalt/20 text-cobalt border border-cobalt/30" 
