@@ -49,9 +49,11 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       // If user logs in, populate the token with DB data
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.accountStatus = user.accountStatus;
+        // Cast to any to bypass strict AdapterUser union type checking
+        const u = user as any; 
+        token.id = u.id;
+        token.role = u.role;
+        token.accountStatus = u.accountStatus;
       }
       return token;
     },
@@ -65,7 +67,6 @@ export const authOptions: NextAuthOptions = {
       return session;
     }
   },
-  // We leave the default sign-in behavior empty because we have multiple custom login portals
   session: {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24 hours
