@@ -10,12 +10,13 @@ import { useRouter } from "next/navigation";
 type Guarantor = any; 
 type Rider = any; 
 
+// DocumentPreview includes e.stopPropagation() so clicking it doesn't accidentally trigger the accordion
 const DocumentPreview = ({ url, label }: { url: string, label: string }) => {
   if (!url) return null;
   const isPdf = url.toLowerCase().includes('.pdf');
   
   return (
-    <a href={url} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-2 text-xs text-slate-300 hover:text-white transition group">
+    <a href={url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-2 text-xs text-slate-300 hover:text-white transition group">
       <div className="w-20 h-20 bg-void-navy border border-white/10 rounded-lg overflow-hidden flex items-center justify-center group-hover:border-cobalt transition">
         {isPdf ? (
           <FileText size={28} className="text-cobalt" />
@@ -100,13 +101,25 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
             className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-void-navy border border-white/10 overflow-hidden flex items-center justify-center">
+              
+              {/* CLICKABLE PASSPORT THUMBNAIL */}
+              <div className="w-12 h-12 rounded-full bg-void-navy border border-white/10 overflow-hidden flex items-center justify-center shrink-0 relative z-10">
                 {rider.passportUrl ? (
-                  <img src={rider.passportUrl} alt="Passport" className="w-full h-full object-cover" />
+                  <a 
+                    href={rider.passportUrl} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    onClick={(e) => e.stopPropagation()} // Prevents the accordion from closing
+                    className="w-full h-full block hover:opacity-70 transition cursor-zoom-in"
+                    title="Click to view full image"
+                  >
+                    <img src={rider.passportUrl} alt="Passport" className="w-full h-full object-cover" />
+                  </a>
                 ) : (
                   <User size={20} className="text-gray-500" />
                 )}
               </div>
+
               <div className="truncate max-w-[150px] sm:max-w-xs md:max-w-md">
                 <h2 className="text-lg font-bold text-crisp-white truncate">
                   {rider.firstName} {rider.lastName}
@@ -187,6 +200,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                   <div>
                     <h3 className="text-sm font-bold text-cobalt mb-3 uppercase tracking-wider">Documents & Signatures</h3>
                     <div className="flex flex-wrap gap-4 mb-4">
+                      <DocumentPreview url={rider.passportUrl} label="Passport" />
                       <DocumentPreview url={rider.utilityBillUrl} label="Utility Bill" />
                       <DocumentPreview url={rider.driversLicenseUrl} label="D. License" />
                       <DocumentPreview url={rider.hpaAgreementUrl} label="Signed HPA" />
@@ -363,7 +377,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
         </div>
       )}
 
-      {/* THE RESTORED ERROR MODAL */}
+      {/* ERROR MODAL */}
       {error && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-void-navy border border-red-500/50 rounded-xl p-6 max-w-md w-full text-center space-y-4 shadow-2xl">
