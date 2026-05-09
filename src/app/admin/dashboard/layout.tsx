@@ -24,14 +24,15 @@ export default async function AdminDashboardLayout({
       <Sidebar />
       
       {/* Main Content Area */}
-      <main className="flex-1 lg:ml-64 p-6 lg:p-10 h-screen overflow-y-auto">
+      {/* Added pt-24 on mobile so the mobile top-nav doesn't hide the header */}
+      <main className="flex-1 lg:ml-64 p-6 pt-24 lg:p-10 lg:pt-10 h-screen overflow-y-auto">
         <header className="flex justify-between items-center mb-8 pb-4 border-b border-white/10">
           <div>
             <h1 className="text-2xl font-bold text-slate-light">Command Center</h1>
             <p className="text-sm text-gray-400">Welcome back, Administrator.</p>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-cobalt/20 border border-cobalt/50 flex items-center justify-center font-bold text-cobalt">
               AD
             </div>
