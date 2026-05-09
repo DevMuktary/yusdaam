@@ -1,12 +1,61 @@
 import { Users, Car, ShieldAlert, Banknote } from "lucide-react";
+import { PrismaClient } from "@prisma/client";
 
-export default function AdminDashboardOverview() {
-  // In the future, these will be fetched via Prisma from your database
+// Initialize Prisma
+const prisma = new PrismaClient();
+
+export default async function AdminDashboardOverview() {
+  // 1. Fetch Real Data from Database Concurrently for maximum speed
+  const [
+    pendingUsersCount,
+    activeVehiclesCount,
+    unverifiedGuarantorsCount,
+    activeContracts
+  ] = await Promise.all([
+    // Count users (both riders and owners) awaiting approval
+    prisma.user.count({
+      where: { 
+        accountStatus: "PENDING", 
+        role: { not: "ADMIN" } 
+      },
+    }),
+    
+    // Count vehicles currently on the road
+    prisma.vehicle.count({
+      where: { status: "ACTIVE" },
+    }),
+    
+    // Count guarantors that have submitted their deeds but aren't verified by admin yet
+    prisma.guarantor.count({
+      where: { status: "SUBMITTED" },
+    }),
+
+    // Fetch active contracts to calculate expected revenue
+    prisma.contract.findMany({
+      where: { isActive: true },
+      select: { weeklyRemittance: true },
+    })
+  ]);
+
+  // 2. Calculate total expected weekly remittance
+  const expectedRemittance = activeContracts.reduce(
+    (sum, contract) => sum + contract.weeklyRemittance,
+    0
+  );
+
+  // Format currency properly for Nigeria
+  const formattedRemittance = new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    maximumFractionDigits: 0,
+  }).format(expectedRemittance);
+
+  // 3. Map Data to the UI Widgets
   const stats = [
-    { title: "Pending KYC Approvals", value: "12", icon: Users, color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20" },
-    { title: "Active Vehicles", value: "48", icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/20" },
-    { title: "Unverified Guarantors", value: "7", icon: ShieldAlert, color: "text-signal-red", bg: "bg-signal-red/10", border: "border-signal-red/20" },
-    { title: "Expected Remittance (Weekly)", value: "₦1,240,000", icon: Banknote, color: "text-cobalt", bg: "bg-cobalt/10", border: "border-cobalt/20" },
+    { title: "Pending KYC Approvals", value: pendingUsersCount.toString(), icon: Users, color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20" },
+    { title: "Active Vehicles", value: activeVehiclesCount.toString(), icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/20" },
+    { title: "Unverified Guarantors", value: unverifiedGuarantorsCount.toString(), icon: ShieldAlert, color: "text-signal-red", bg: "bg-signal-red/10", border: "border-signal-red/20" },
+    { title: "Expected Remittance (Weekly)", value: formattedRemittance, icon: Banknote, color: "text-cobalt", bg: "bg-cobalt/10", border: "border-cobalt/20" },
   ];
 
   return (
@@ -34,9 +83,9 @@ export default function AdminDashboardOverview() {
         
         {/* Main Panel */}
         <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-xl p-6">
-          <h2 className="text-lg font-bold text-slate-light mb-4">Recent Platform Activity</h2>
+          <h2 className="text-lg font-bold text-slate-light mb-4">Platform Overview</h2>
           <div className="text-center py-12 text-gray-500 border border-dashed border-white/10 rounded-lg">
-            Activity feed will populate once the database is wired up.
+            Dashboard is wired up. Try registering a new user to see the stats update in real-time!
           </div>
         </div>
 
@@ -44,13 +93,11 @@ export default function AdminDashboardOverview() {
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
           <h2 className="text-lg font-bold text-slate-light mb-4">Action Items</h2>
           <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-void-navy border border-white/5 flex justify-between items-center">
-              <span className="text-sm text-gray-300">Assign Vehicle to Rider</span>
-              <button className="text-xs bg-cobalt hover:bg-blue-600 px-3 py-1.5 rounded transition">Assign</button>
+            <div className="p-4 rounded-lg bg-void-navy border border-white/5 flex flex-col gap-3">
+              <span className="text-sm text-gray-300">You have <strong>{pendingUsersCount}</strong> users awaiting KYC verification before they can use the platform.</span>
             </div>
-            <div className="p-4 rounded-lg bg-void-navy border border-white/5 flex justify-between items-center">
-              <span className="text-sm text-gray-300">Review Guarantor Deeds</span>
-              <button className="text-xs bg-signal-red hover:bg-red-700 px-3 py-1.5 rounded transition">Review</button>
+            <div className="p-4 rounded-lg bg-void-navy border border-white/5 flex flex-col gap-3">
+              <span className="text-sm text-gray-300">You have <strong>{unverifiedGuarantorsCount}</strong> guarantors waiting for deed review.</span>
             </div>
           </div>
         </div>
