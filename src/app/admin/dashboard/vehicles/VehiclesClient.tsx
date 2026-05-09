@@ -14,6 +14,7 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
 
   const [formData, setFormData] = useState({
     type: "TRICYCLE",
+    customType: "",
     makeModel: "",
     year: "",
     engineNumber: "",
@@ -29,6 +30,13 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
     e.preventDefault();
     setIsSubmitting(true);
     
+    // Safety check for custom type
+    if (formData.type === "OTHERS" && !formData.customType) {
+      alert("Please specify the custom asset type.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/admin/vehicles", {
         method: "POST",
@@ -43,7 +51,7 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
 
       alert("Vehicle successfully added to inventory!");
       setIsModalOpen(false);
-      setFormData({ type: "TRICYCLE", makeModel: "", year: "", engineNumber: "", chassisNumber: "", registrationNumber: "" });
+      setFormData({ type: "TRICYCLE", customType: "", makeModel: "", year: "", engineNumber: "", chassisNumber: "", registrationNumber: "" });
       router.refresh();
     } catch (err: any) {
       alert(err.message);
@@ -93,7 +101,9 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
                 </div>
                 <div>
                   <h3 className="font-bold text-white leading-tight">{vehicle.makeModel || "Unknown Make"}</h3>
-                  <p className="text-xs text-gray-400">{vehicle.year} • {vehicle.type}</p>
+                  <p className="text-xs text-gray-400">
+                    {vehicle.year} • {vehicle.type === 'OTHERS' ? vehicle.customType : vehicle.type.replace('_', ' ')}
+                  </p>
                 </div>
               </div>
               <span className={`px-2.5 py-1 rounded text-[10px] font-bold tracking-wider ${
@@ -144,38 +154,49 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
             <form onSubmit={handleAddVehicle} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Asset Type *</label>
-                <select name="type" value={formData.type} onChange={handleTextChange} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt" required>
-                  <option value="TRICYCLE">Tricycle (Keke)</option>
-                  <option value="MINIBUS_KOROPE">Mini-Bus (Korope)</option>
-                  <option value="CAR_UBER">Uber Sedan</option>
-                  <option value="TIPPER">Tipper Truck</option>
+                {/* Changed background to bg-void-navy to fix the white selection bug */}
+                <select name="type" value={formData.type} onChange={handleTextChange} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt appearance-none" required>
+                  <option value="TRICYCLE" className="bg-void-navy text-white">Tricycle (Keke)</option>
+                  <option value="MINIBUS_KOROPE" className="bg-void-navy text-white">Mini-Bus (Korope)</option>
+                  <option value="CAR_UBER" className="bg-void-navy text-white">Uber Sedan</option>
+                  <option value="TIPPER" className="bg-void-navy text-white">Tipper Truck</option>
+                  <option value="OTHERS" className="bg-void-navy text-white">Others (Specify)</option>
                 </select>
               </div>
+
+              {/* Conditional Input Box for 'OTHERS' */}
+              {formData.type === "OTHERS" && (
+                <div className="animate-in slide-in-from-top-2 duration-300">
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Specify Custom Asset *</label>
+                  <input type="text" name="customType" value={formData.customType} onChange={handleTextChange} placeholder="e.g. Delivery Van" className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt" required />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Make & Model *</label>
-                  <input type="text" name="makeModel" value={formData.makeModel} onChange={handleTextChange} placeholder="e.g. TVS King" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt" required />
+                  <input type="text" name="makeModel" value={formData.makeModel} onChange={handleTextChange} placeholder="e.g. TVS King" className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt" required />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Year *</label>
-                  <input type="text" name="year" value={formData.year} onChange={handleTextChange} placeholder="e.g. 2024" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt" required />
+                  <input type="text" name="year" value={formData.year} onChange={handleTextChange} placeholder="e.g. 2024" className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt" required />
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Plate / Registration No *</label>
-                <input type="text" name="registrationNumber" value={formData.registrationNumber} onChange={handleTextChange} placeholder="e.g. KJA-123XY" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt uppercase" required />
+                <input type="text" name="registrationNumber" value={formData.registrationNumber} onChange={handleTextChange} placeholder="e.g. KJA-123XY" className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt uppercase" required />
               </div>
 
+              {/* All fields are now COMPULSORY (required) */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Chassis Number</label>
-                  <input type="text" name="chassisNumber" value={formData.chassisNumber} onChange={handleTextChange} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt uppercase" />
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Chassis Number *</label>
+                  <input type="text" name="chassisNumber" value={formData.chassisNumber} onChange={handleTextChange} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt uppercase" required />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Engine Number</label>
-                  <input type="text" name="engineNumber" value={formData.engineNumber} onChange={handleTextChange} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt uppercase" />
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Engine Number *</label>
+                  <input type="text" name="engineNumber" value={formData.engineNumber} onChange={handleTextChange} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt uppercase" required />
                 </div>
               </div>
 
