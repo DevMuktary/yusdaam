@@ -209,6 +209,10 @@ model Guarantor {
 model Vehicle {
   id                 String        @id @default(cuid())
   type               VehicleType
+  makeModel          String?       // e.g., "TVS King" or "Toyota Corolla"
+  year               String?       // e.g., "2023"
+  engineNumber       String?       @unique 
+  chassisNumber      String?       @unique 
   registrationNumber String        @unique
   status             VehicleStatus @default(UNASSIGNED)
   createdAt          DateTime      @default(now())
