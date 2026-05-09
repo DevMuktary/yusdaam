@@ -50,19 +50,21 @@ export const authOptions: NextAuthOptions = {
       // If user logs in, populate the token with DB data
       if (user) {
         // Cast to any to bypass strict AdapterUser union type checking
-        const u = user as any; 
-        token.id = u.id;
-        token.role = u.role;
-        token.accountStatus = u.accountStatus;
+        const customUser = user as any; 
+        token.id = customUser.id;
+        token.role = customUser.role;
+        token.accountStatus = customUser.accountStatus;
       }
       return token;
     },
     async session({ session, token }) {
       // Send token data to the client-side session
       if (token && session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.accountStatus = token.accountStatus as string;
+        // Cast to any to bypass strict DefaultSession type checking during build
+        const sessionUser = session.user as any;
+        sessionUser.id = token.id;
+        sessionUser.role = token.role;
+        sessionUser.accountStatus = token.accountStatus;
       }
       return session;
     }
