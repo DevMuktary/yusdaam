@@ -26,12 +26,13 @@ export async function POST(req: Request) {
     const newVehicle = await prisma.vehicle.create({
       data: {
         type: data.type,
+        customType: data.type === "OTHERS" ? data.customType : null,
         makeModel: data.makeModel,
         year: data.year,
         registrationNumber: data.registrationNumber.toUpperCase(),
-        chassisNumber: data.chassisNumber?.toUpperCase() || null,
-        engineNumber: data.engineNumber?.toUpperCase() || null,
-        status: "UNASSIGNED", // Default status as discussed
+        chassisNumber: data.chassisNumber.toUpperCase(), // Now compulsory
+        engineNumber: data.engineNumber.toUpperCase(),   // Now compulsory
+        status: "UNASSIGNED", 
       }
     });
 
