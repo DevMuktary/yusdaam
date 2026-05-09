@@ -3,18 +3,19 @@
 import { useState } from "react";
 import { 
   ShieldCheck, Loader2, X, CheckCircle, 
-  ChevronDown, ChevronUp, UserCheck, UserX, FileText, User, Briefcase 
+  ChevronDown, ChevronUp, UserCheck, UserX, FileText, Briefcase 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Owner = any; 
 
+// DocumentPreview now includes e.stopPropagation() so clicking it doesn't accidentally trigger other elements
 const DocumentPreview = ({ url, label }: { url: string, label: string }) => {
   if (!url) return null;
   const isPdf = url.toLowerCase().includes('.pdf');
   
   return (
-    <a href={url} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-2 text-xs text-slate-300 hover:text-white transition group">
+    <a href={url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-2 text-xs text-slate-300 hover:text-white transition group">
       <div className="w-20 h-20 bg-void-navy border border-white/10 rounded-lg overflow-hidden flex items-center justify-center group-hover:border-cobalt transition">
         {isPdf ? (
           <FileText size={28} className="text-cobalt" />
@@ -98,13 +99,25 @@ export default function OwnersKycClient({ owners }: { owners: Owner[] }) {
             className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-void-navy border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
+              
+              {/* CLICKABLE PASSPORT THUMBNAIL */}
+              <div className="w-12 h-12 rounded-full bg-void-navy border border-white/10 overflow-hidden flex items-center justify-center shrink-0 relative z-10">
                 {owner.passportUrl ? (
-                  <img src={owner.passportUrl} alt="Passport" className="w-full h-full object-cover" />
+                  <a 
+                    href={owner.passportUrl} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    onClick={(e) => e.stopPropagation()} // Prevents the accordion from closing when the image is clicked
+                    className="w-full h-full block hover:opacity-70 transition cursor-zoom-in"
+                    title="Click to view full image"
+                  >
+                    <img src={owner.passportUrl} alt="Passport" className="w-full h-full object-cover" />
+                  </a>
                 ) : (
                   <Briefcase size={20} className="text-gray-500" />
                 )}
               </div>
+
               <div className="truncate max-w-[150px] sm:max-w-xs md:max-w-md">
                 <h2 className="text-lg font-bold text-crisp-white truncate">
                   {owner.firstName} {owner.lastName}
@@ -219,6 +232,8 @@ export default function OwnersKycClient({ owners }: { owners: Owner[] }) {
                   <div>
                     <h3 className="text-sm font-bold text-cobalt mb-3 uppercase tracking-wider">Documents & Signatures</h3>
                     <div className="flex flex-wrap gap-4 mb-4">
+                      {/* ADDED PASSPORT TO THE DOCUMENT GRID */}
+                      <DocumentPreview url={owner.passportUrl} label="Passport" />
                       <DocumentPreview url={owner.utilityBillUrl} label="Utility Bill" />
                       <DocumentPreview url={owner.poaAgreementUrl} label="Signed POA" />
                     </div>
