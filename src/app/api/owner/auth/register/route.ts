@@ -3,6 +3,14 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { sendSystemEmail } from "@/lib/email/sender";
 import { getRegistrationReceivedEmail } from "@/lib/email/templates";
+import { v2 as cloudinary } from "cloudinary";
+
+// 1. Configure Cloudinary for secure server-side uploads
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const prisma = new PrismaClient();
 
@@ -12,12 +20,13 @@ export async function POST(req: Request) {
     const {
       firstName, lastName, middleName, email, password,
       country, state, streetAddress, phoneCountryCode, phoneNumber,
-      nin, bvn, passportUrl, utilityBillUrl, // <-- NEW KYC FIELDS
-      nokFirstName, nokLastName, nokRelationship, nokPhone, nokAddress, nokIdNumber, // <-- NEW NOK FIELDS
+      nin, bvn, 
+      passportBase64, utilityBillBase64, // <-- We now receive the Base64 strings from the frontend
+      nokFirstName, nokLastName, nokRelationship, nokPhone, nokAddress, nokIdNumber, 
       bankName, bankCode, accountNumber, preferredAssetClass, intendedVolume
     } = body;
 
-    // 1. Check for existing user
+    // 2. Check for existing user
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email }, { phoneNumber }]
@@ -31,7 +40,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Paystack Bank Account Resolution
+    // 3. Paystack Bank Account Resolution
     const paystackRes = await fetch(
       `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
       {
@@ -53,11 +62,39 @@ export async function POST(req: Request) {
 
     const resolvedAccountName = paystackData.data.account_name;
 
-    // 3. Security: Hash Password
+    // 4. Securely Upload Documents to Cloudinary
+    let uploadedPassportUrl = null;
+    let uploadedUtilityUrl = null;
+
+    try {
+      if (passportBase64) {
+        const passportUpload = await cloudinary.uploader.upload(`data:image/jpeg;base64,${passportBase64}`, {
+          folder: "yusdaam_owners_kyc",
+          resource_type: "auto"
+        });
+        uploadedPassportUrl = passportUpload.secure_url;
+      }
+
+      if (utilityBillBase64) {
+        const utilityUpload = await cloudinary.uploader.upload(`data:image/jpeg;base64,${utilityBillBase64}`, {
+          folder: "yusdaam_owners_kyc",
+          resource_type: "auto"
+        });
+        uploadedUtilityUrl = utilityUpload.secure_url;
+      }
+    } catch (uploadError) {
+      console.error("Cloudinary Upload Error:", uploadError);
+      return NextResponse.json(
+        { error: "Failed to process document uploads. Please try again." },
+        { status: 500 }
+      );
+    }
+
+    // 5. Security: Hash Password
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // 4. Save to Database
+    // 6. Save Everything to Database
     const newUser = await prisma.user.create({
       data: {
         firstName,
@@ -72,11 +109,11 @@ export async function POST(req: Request) {
         phoneCountryCode,
         phoneNumber,
         
-        // Identity & KYC
+        // Identity & KYC (Using the newly uploaded secure URLs)
         nin,
         bvn,
-        passportUrl,
-        utilityBillUrl,
+        passportUrl: uploadedPassportUrl,
+        utilityBillUrl: uploadedUtilityUrl,
         
         // Next of Kin
         nokFirstName,
@@ -99,7 +136,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // 5. Generate and Send HTML Email via Library
+    // 7. Generate and Send HTML Email
     const emailHtml = getRegistrationReceivedEmail({
       firstName,
       lastName,
@@ -111,12 +148,13 @@ export async function POST(req: Request) {
       bankName
     });
 
-    await sendSystemEmail({
+    // Fire off email without blocking the response
+    sendSystemEmail({
       toEmail: email,
       toName: `${firstName} ${lastName}`,
-      subject: "Welcome to YUSDAAM Autos - Registration Received", // Updated Subject
+      subject: "Welcome to YUSDAAM Autos - Registration Received",
       htmlBody: emailHtml
-    });
+    }).catch(err => console.error("Email dispatch failed:", err));
 
     // Remove password from response
     const { password: _, ...safeOwnerData } = newUser;
