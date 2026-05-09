@@ -107,7 +107,7 @@ export const getAgreementSignedEmail = (data: AgreementSignedEmailData) => {
   `;
 };
 
-// --- NEW RIDER TEMPLATE ---
+// --- RIDER TEMPLATE ---
 export const getRiderAgreementSignedEmail = (data: AgreementSignedEmailData) => {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
@@ -137,6 +137,91 @@ export const getRiderAgreementSignedEmail = (data: AgreementSignedEmailData) => 
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9335611)</strong></p>
         <p style="margin: 0 0 15px 0;">18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos.</p>
+        <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
+      </div>
+    </div>
+  `;
+};
+
+// --- NEW KYC APPROVAL TEMPLATES ---
+export interface AccountStatusEmailData {
+  firstName: string;
+  email: string;
+  role: string;
+}
+
+export const getAccountApprovedEmail = (data: AccountStatusEmailData) => {
+  const loginUrl = data.role === "RIDER" 
+    ? "https://yusdaamautos.com/rider/login" 
+    : "https://yusdaamautos.com/owner/login";
+    
+  const roleName = data.role === "RIDER" ? "Rider" : "Asset Owner";
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
+      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px;">
+        <h1 style="margin: 0; font-size: 22px; color: #001232; letter-spacing: 1px;">
+          YUSDAAM<span style="color: #FFB902;">.</span>
+        </h1>
+      </div>
+      
+      <div style="font-size: 15px;">
+        <p>Hi ${data.firstName},</p>
+        
+        <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
+          <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Account Approved</h3>
+          <p style="margin: 0; font-size: 14px; color: #4a4a4a;">Congratulations! Your KYC documents have been successfully verified by our compliance team.</p>
+        </div>
+
+        <p>Your profile is now fully active as a verified <strong>${roleName}</strong>. You can now log into your portal to view your dashboard and proceed with the next steps of your deployment.</p>
+        
+        <div style="margin: 35px 0; text-align: center;">
+          <a href="${loginUrl}" style="background-color: #001232; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 15px; display: inline-block;">Access Your Portal</a>
+        </div>
+        
+        <p style="margin-top: 35px; margin-bottom: 0;">
+          Welcome to the Yusdaam Fleet,<br>
+          <strong>The YUSDAAM Team</strong>
+        </p>
+      </div>
+
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9335611)</strong></p>
+        <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
+      </div>
+    </div>
+  `;
+};
+
+export const getAccountRejectedEmail = (data: AccountStatusEmailData) => {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
+      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px;">
+        <h1 style="margin: 0; font-size: 22px; color: #001232; letter-spacing: 1px;">
+          YUSDAAM<span style="color: #FFB902;">.</span>
+        </h1>
+      </div>
+      
+      <div style="font-size: 15px;">
+        <p>Hi ${data.firstName},</p>
+        
+        <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 25px 0;">
+          <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Account Verification Update</h3>
+          <p style="margin: 0; font-size: 14px; color: #4a4a4a;">Unfortunately, we were unable to verify your profile based on the KYC documents and information provided.</p>
+        </div>
+
+        <p>This can happen for a few reasons, such as a mismatch in your National ID details, unverified guarantor information, or unclear document uploads.</p>
+        
+        <p>If you believe this was a mistake or you would like to provide updated documentation, please reply directly to this email or contact our support team.</p>
+        
+        <p style="margin-top: 35px; margin-bottom: 0;">
+          Regards,<br>
+          <strong>The YUSDAAM Compliance Team</strong>
+        </p>
+      </div>
+
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9335611)</strong></p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
       </div>
     </div>
