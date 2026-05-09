@@ -40,8 +40,8 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleVerifyNIN = async (nin: string, userId: string) => {
-    setVerifyingId(userId);
+  const handleVerifyNIN = async (nin: string, targetId: string) => {
+    setVerifyingId(targetId);
     setError(null);
     setNinData(null);
     
@@ -107,37 +107,37 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                   <User size={20} className="text-gray-500" />
                 )}
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-crisp-white">
+              <div className="truncate max-w-[150px] sm:max-w-xs md:max-w-md">
+                <h2 className="text-lg font-bold text-crisp-white truncate">
                   {rider.firstName} {rider.lastName}
                 </h2>
-                <p className="text-sm text-gray-400">{rider.email} • {rider.phoneNumber}</p>
+                <p className="text-sm text-gray-400 truncate">{rider.phoneNumber}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+            <div className="flex items-center gap-2 sm:gap-6">
+              <span className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold ${
                 rider.accountStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : 
                 rider.accountStatus === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
                 'bg-amber-500/20 text-amber-400'
               }`}>
                 {rider.accountStatus}
               </span>
-              {expandedId === rider.id ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+              {expandedId === rider.id ? <ChevronUp className="text-gray-400 shrink-0" /> : <ChevronDown className="text-gray-400 shrink-0" />}
             </div>
           </div>
 
           {/* EXPANDED DETAILS */}
           {expandedId === rider.id && (
-            <div className="p-6 border-t border-white/10 bg-void-navy/50">
+            <div className="p-4 sm:p-6 border-t border-white/10 bg-void-navy/50">
               
               {/* ACTION BUTTONS */}
               {rider.accountStatus === "PENDING" && (
-                <div className="flex gap-4 mb-8 pb-6 border-b border-white/10">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 pb-6 border-b border-white/10">
                   <button 
                     onClick={() => handleStatusUpdate(rider.id, "APPROVED")}
                     disabled={isProcessing === rider.id}
-                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold transition disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold transition disabled:opacity-50 w-full sm:w-auto"
                   >
                     {isProcessing === rider.id ? <Loader2 className="animate-spin" size={18} /> : <UserCheck size={18} />}
                     Approve Rider
@@ -145,7 +145,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                   <button 
                     onClick={() => handleStatusUpdate(rider.id, "REJECTED")}
                     disabled={isProcessing === rider.id}
-                    className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold transition disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold transition disabled:opacity-50 w-full sm:w-auto"
                   >
                     {isProcessing === rider.id ? <Loader2 className="animate-spin" size={18} /> : <UserX size={18} />}
                     Reject Rider
@@ -153,7 +153,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
                 
                 {/* COLUMN 1: Personal & KYC */}
                 <div className="space-y-6">
@@ -161,23 +161,24 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                     <h3 className="text-sm font-bold text-cobalt mb-3 uppercase tracking-wider">Identity Data</h3>
                     <div className="space-y-2 text-sm">
                       <p className="text-gray-400">Full Name: <span className="text-white font-medium">{rider.firstName} {rider.middleName} {rider.lastName}</span></p>
+                      <p className="text-gray-400">Email: <span className="text-white break-all">{rider.email}</span></p>
                       <p className="text-gray-400">Address: <span className="text-white">{rider.streetAddress}, {rider.state}, {rider.country}</span></p>
                       <p className="text-gray-400">BVN: <span className="text-amber-400 font-mono tracking-widest">{rider.bvn || "Not Provided"}</span></p>
                     </div>
                   </div>
 
                   <div className="p-4 bg-void-navy rounded-lg border border-white/5">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">National ID Number (NIN)</p>
-                    <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Rider NIN</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <p className="text-lg font-bold text-white tracking-widest">{rider.nin || "Not Provided"}</p>
                       {rider.nin && (
                         <button
                           onClick={() => handleVerifyNIN(rider.nin, rider.id)}
                           disabled={verifyingId === rider.id}
-                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-lg shadow-blue-900/20 disabled:opacity-50"
+                          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-lg shadow-blue-900/20 disabled:opacity-50 w-full sm:w-auto"
                         >
                           {verifyingId === rider.id ? <Loader2 className="animate-spin" size={16} /> : <ShieldCheck size={16} />}
-                          Verify NIN
+                          Verify
                         </button>
                       )}
                     </div>
@@ -230,52 +231,69 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                     <div className="space-y-2 text-sm bg-emerald-500/10 p-4 rounded-lg border border-emerald-500/20">
                       <p className="text-xs text-emerald-400 mb-2 font-bold border-b border-emerald-500/20 pb-1">Paystack Dedicated Account</p>
                       <p className="text-gray-400">Bank: <span className="text-white">{rider.virtualBankName || "Pending Setup"}</span></p>
-                      <p className="text-gray-400">Account: <span className="text-white font-mono tracking-wider">{rider.virtualAccountNo || "Pending Setup"}</span></p>
+                      <p className="text-gray-400">Account: <span className="text-white font-mono tracking-wider break-all">{rider.virtualAccountNo || "Pending Setup"}</span></p>
                     </div>
                   </div>
                 </div>
 
                 {/* COLUMN 3: Guarantors Details */}
-                <div className="space-y-4 xl:col-span-1 md:col-span-2">
+                <div className="space-y-4 xl:col-span-1 lg:col-span-2">
                   <h3 className="text-sm font-bold text-signal-red mb-3 uppercase tracking-wider flex items-center gap-2">
                     <ShieldCheck size={18} /> Guarantor Dossiers
                   </h3>
                   
                   {rider.guarantors && rider.guarantors.length > 0 ? (
                     rider.guarantors.map((g: Guarantor) => (
-                      <div key={g.id} className="bg-void-navy p-5 rounded-lg border border-white/5 space-y-4 shadow-lg">
-                        <div className="flex justify-between items-start">
-                          <div className="flex gap-3 items-center">
-                            <div className="w-12 h-12 rounded-full bg-white/5 overflow-hidden flex items-center justify-center border border-white/10">
-                               {g.passportUrl ? <img src={g.passportUrl} className="w-full h-full object-cover"/> : <User size={20} className="text-gray-500"/>}
-                            </div>
-                            <div>
-                              <p className="font-bold text-white text-base leading-tight">{g.firstName} {g.lastName}</p>
-                              <p className="text-xs text-gray-400 mt-1">{g.relationship} • {g.phone}</p>
-                            </div>
+                      <div key={g.id} className="bg-void-navy p-4 sm:p-5 rounded-lg border border-white/5 space-y-4 shadow-lg">
+                        <div className="flex gap-3 items-center border-b border-white/10 pb-3">
+                          <div className="w-12 h-12 rounded-full bg-white/5 overflow-hidden flex items-center justify-center border border-white/10 shrink-0">
+                              {g.passportUrl ? <img src={g.passportUrl} className="w-full h-full object-cover"/> : <User size={20} className="text-gray-500"/>}
+                          </div>
+                          <div className="truncate">
+                            <p className="font-bold text-white text-base leading-tight truncate">{g.firstName} {g.lastName}</p>
+                            <p className="text-xs text-gray-400 mt-1 truncate">{g.relationship} • {g.phone}</p>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                           <div>
-                             <p className="text-gray-500 mb-0.5">Email</p>
-                             <p className="text-white">{g.email || "N/A"}</p>
+                        {/* Mobile Optimized Grid for Guarantor Data */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                           
+                           {/* Email (With Break All to prevent overflow) */}
+                           <div className="col-span-1 sm:col-span-2">
+                             <p className="text-gray-500 mb-1 uppercase tracking-wider text-[10px]">Email Address</p>
+                             <p className="text-white break-all bg-white/5 p-2 rounded">{g.email || "N/A"}</p>
                            </div>
-                           <div>
-                             <p className="text-gray-500 mb-0.5">NIN</p>
-                             <p className="text-white">{g.nin || "N/A"}</p>
+                           
+                           {/* NIN With Verify Button */}
+                           <div className="col-span-1 sm:col-span-2">
+                             <p className="text-gray-500 mb-1 uppercase tracking-wider text-[10px]">Guarantor NIN</p>
+                             <div className="flex items-center justify-between bg-white/5 p-2 rounded">
+                               <p className="text-white font-mono tracking-widest text-sm">{g.nin || "N/A"}</p>
+                               {g.nin && (
+                                 <button
+                                   onClick={() => handleVerifyNIN(g.nin, g.id)}
+                                   disabled={verifyingId === g.id}
+                                   className="flex items-center gap-1.5 bg-cobalt hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold transition disabled:opacity-50"
+                                 >
+                                   {verifyingId === g.id ? <Loader2 className="animate-spin" size={14} /> : <ShieldCheck size={14} />}
+                                   Verify
+                                 </button>
+                               )}
+                             </div>
                            </div>
-                           <div className="col-span-2">
+
+                           <div className="col-span-1 sm:col-span-2 mt-2">
                              <p className="text-gray-500 mb-0.5">Address ({g.residentialStatus || "Unknown"})</p>
                              <p className="text-white">{g.address || "N/A"}</p>
                            </div>
-                           <div className="col-span-2">
+                           
+                           <div className="col-span-1 sm:col-span-2">
                              <p className="text-gray-500 mb-0.5">Employment ({g.employmentStatus || "Unknown"})</p>
                              <p className="text-white">{g.employerName || "N/A"} - {g.officeAddress}</p>
                            </div>
                         </div>
 
-                        <div className="pt-3 border-t border-white/10 flex gap-4">
+                        <div className="pt-3 border-t border-white/10 flex flex-wrap gap-4">
                            {g.utilityBillUrl && (
                              <div>
                                 <p className="text-gray-500 text-[10px] uppercase mb-1">Utility</p>
@@ -285,7 +303,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                            {g.signatureUrl && (
                              <div>
                                 <p className="text-gray-500 text-[10px] uppercase mb-1">Signature</p>
-                                <div className="bg-white p-1 rounded w-32 h-16 flex items-center justify-center">
+                                <div className="bg-white p-1 rounded w-32 h-20 flex items-center justify-center">
                                    <img src={g.signatureUrl} alt="Signature" className="max-h-full max-w-full object-contain" />
                                 </div>
                                 <p className="text-[9px] text-gray-500 mt-1">IP: {g.ipAddress}</p>
@@ -318,7 +336,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
               </button>
             </div>
             
-            <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[80vh] overflow-y-auto">
               <div className="flex flex-col items-center space-y-3">
                 {ninData.photo ? (
                   <div className="w-32 h-32 rounded-lg overflow-hidden border-2 border-emerald-500/50 shadow-lg">
@@ -330,12 +348,12 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                 <span className="text-xs bg-white/10 px-2 py-1 rounded text-gray-300">NIMC Match</span>
               </div>
 
-              <div className="md:col-span-2 grid grid-cols-2 gap-4">
+              <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div><p className="text-xs text-gray-500">First Name</p><p className="font-bold text-white text-lg">{ninData.firstname}</p></div>
                 <div><p className="text-xs text-gray-500">Surname</p><p className="font-bold text-white text-lg">{ninData.surname}</p></div>
                 <div><p className="text-xs text-gray-500">Date of Birth</p><p className="font-bold text-white">{ninData.birthdate}</p></div>
                 <div><p className="text-xs text-gray-500">Gender</p><p className="font-bold text-white uppercase">{ninData.gender}</p></div>
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <p className="text-xs text-gray-500">Registered Address</p>
                   <p className="font-bold text-white">{ninData.residence_AdressLine1}, {ninData.residence_lga}, {ninData.residence_state}</p>
                 </div>
@@ -354,7 +372,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
             </div>
             <h3 className="text-xl font-bold text-red-500">Verification Failed</h3>
             <p className="text-gray-300 text-sm">{error}</p>
-            <p className="text-xs text-gray-500">INVALID NIN.</p>
+            <p className="text-xs text-gray-500 mt-2">Ensure the NIN is exactly 11 digits and your Robosttech API Key is correctly set in your Railway variables.</p>
             <button 
               onClick={() => setError(null)}
               className="bg-red-600 hover:bg-red-500 text-white px-8 py-2.5 rounded-lg font-bold transition w-full mt-4"
