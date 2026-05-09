@@ -38,7 +38,7 @@ export async function GET(req: Request) {
     const ledgers = vehicle.ledgers.filter((l: any) => l.type === "PAYMENT_COLLECTED");
 
     // Dynamic Calculation Logic
-    const startDate = new Date(contract.createdAt); // TypeScript now knows this is safe
+    const startDate = new Date(contract.createdAt); 
     const now = new Date();
     const msInWeek = 7 * 24 * 60 * 60 * 1000;
 
@@ -60,7 +60,9 @@ export async function GET(req: Request) {
         })
         .reduce((sum: number, l: any) => sum + l.amount, 0);
 
-      const target = contract.weeklyRemittance;
+      // CHANGED: Now correctly looks at what the RIDER is supposed to pay
+      const target = contract.riderWeeklyRemittance;
+      
       const shortfall = target - paid;
       cumulativeArrears += shortfall;
 
