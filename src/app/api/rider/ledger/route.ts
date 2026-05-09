@@ -25,19 +25,20 @@ export async function GET(req: Request) {
       }
     });
 
-    // If no contract is active yet, return empty ledger
-    if (!rider || !rider.assignedTrip || !rider.assignedTrip.contract) {
+    // Safely extract variables to satisfy TypeScript's strict null checks
+    const vehicle = rider?.assignedTrip;
+    const contract = vehicle?.contract;
+
+    // If no contract is active yet, return an empty ledger
+    if (!rider || !vehicle || !contract) {
       return NextResponse.json({ ledger: [] }, { status: 200 });
     }
-
-    const vehicle = rider.assignedTrip;
-    const contract = vehicle.contract;
     
     // Only look at actual payments made by the rider
     const ledgers = vehicle.ledgers.filter((l: any) => l.type === "PAYMENT_COLLECTED");
 
     // Dynamic Calculation Logic
-    const startDate = new Date(contract.createdAt);
+    const startDate = new Date(contract.createdAt); // TypeScript now knows this is safe
     const now = new Date();
     const msInWeek = 7 * 24 * 60 * 60 * 1000;
 
