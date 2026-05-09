@@ -213,7 +213,7 @@ model Vehicle {
   year               String?       // e.g., "2023"
   engineNumber       String?        
   chassisNumber      String?        
-  registrationNumber String        @unique
+  registrationNumber String        
   status             VehicleStatus @default(UNASSIGNED)
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
