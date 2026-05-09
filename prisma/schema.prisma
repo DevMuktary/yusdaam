@@ -29,6 +29,7 @@ enum VehicleType {
   MOTORCYCLE
   MINIBUS_KOROPE
   TIPPER
+  OTHERS
 }
 
 enum VehicleStatus {
@@ -211,7 +212,8 @@ model Vehicle {
   type               VehicleType
   makeModel          String?       // e.g., "TVS King" or "Toyota Corolla"
   year               String?       // e.g., "2023"
-  engineNumber       String?        
+  engineNumber       String?  
+  customType         String?
   chassisNumber      String?        
   registrationNumber String        
   status             VehicleStatus @default(UNASSIGNED)
