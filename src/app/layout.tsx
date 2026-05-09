@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
-import Footer from "@/components/Footer";
+import ConditionalFooter from "@/components/ConditionalFooter";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,7 +26,7 @@ export default function RootLayout({
           {children}
         </main>
         
-        {/* Global Footer (Shows at the bottom of every page) */}
+        {/* Conditional Footer (Hidden on dashboards/login) */}
         <ConditionalFooter />
 
         {/* Global WhatsApp Button (Floats above everything) */}
