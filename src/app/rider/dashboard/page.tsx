@@ -1,9 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import { ShieldAlert, Loader2, CheckCircle2, Clock, CarFront, Banknote, Calendar, Activity } from "lucide-react";
-import VirtualAgreement from "./VirtualAgreement";
-import Link from "next/link";
+import { ShieldAlert, Loader2, CheckCircle2, Clock, CarFront, Banknote } from "lucide-react";
+import VirtualAgreement from "./VirtualAgreement"; // IMPORTANT: Ensure your agreement file is named exactly VirtualAgreement.tsx
 
 const prisma = new PrismaClient();
 
@@ -11,18 +10,11 @@ export default async function RiderDashboardHome() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
 
-  // Fetch Rider, their assigned vehicle, and the active contract
+  // Fetch Rider, their assigned vehicle, contract, AND guarantors
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { 
-      id: true,
-      accountStatus: true, 
-      firstName: true, 
-      lastName: true,
-      email: true,
-      phoneNumber: true,
-      nin: true,
-      streetAddress: true,
+    include: { 
+      guarantors: true,
       assignedTrip: {
         include: {
           contract: true
@@ -32,10 +24,9 @@ export default async function RiderDashboardHome() {
   });
 
   const currentStatus = String(user?.accountStatus);
-  const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
-  
   const vehicle = user?.assignedTrip;
   const contract = vehicle?.contract;
+  const guarantors = user?.guarantors || [];
 
   // --- STATE 1: PENDING KYC ---
   if (currentStatus === "PENDING" || currentStatus === "undefined" || !user?.accountStatus) {
@@ -85,29 +76,18 @@ export default async function RiderDashboardHome() {
   if (currentStatus === "AWAITING_SIGNATURE" && vehicle && contract) {
     return (
       <div className="py-6 overflow-x-hidden">
+        {/* We now pass the entire objects exactly as your VirtualAgreement expects them */}
         <VirtualAgreement 
-          riderId={user?.id}
-          riderName={fullName} 
-          riderAddress={user?.streetAddress || ""}
-          riderPhone={user?.phoneNumber || ""}
-          riderNin={user?.nin || ""}
-          vehicleType={vehicle.type}
-          makeModel={vehicle.makeModel || ""}
-          year={vehicle.year || ""}
-          registrationNumber={vehicle.registrationNumber}
-          chassisNumber={vehicle.chassisNumber || "N/A"}
-          engineNumber={vehicle.engineNumber || "N/A"}
-          totalPrice={contract.totalHirePurchasePrice}
-          downPayment={contract.downPayment}
-          weeklyRemittance={contract.riderWeeklyRemittance}
-          durationWeeks={contract.riderDurationWeeks}
+          rider={user}
+          vehicle={vehicle}
+          contract={contract}
+          guarantors={guarantors}
         />
       </div>
     );
   }
 
   // --- STATE 3: FULLY ACTIVE DASHBOARD ---
-  // (We will build the detailed active dashboard out later, but here is a placeholder)
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden">
       <div className="border-b border-cobalt/20 pb-6">
