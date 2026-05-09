@@ -27,7 +27,7 @@ export default function RootLayout({
         </main>
         
         {/* Global Footer (Shows at the bottom of every page) */}
-        <Footer />
+        <ConditionalFooter />
 
         {/* Global WhatsApp Button (Floats above everything) */}
         <FloatingWhatsApp />
