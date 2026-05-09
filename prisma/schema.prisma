@@ -229,18 +229,27 @@ model Vehicle {
 }
 
 model Contract {
-  id                   String   @id @default(cuid())
-  ownerId              String   
-  vehicleId            String   @unique
-  weeklyRemittance     Float    
-  agreedDurationMonths Int
-  isActive             Boolean  @default(true)
-  signedDocumentUrl    String?  
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                     String   @id @default(cuid())
+  ownerId                String   
+  vehicleId              String   @unique
+  
+  // --- RIDER TERMS ---
+  totalHirePurchasePrice Float    // The total price the rider is buying it for
+  downPayment            Float    @default(0) // What they paid upfront
+  riderWeeklyRemittance  Float    // What the rider pays every week
+  riderDurationWeeks     Int      // How many weeks the rider will pay
 
-  owner                User     @relation(fields: [ownerId], references: [id])
-  vehicle              Vehicle  @relation(fields: [vehicleId], references: [id])
+  // --- OWNER TERMS ---
+  ownerWeeklyPayout      Float    // What the investor/owner receives weekly
+  ownerDurationWeeks     Int      // How many weeks the owner receives this payout
+
+  isActive               Boolean  @default(true)
+  signedDocumentUrl      String?  
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  owner                  User     @relation(fields: [ownerId], references: [id])
+  vehicle                Vehicle  @relation(fields: [vehicleId], references: [id])
 }
 
 model Ledger {
