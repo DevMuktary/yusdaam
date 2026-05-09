@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldAlert, CheckCircle2, Clock, Copy, Lock, CarFront, WalletCards, ShieldCheck, Check, MessageCircle, Hourglass, Loader2, Landmark, AlertTriangle } from "lucide-react";
 import RiderVirtualAgreement from "./RiderVirtualAgreement";
@@ -25,19 +25,17 @@ export default function ClientDashboard({
   const [isGenerating, setIsGenerating] = useState(false);
   const [accountError, setAccountError] = useState("");
 
+  // Real Ledger State
+  const [ledgerData, setLedgerData] = useState<any[]>([]);
+  const [isLoadingLedger, setIsLoadingLedger] = useState(true);
+
   const g1 = guarantors[0];
   const g2 = guarantors[1];
-
-  const g1Completed = g1?.status !== "PENDING";
-  const g2Completed = g2?.status !== "PENDING";
-  const allGuarantorsSubmitted = g1Completed && g2Completed;
-
+  const allGuarantorsSubmitted = g1?.status !== "PENDING" && g2?.status !== "PENDING";
   const isPendingReview = allGuarantorsSubmitted && rider.accountStatus === "PENDING";
-  const isApproved = rider.accountStatus === "APPROVED";
   const isActive = rider.accountStatus === "ACTIVE";
   const isAwaitingSignature = rider.accountStatus === "AWAITING_SIGNATURE";
-  
-  const isFullyApproved = isApproved || isActive || isAwaitingSignature;
+  const isFullyApproved = rider.accountStatus === "APPROVED" || isActive || isAwaitingSignature;
 
   const copyToClipboard = (text: string, id: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -60,7 +58,7 @@ export default function ClientDashboard({
       const data = await res.json();
       
       if (!res.ok) throw new Error(data.error || "Failed to generate account");
-      router.refresh(); // Refresh to show the new account details
+      router.refresh(); 
     } catch (err: any) {
       setAccountError(err.message);
     } finally {
@@ -68,13 +66,23 @@ export default function ClientDashboard({
     }
   };
 
-  // MOCK DATA: We will replace this with real Ledger queries later
-  const mockWeeklyLedger = [
-    { week: 1, target: 100000, paid: 100000, arrears: 0, status: "CLEARED", date: "Oct 12, 2026" },
-    { week: 2, target: 100000, paid: 80000, arrears: 20000, status: "PARTIAL", date: "Oct 19, 2026" },
-    { week: 3, target: 100000, paid: 0, arrears: 100000, status: "OVERDUE", date: "Oct 26, 2026" },
-    { week: 4, target: 100000, paid: 0, arrears: 0, status: "PENDING", date: "Nov 02, 2026" },
-  ];
+  // Fetch Real Ledger Data
+  useEffect(() => {
+    if (isActive) {
+      fetch("/api/rider/ledger")
+        .then(res => res.json())
+        .then(data => {
+          if (data.ledger) setLedgerData(data.ledger);
+          setIsLoadingLedger(false);
+        })
+        .catch(err => {
+          console.error("Ledger Error", err);
+          setIsLoadingLedger(false);
+        });
+    } else {
+      setIsLoadingLedger(false);
+    }
+  }, [isActive]);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
@@ -219,9 +227,62 @@ export default function ClientDashboard({
           </div>
         )}
 
-        <div className={`transition-all duration-500 ${!isActive ? "opacity-40 grayscale pointer-events-none" : "space-y-6"}`}>
+        <div className={`transition-all duration-500 ${!isActive ? "opacity-40 grayscale pointer-events-none" : "flex flex-col gap-6"}`}>
           
-          {/* QUICK STATS */}
+          {/* 1. TOP SECTION: VIRTUAL ACCOUNT CARD */}
+          <div className="bg-void-dark border border-cobalt/20 rounded-xl p-6 lg:p-8 shadow-lg">
+            <h3 className="font-bold border-b border-cobalt/20 pb-3 mb-6 uppercase tracking-wider flex items-center gap-2">
+              <Landmark size={18} className="text-cobalt"/> Payment Account
+            </h3>
+
+            {accountError && <p className="text-signal-red text-xs font-bold mb-4">{accountError}</p>}
+
+            {rider.virtualAccountNo ? (
+              <div className="flex flex-col lg:flex-row gap-6 items-center">
+                <div className="w-full lg:w-1/2 bg-gradient-to-br from-cobalt/20 to-void-navy border border-cobalt/30 rounded-xl p-6 relative overflow-hidden shrink-0">
+                  <div className="absolute -right-4 -top-4 opacity-10">
+                    <Landmark size={100} />
+                  </div>
+                  <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Bank Name</p>
+                  <p className="text-sm font-bold text-emerald-400 mb-4">{rider.virtualBankName}</p>
+
+                  <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Account Number</p>
+                  <div className="flex items-center gap-3 mb-4">
+                    <p className="text-2xl font-black tracking-widest text-crisp-white font-mono">{rider.virtualAccountNo}</p>
+                    <button onClick={() => copyToClipboard(rider.virtualAccountNo, 'acc')} className="p-2 bg-void-light/10 hover:bg-void-light/20 rounded-lg transition">
+                      {copiedId === 'acc' ? <CheckCircle2 size={16} className="text-emerald-400" /> : <Copy size={16} className="text-slate-light" />}
+                    </button>
+                  </div>
+
+                  <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Account Name</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-crisp-white">{rider.virtualAccountName}</p>
+                </div>
+                
+                <div className="w-full lg:w-1/2 p-6 bg-signal-red/5 border border-signal-red/10 rounded-xl text-sm text-slate-light leading-relaxed">
+                  <h4 className="flex items-center gap-2 text-signal-red font-bold uppercase tracking-wider mb-2">
+                    <AlertTriangle size={18} /> Important Notice
+                  </h4>
+                  <p className="mb-4">This is your dedicated static account for all vehicle remittances. Any funds transferred to this account will be automatically credited to your weekly ledger.</p>
+                  <p className="font-bold text-crisp-white">Do not hand cash to any staff. Always use this account.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <WalletCards size={40} className="text-slate-light/30 mx-auto mb-4" />
+                <p className="text-sm font-bold text-crisp-white mb-2">No Account Found</p>
+                <p className="text-xs text-slate-light mb-6 max-w-sm mx-auto">Generate your dedicated Paystack virtual account to securely make your weekly vehicle remittances.</p>
+                <button 
+                  onClick={handleGenerateAccount}
+                  disabled={isGenerating}
+                  className="flex items-center justify-center gap-2 px-8 py-4 bg-cobalt hover:bg-cobalt/90 text-crisp-white font-bold uppercase tracking-wider text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(77,148,255,0.3)] disabled:opacity-50 mx-auto"
+                >
+                  {isGenerating ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : "Generate Virtual Account"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 2. MIDDLE SECTION: QUICK STATS */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-void-dark border border-cobalt/20 p-6 rounded-xl shadow-lg">
               <CarFront className="text-cobalt mb-4" size={32} />
@@ -243,65 +304,21 @@ export default function ClientDashboard({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* VIRTUAL ACCOUNT CARD */}
-            <div className="lg:col-span-1 bg-void-dark border border-cobalt/20 rounded-xl p-6 shadow-lg h-fit">
-              <h3 className="font-bold border-b border-cobalt/20 pb-3 mb-6 uppercase tracking-wider flex items-center gap-2">
-                <Landmark size={18} className="text-cobalt"/> Payment Account
-              </h3>
+          {/* 3. BOTTOM SECTION: REMITTANCE LEDGER */}
+          <div className="bg-void-dark border border-cobalt/20 rounded-xl p-6 shadow-lg">
+            <h3 className="font-bold border-b border-cobalt/20 pb-3 mb-6 uppercase tracking-wider flex items-center gap-2">
+              <Clock size={18} className="text-cobalt"/> Weekly Remittance Ledger
+            </h3>
 
-              {accountError && <p className="text-signal-red text-xs font-bold mb-4">{accountError}</p>}
-
-              {rider.virtualAccountNo ? (
-                <div className="bg-gradient-to-br from-cobalt/20 to-void-navy border border-cobalt/30 rounded-xl p-6 relative overflow-hidden">
-                  <div className="absolute -right-4 -top-4 opacity-10">
-                    <Landmark size={100} />
-                  </div>
-                  <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Bank Name</p>
-                  <p className="text-sm font-bold text-emerald-400 mb-4">{rider.virtualBankName}</p>
-
-                  <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Account Number</p>
-                  <div className="flex items-center gap-3 mb-4">
-                    <p className="text-2xl font-black tracking-widest text-crisp-white font-mono">{rider.virtualAccountNo}</p>
-                    <button onClick={() => copyToClipboard(rider.virtualAccountNo, 'acc')} className="p-2 bg-void-light/10 hover:bg-void-light/20 rounded-lg transition">
-                      {copiedId === 'acc' ? <CheckCircle2 size={16} className="text-emerald-400" /> : <Copy size={16} className="text-slate-light" />}
-                    </button>
-                  </div>
-
-                  <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Account Name</p>
-                  <p className="text-xs font-bold uppercase tracking-wider text-crisp-white">{rider.virtualAccountName}</p>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <WalletCards size={40} className="text-slate-light/30 mx-auto mb-4" />
-                  <p className="text-sm font-bold text-crisp-white mb-2">No Account Found</p>
-                  <p className="text-xs text-slate-light mb-6">Generate your dedicated Paystack virtual account to make your weekly remittances.</p>
-                  <button 
-                    onClick={handleGenerateAccount}
-                    disabled={isGenerating}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-cobalt hover:bg-cobalt/90 text-crisp-white font-bold uppercase tracking-wider text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(77,148,255,0.3)] disabled:opacity-50"
-                  >
-                    {isGenerating ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : "Generate Account"}
-                  </button>
-                </div>
-              )}
-
-              <div className="mt-6 p-4 bg-signal-red/10 border border-signal-red/20 rounded-lg flex gap-3">
-                <AlertTriangle size={16} className="text-signal-red shrink-0 mt-0.5" />
-                <p className="text-[10px] text-slate-light leading-relaxed">
-                  <strong className="text-signal-red uppercase tracking-wider block mb-1">Strict Notice</strong>
-                  Transfer exact weekly amounts to this account ONLY. Cash payments to staff are prohibited. Shortfalls will accrue as debt.
-                </p>
+            {isLoadingLedger ? (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 size={32} className="text-cobalt animate-spin" />
               </div>
-            </div>
-
-            {/* REMITTANCE LEDGER */}
-            <div className="lg:col-span-2 bg-void-dark border border-cobalt/20 rounded-xl p-6 shadow-lg">
-              <h3 className="font-bold border-b border-cobalt/20 pb-3 mb-6 uppercase tracking-wider flex items-center gap-2">
-                <Clock size={18} className="text-cobalt"/> Weekly Remittance Ledger
-              </h3>
-
+            ) : ledgerData.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-sm text-slate-light">No remittance history found.</p>
+              </div>
+            ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -314,7 +331,7 @@ export default function ClientDashboard({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-cobalt/10">
-                    {mockWeeklyLedger.map((row, idx) => (
+                    {ledgerData.map((row, idx) => (
                       <tr key={idx} className="hover:bg-void-light/5 transition-colors">
                         <td className="py-4 px-4 whitespace-nowrap">
                           <p className="text-sm font-bold text-crisp-white">Week {row.week}</p>
@@ -335,7 +352,7 @@ export default function ClientDashboard({
                           <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded text-[9px] font-black uppercase tracking-widest
                             ${row.status === 'CLEARED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
                               row.status === 'PARTIAL' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' : 
-                              row.status === 'OVERDUE' ? 'bg-signal-red/10 text-signal-red border border-signal-red/20' : 
+                              row.status === 'OVERDUE' || row.status === 'ARREARS' ? 'bg-signal-red/10 text-signal-red border border-signal-red/20' : 
                               'bg-void-light/10 text-slate-light border border-void-light/20'}`}
                           >
                             {row.status}
@@ -346,10 +363,9 @@ export default function ClientDashboard({
                   </tbody>
                 </table>
               </div>
-
-            </div>
-
+            )}
           </div>
+
         </div>
       </div>
 
