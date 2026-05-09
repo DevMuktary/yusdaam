@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
+import { sendSystemEmail } from "@/lib/email/sender";
+import { getOwnerAwaitingSignatureEmail, getRiderAwaitingSignatureEmail } from "@/lib/email/templates";
 
 const prisma = new PrismaClient();
 
@@ -26,10 +28,11 @@ export async function POST(req: Request) {
     }
 
     // Wrap the entire assignment logic in a transaction
-    await prisma.$transaction(async (tx) => {
+    // We destructure the results to capture the updated users and vehicle details for the email
+    const result = await prisma.$transaction(async (tx) => {
       
       // 1. Update the Vehicle
-      await tx.vehicle.update({
+      const updatedVehicle = await tx.vehicle.update({
         where: { id: vehicleId },
         data: {
           ownerId: ownerId,
@@ -53,28 +56,59 @@ export async function POST(req: Request) {
         }
       });
 
-      // 3. Update Rider Status (Sends them to the "Virtual Agreement" page)
-      await tx.user.update({
+      // 3. Update Rider Status
+      const updatedRider = await tx.user.update({
         where: { id: riderId },
-        data: { accountStatus: "AWAITING_SIGNATURE" }
+        data: { accountStatus: "AWAITING_SIGNATURE" },
+        select: { firstName: true, lastName: true, email: true }
       });
 
-      // 4. Update Owner Status (Sends them to the "Virtual Agreement" page)
-      await tx.user.update({
+      // 4. Update Owner Status
+      const updatedOwner = await tx.user.update({
         where: { id: ownerId },
-        data: { accountStatus: "AWAITING_SIGNATURE" }
+        data: { accountStatus: "AWAITING_SIGNATURE" },
+        select: { firstName: true, lastName: true, email: true }
       });
 
+      return { updatedVehicle, updatedRider, updatedOwner };
     });
 
-    // NOTE: You can hook up your sendSystemEmail here to email the rider and owner 
-    // notifying them to log in and sign their agreements!
+    // 5. Fire off the automated emails (non-blocking)
+    const vehicleString = `${result.updatedVehicle.makeModel} (${result.updatedVehicle.registrationNumber})`;
+
+    // Email to Rider
+    if (result.updatedRider.email) {
+      sendSystemEmail({
+        toEmail: result.updatedRider.email,
+        toName: `${result.updatedRider.firstName} ${result.updatedRider.lastName}`,
+        subject: "Action Required: Sign Your Yusdaam Vehicle Agreement",
+        htmlBody: getRiderAwaitingSignatureEmail({
+          firstName: result.updatedRider.firstName || "Rider",
+          email: result.updatedRider.email,
+          vehicleDetails: vehicleString
+        })
+      }).catch(err => console.error("Failed to email assigned rider:", err));
+    }
+
+    // Email to Owner
+    if (result.updatedOwner.email) {
+      sendSystemEmail({
+        toEmail: result.updatedOwner.email,
+        toName: `${result.updatedOwner.firstName} ${result.updatedOwner.lastName}`,
+        subject: "Asset Deployed: Sign Your Specific Power of Attorney",
+        htmlBody: getOwnerAwaitingSignatureEmail({
+          firstName: result.updatedOwner.firstName || "Asset Owner",
+          email: result.updatedOwner.email,
+          vehicleDetails: vehicleString
+        })
+      }).catch(err => console.error("Failed to email assigned owner:", err));
+    }
 
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
     console.error("Assignment Transaction Error:", error);
-    // Handle Prisma unique constraint error specifically (e.g., rider already assigned)
+    // Handle Prisma unique constraint error specifically
     if (error.code === 'P2002') {
        return NextResponse.json({ error: "This rider or vehicle is already in an active contract." }, { status: 400 });
     }
