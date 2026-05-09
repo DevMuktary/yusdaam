@@ -147,11 +147,11 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         </ul>
 
         <h3 className={headingStyle}>2. FINANCIAL TERMS AND REMITTANCE</h3>
-        <p className={paraSpacing}>2.1 <strong>Total Hire Purchase Price:</strong> The total sum payable by the Driver/Rider to acquire ownership of the Asset is <strong>₦{contract?.totalPrice?.toLocaleString() || "---"}</strong>.</p>
-        <p className={paraSpacing}>2.2 <strong>Initial Deposit:</strong> The Driver/Rider has paid a non-refundable initial commitment deposit of <strong>₦{contract?.initialDeposit?.toLocaleString() || "0"}</strong>.</p>
-        <p className={paraSpacing}>2.3 <strong>Weekly Remittance:</strong> The Driver/Rider shall pay a fixed sum of <strong>₦{contract?.weeklyRemittance?.toLocaleString() || "---"}</strong> every week directly into the Administrator’s designated Client Remittance Account.</p>
-        <p className={paraSpacing}>2.4 <strong>Payment Schedule:</strong> Payments must be made no later than <strong>{contract?.paymentDay || "Friday 11:59 PM"}</strong> of every week. Payments made to unauthorized staff or third parties will not be recognized.</p>
-        <p className={isPdf ? "mb-2" : "mb-6"}>2.5 <strong>Tenure:</strong> The expected duration is <strong>{contract?.agreedDurationMonths ? contract.agreedDurationMonths * 4 : "---"}</strong> weeks, concluding when the Total Hire Purchase Price is fully paid.</p>
+        <p className={paraSpacing}>2.1 <strong>Total Hire Purchase Price:</strong> The total sum payable by the Driver/Rider to acquire ownership of the Asset is <strong>₦{contract?.totalHirePurchasePrice?.toLocaleString() || "---"}</strong>.</p>
+        <p className={paraSpacing}>2.2 <strong>Initial Deposit:</strong> The Driver/Rider has paid a non-refundable initial commitment deposit of <strong>₦{contract?.downPayment?.toLocaleString() || "0"}</strong>.</p>
+        <p className={paraSpacing}>2.3 <strong>Weekly Remittance:</strong> The Driver/Rider shall pay a fixed sum of <strong>₦{contract?.riderWeeklyRemittance?.toLocaleString() || "---"}</strong> every week directly into the Administrator’s designated Client Remittance Account.</p>
+        <p className={paraSpacing}>2.4 <strong>Payment Schedule:</strong> Payments must be made no later than <strong>Friday 11:59 PM</strong> of every week. Payments made to unauthorized staff or third parties will not be recognized.</p>
+        <p className={isPdf ? "mb-2" : "mb-6"}>2.5 <strong>Tenure:</strong> The expected duration is <strong>{contract?.riderDurationWeeks || "---"}</strong> weeks, concluding when the Total Hire Purchase Price is fully paid.</p>
 
         <h3 className={headingStyle}>3. DRIVER/RIDER’S OBLIGATIONS AND RISK</h3>
         <p className={paraSpacing}>3.1 <strong>Absolute Risk:</strong> The Driver/Rider assumes 100% financial and operational risk for the Asset from the moment of handover. The Administrator makes no warranties regarding the mechanical longevity of the Asset.</p>
