@@ -354,7 +354,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
             </div>
             <h3 className="text-xl font-bold text-red-500">Verification Failed</h3>
             <p className="text-gray-300 text-sm">{error}</p>
-            <p className="text-xs text-gray-500">Ensure the NIN is exactly 11 digits and your Robosttech API Key is correctly set in your Railway variables.</p>
+            <p className="text-xs text-gray-500">INVALID NIN.</p>
             <button 
               onClick={() => setError(null)}
               className="bg-red-600 hover:bg-red-500 text-white px-8 py-2.5 rounded-lg font-bold transition w-full mt-4"
