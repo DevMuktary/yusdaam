@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 type Guarantor = any; 
 type Rider = any; 
 
-// Helper Component to render actual image previews instead of just icons
 const DocumentPreview = ({ url, label }: { url: string, label: string }) => {
   if (!url) return null;
   const isPdf = url.toLowerCase().includes('.pdf');
@@ -45,16 +44,23 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
     setVerifyingId(userId);
     setError(null);
     setNinData(null);
+    
     try {
       const res = await fetch("/api/admin/verify-nin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nin }),
       });
+      
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Verification failed");
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Verification failed. Check your API key or NIN.");
+      }
+      
       setNinData(data);
     } catch (err: any) {
+      console.error("NIN Verification Catch Error:", err);
       setError(err.message);
     } finally {
       setVerifyingId(null);
@@ -168,10 +174,10 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                         <button
                           onClick={() => handleVerifyNIN(rider.nin, rider.id)}
                           disabled={verifyingId === rider.id}
-                          className="flex items-center gap-1 bg-cobalt/20 text-cobalt hover:bg-cobalt hover:text-white px-3 py-1.5 rounded text-xs font-bold transition disabled:opacity-50"
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-lg shadow-blue-900/20 disabled:opacity-50"
                         >
-                          {verifyingId === rider.id ? <Loader2 className="animate-spin" size={14} /> : <ShieldCheck size={14} />}
-                          Verify
+                          {verifyingId === rider.id ? <Loader2 className="animate-spin" size={16} /> : <ShieldCheck size={16} />}
+                          Verify NIN
                         </button>
                       )}
                     </div>
@@ -229,7 +235,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                   </div>
                 </div>
 
-                {/* COLUMN 3: Guarantors Details (Fully Expanded) */}
+                {/* COLUMN 3: Guarantors Details */}
                 <div className="space-y-4 xl:col-span-1 md:col-span-2">
                   <h3 className="text-sm font-bold text-signal-red mb-3 uppercase tracking-wider flex items-center gap-2">
                     <ShieldCheck size={18} /> Guarantor Dossiers
@@ -299,7 +305,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
         </div>
       ))}
 
-      {/* NIN MODAL */}
+      {/* SUCCESS NIN MODAL */}
       {ninData && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-void-navy border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
@@ -315,7 +321,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
             <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex flex-col items-center space-y-3">
                 {ninData.photo ? (
-                  <div className="w-32 h-32 rounded-lg overflow-hidden border-2 border-emerald-500/50">
+                  <div className="w-32 h-32 rounded-lg overflow-hidden border-2 border-emerald-500/50 shadow-lg">
                     <img src={`data:image/jpeg;base64,${ninData.photo}`} alt="NIMC Photo" className="w-full h-full object-cover" />
                   </div>
                 ) : (
@@ -325,16 +331,40 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
               </div>
 
               <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                <div><p className="text-xs text-gray-500">First Name</p><p className="font-bold text-white">{ninData.firstname}</p></div>
-                <div><p className="text-xs text-gray-500">Surname</p><p className="font-bold text-white">{ninData.surname}</p></div>
+                <div><p className="text-xs text-gray-500">First Name</p><p className="font-bold text-white text-lg">{ninData.firstname}</p></div>
+                <div><p className="text-xs text-gray-500">Surname</p><p className="font-bold text-white text-lg">{ninData.surname}</p></div>
                 <div><p className="text-xs text-gray-500">Date of Birth</p><p className="font-bold text-white">{ninData.birthdate}</p></div>
                 <div><p className="text-xs text-gray-500">Gender</p><p className="font-bold text-white uppercase">{ninData.gender}</p></div>
-                <div className="col-span-2"><p className="text-xs text-gray-500">Registered Address</p><p className="font-bold text-white">{ninData.residence_AdressLine1}, {ninData.residence_lga}</p></div>
+                <div className="col-span-2">
+                  <p className="text-xs text-gray-500">Registered Address</p>
+                  <p className="font-bold text-white">{ninData.residence_AdressLine1}, {ninData.residence_lga}, {ninData.residence_state}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* THE RESTORED ERROR MODAL */}
+      {error && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-void-navy border border-red-500/50 rounded-xl p-6 max-w-md w-full text-center space-y-4 shadow-2xl">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
+              <X size={32} className="text-red-500" />
+            </div>
+            <h3 className="text-xl font-bold text-red-500">Verification Failed</h3>
+            <p className="text-gray-300 text-sm">{error}</p>
+            <p className="text-xs text-gray-500">Ensure the NIN is exactly 11 digits and your Robosttech API Key is correctly set in your Railway variables.</p>
+            <button 
+              onClick={() => setError(null)}
+              className="bg-red-600 hover:bg-red-500 text-white px-8 py-2.5 rounded-lg font-bold transition w-full mt-4"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
