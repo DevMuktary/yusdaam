@@ -102,7 +102,8 @@ export default async function DashboardHome() {
           ownerAcctNo={user?.accountNumber || ""}
           vehicleType={assignedVehicle?.type || ""}
           plateNo={assignedVehicle?.registrationNumber || ""}
-          targetWeeklyRemittance={assignedContract?.weeklyRemittance?.toString() || ""}
+          // FIXED: Now reads ownerWeeklyPayout
+          targetWeeklyRemittance={assignedContract?.ownerWeeklyPayout?.toString() || ""}
         />
       </div>
     );
