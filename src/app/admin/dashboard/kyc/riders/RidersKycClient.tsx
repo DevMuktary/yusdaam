@@ -2,13 +2,32 @@
 
 import { useState } from "react";
 import { 
-  ShieldCheck, Loader2, X, CheckCircle, ImageIcon, 
-  ChevronDown, ChevronUp, UserCheck, UserX, FileSignature 
+  ShieldCheck, Loader2, X, CheckCircle, 
+  ChevronDown, ChevronUp, UserCheck, UserX, FileText, User 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Guarantor = any; 
 type Rider = any; 
+
+// Helper Component to render actual image previews instead of just icons
+const DocumentPreview = ({ url, label }: { url: string, label: string }) => {
+  if (!url) return null;
+  const isPdf = url.toLowerCase().includes('.pdf');
+  
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-2 text-xs text-slate-300 hover:text-white transition group">
+      <div className="w-20 h-20 bg-void-navy border border-white/10 rounded-lg overflow-hidden flex items-center justify-center group-hover:border-cobalt transition">
+        {isPdf ? (
+          <FileText size={28} className="text-cobalt" />
+        ) : (
+          <img src={url} alt={label} className="w-full h-full object-cover" />
+        )}
+      </div>
+      <span className="font-medium text-center">{label}</span>
+    </a>
+  );
+};
 
 export default function RidersKycClient({ riders }: { riders: Rider[] }) {
   const router = useRouter();
@@ -56,7 +75,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
       if (!res.ok) throw new Error("Failed to update status");
       
       alert(`Rider successfully ${newStatus.toLowerCase()}!`);
-      router.refresh(); // Refresh the server component to get new data
+      router.refresh(); 
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -79,7 +98,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                 {rider.passportUrl ? (
                   <img src={rider.passportUrl} alt="Passport" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-gray-500 text-xs">No Pic</span>
+                  <User size={20} className="text-gray-500" />
                 )}
               </div>
               <div>
@@ -102,7 +121,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
             </div>
           </div>
 
-          {/* EXPANDED DETAILS (Hidden until clicked) */}
+          {/* EXPANDED DETAILS */}
           {expandedId === rider.id && (
             <div className="p-6 border-t border-white/10 bg-void-navy/50">
               
@@ -128,7 +147,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 
                 {/* COLUMN 1: Personal & KYC */}
                 <div className="space-y-6">
@@ -160,31 +179,16 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
 
                   <div>
                     <h3 className="text-sm font-bold text-cobalt mb-3 uppercase tracking-wider">Documents & Signatures</h3>
-                    <div className="flex flex-wrap gap-4">
-                      {rider.utilityBillUrl && (
-                        <a href={rider.utilityBillUrl} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1 text-xs text-slate-300 hover:text-white">
-                          <div className="w-12 h-12 bg-white/10 rounded flex items-center justify-center"><ImageIcon size={20} /></div>
-                          Utility Bill
-                        </a>
-                      )}
-                      {rider.driversLicenseUrl && (
-                        <a href={rider.driversLicenseUrl} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1 text-xs text-slate-300 hover:text-white">
-                          <div className="w-12 h-12 bg-white/10 rounded flex items-center justify-center"><ImageIcon size={20} /></div>
-                          D. License
-                        </a>
-                      )}
-                      {rider.hpaAgreementUrl && (
-                        <a href={rider.hpaAgreementUrl} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300">
-                          <div className="w-12 h-12 bg-emerald-500/10 rounded flex items-center justify-center"><FileSignature size={20} /></div>
-                          Signed HPA
-                        </a>
-                      )}
+                    <div className="flex flex-wrap gap-4 mb-4">
+                      <DocumentPreview url={rider.utilityBillUrl} label="Utility Bill" />
+                      <DocumentPreview url={rider.driversLicenseUrl} label="D. License" />
+                      <DocumentPreview url={rider.hpaAgreementUrl} label="Signed HPA" />
                     </div>
                     {rider.signatureUrl && (
                       <div className="mt-4">
-                        <p className="text-xs text-gray-400 mb-1">Digital Signature</p>
-                        <div className="bg-white p-2 rounded w-48 h-16 flex items-center justify-center">
-                          <img src={rider.signatureUrl} alt="Signature" className="max-h-full" />
+                        <p className="text-xs text-gray-400 mb-2">Rider's Digital Signature</p>
+                        <div className="bg-white p-2 rounded w-48 h-20 flex items-center justify-center">
+                          <img src={rider.signatureUrl} alt="Signature" className="max-h-full max-w-full object-contain" />
                         </div>
                       </div>
                     )}
@@ -214,46 +218,79 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                       <p className="text-gray-400">Prev. Hire Purchase: <span className="text-white">{rider.previousHPExperience ? "Yes" : "No"}</span></p>
                     </div>
                   </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-emerald-500 mb-3 uppercase tracking-wider">Virtual Account</h3>
+                    <div className="space-y-2 text-sm bg-emerald-500/10 p-4 rounded-lg border border-emerald-500/20">
+                      <p className="text-xs text-emerald-400 mb-2 font-bold border-b border-emerald-500/20 pb-1">Paystack Dedicated Account</p>
+                      <p className="text-gray-400">Bank: <span className="text-white">{rider.virtualBankName || "Pending Setup"}</span></p>
+                      <p className="text-gray-400">Account: <span className="text-white font-mono tracking-wider">{rider.virtualAccountNo || "Pending Setup"}</span></p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* COLUMN 3: Banking & Guarantors */}
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-bold text-cobalt mb-3 uppercase tracking-wider">Financial Data</h3>
-                    <div className="space-y-2 text-sm bg-white/5 p-4 rounded-lg border border-white/5 mb-4">
-                      <p className="text-xs text-emerald-400 mb-2 font-bold border-b border-white/10 pb-1">Personal Bank</p>
-                      <p className="text-gray-400">Bank: <span className="text-white">{rider.bankName || "N/A"}</span></p>
-                      <p className="text-gray-400">Account: <span className="text-white">{rider.accountNumber || "N/A"}</span></p>
-                      <p className="text-gray-400">Name: <span className="text-white">{rider.accountName || "N/A"}</span></p>
-                    </div>
-
-                    <div className="space-y-2 text-sm bg-cobalt/10 p-4 rounded-lg border border-cobalt/20">
-                      <p className="text-xs text-cobalt mb-2 font-bold border-b border-cobalt/20 pb-1">Paystack Virtual Account</p>
-                      <p className="text-gray-400">Bank: <span className="text-white">{rider.virtualBankName || "Pending"}</span></p>
-                      <p className="text-gray-400">Account: <span className="text-white font-mono">{rider.virtualAccountNo || "Pending"}</span></p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-bold text-signal-red mb-3 uppercase tracking-wider flex items-center gap-2">
-                      <ShieldCheck size={16} /> Guarantors
-                    </h3>
-                    {rider.guarantors && rider.guarantors.length > 0 ? (
-                      rider.guarantors.map((g: Guarantor) => (
-                        <div key={g.id} className="bg-void-navy p-3 rounded border border-white/5 text-sm space-y-1 mb-2">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-bold text-white">{g.firstName} {g.lastName}</span>
-                            <span className="text-xs text-amber-400">{g.status}</span>
+                {/* COLUMN 3: Guarantors Details (Fully Expanded) */}
+                <div className="space-y-4 xl:col-span-1 md:col-span-2">
+                  <h3 className="text-sm font-bold text-signal-red mb-3 uppercase tracking-wider flex items-center gap-2">
+                    <ShieldCheck size={18} /> Guarantor Dossiers
+                  </h3>
+                  
+                  {rider.guarantors && rider.guarantors.length > 0 ? (
+                    rider.guarantors.map((g: Guarantor) => (
+                      <div key={g.id} className="bg-void-navy p-5 rounded-lg border border-white/5 space-y-4 shadow-lg">
+                        <div className="flex justify-between items-start">
+                          <div className="flex gap-3 items-center">
+                            <div className="w-12 h-12 rounded-full bg-white/5 overflow-hidden flex items-center justify-center border border-white/10">
+                               {g.passportUrl ? <img src={g.passportUrl} className="w-full h-full object-cover"/> : <User size={20} className="text-gray-500"/>}
+                            </div>
+                            <div>
+                              <p className="font-bold text-white text-base leading-tight">{g.firstName} {g.lastName}</p>
+                              <p className="text-xs text-gray-400 mt-1">{g.relationship} • {g.phone}</p>
+                            </div>
                           </div>
-                          <p className="text-gray-400 text-xs">{g.phone} • {g.relationship}</p>
-                          <p className="text-gray-400 text-xs">Employer: {g.employerName || "N/A"}</p>
-                          {g.signatureUrl && <p className="text-emerald-400 text-xs mt-1">✓ Deed Signed</p>}
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-gray-500 italic">No guarantor submitted yet.</p>
-                    )}
-                  </div>
+
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                           <div>
+                             <p className="text-gray-500 mb-0.5">Email</p>
+                             <p className="text-white">{g.email || "N/A"}</p>
+                           </div>
+                           <div>
+                             <p className="text-gray-500 mb-0.5">NIN</p>
+                             <p className="text-white">{g.nin || "N/A"}</p>
+                           </div>
+                           <div className="col-span-2">
+                             <p className="text-gray-500 mb-0.5">Address ({g.residentialStatus || "Unknown"})</p>
+                             <p className="text-white">{g.address || "N/A"}</p>
+                           </div>
+                           <div className="col-span-2">
+                             <p className="text-gray-500 mb-0.5">Employment ({g.employmentStatus || "Unknown"})</p>
+                             <p className="text-white">{g.employerName || "N/A"} - {g.officeAddress}</p>
+                           </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-white/10 flex gap-4">
+                           {g.utilityBillUrl && (
+                             <div>
+                                <p className="text-gray-500 text-[10px] uppercase mb-1">Utility</p>
+                                <DocumentPreview url={g.utilityBillUrl} label="" />
+                             </div>
+                           )}
+                           {g.signatureUrl && (
+                             <div>
+                                <p className="text-gray-500 text-[10px] uppercase mb-1">Signature</p>
+                                <div className="bg-white p-1 rounded w-32 h-16 flex items-center justify-center">
+                                   <img src={g.signatureUrl} alt="Signature" className="max-h-full max-w-full object-contain" />
+                                </div>
+                                <p className="text-[9px] text-gray-500 mt-1">IP: {g.ipAddress}</p>
+                             </div>
+                           )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 italic p-4 bg-void-navy rounded-lg border border-white/5">No guarantor submitted yet.</p>
+                  )}
                 </div>
 
               </div>
@@ -262,11 +299,10 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
         </div>
       ))}
 
-      {/* NIN MODAL REMAINS THE SAME AS PREVIOUS CODE */}
+      {/* NIN MODAL */}
       {ninData && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-           {/* ... Keep the exact same NIN verification modal UI here from the previous step ... */}
-           <div className="bg-void-navy border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
+          <div className="bg-void-navy border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
               <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2">
                 <CheckCircle size={20} /> NIMC Verification Successful
@@ -285,7 +321,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
                 ) : (
                   <div className="w-32 h-32 rounded-lg bg-white/5 flex items-center justify-center text-xs text-gray-500">No Photo</div>
                 )}
-                <span className="text-xs bg-white/10 px-2 py-1 rounded text-gray-300">NIMC Database Match</span>
+                <span className="text-xs bg-white/10 px-2 py-1 rounded text-gray-300">NIMC Match</span>
               </div>
 
               <div className="md:col-span-2 grid grid-cols-2 gap-4">
