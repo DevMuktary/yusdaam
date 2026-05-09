@@ -11,7 +11,6 @@ export default async function FleetPortfolioPage() {
   if (!session?.user?.id) return null;
 
   // PRIVACY FIREWALL: We only select the rider's ID to know if the vehicle is deployed.
-  // We strictly DO NOT fetch firstName, lastName, or phoneNumber to protect rider privacy.
   const vehicles = await prisma.vehicle.findMany({
     where: { ownerId: session.user.id },
     include: {
@@ -96,7 +95,7 @@ export default async function FleetPortfolioPage() {
                   <th className="p-4 font-bold">Asset ID / Plate</th>
                   <th className="p-4 font-bold">Type</th>
                   <th className="p-4 font-bold">Deployment</th>
-                  <th className="p-4 font-bold">Target Weekly</th>
+                  <th className="p-4 font-bold">Weekly Payout</th>
                   <th className="p-4 font-bold text-right">Status</th>
                 </tr>
               </thead>
@@ -137,7 +136,8 @@ export default async function FleetPortfolioPage() {
                       </td>
                       <td className="p-4">
                         {vehicle.contract ? (
-                          <p className="font-black text-sm text-emerald-400">₦{vehicle.contract.weeklyRemittance.toLocaleString()}</p>
+                          // FIXED: Now reads ownerWeeklyPayout
+                          <p className="font-black text-sm text-emerald-400">₦{vehicle.contract.ownerWeeklyPayout.toLocaleString()}</p>
                         ) : (
                           <span className="text-[10px] uppercase tracking-widest text-slate-light/50">N/A</span>
                         )}
