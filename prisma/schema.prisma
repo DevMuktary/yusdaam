@@ -18,7 +18,7 @@ enum AccountStatus {
   PENDING             // Default for new registrations
   AWAITING_SIGNATURE  // Vehicle assigned, waiting for owner to sign
   ACTIVE              // Fully operational dashboard
-  APPROVED            
+  APPROVED         
   REJECTED
   SUSPENDED
 }
@@ -111,7 +111,7 @@ model User {
   bvn              String?       
   passportUrl      String?       
   utilityBillUrl   String?       
-  signatureUrl     String?       // NEW: Stores the virtual agreement signature
+  signatureUrl     String?       // Stores the virtual agreement signature
   hpaAgreementUrl  String?
   poaAgreementUrl  String?
 
@@ -131,11 +131,17 @@ model User {
   nokAddress       String?       
   nokIdNumber      String?       
   
-  // Financial Routing
+  // Financial Routing (Payouts)
   bankName         String?
   bankCode         String?
   accountNumber    String?
   accountName      String?
+
+  // --- NEW: PAYSTACK VIRTUAL ACCOUNT DATA ---
+  paystackCustomerCode String?
+  virtualAccountNo     String?
+  virtualBankName      String?
+  virtualAccountName   String?
   
   // Pre-Qualification Intents
   preferredAssetClass String?
@@ -156,10 +162,10 @@ model User {
   assignedTrip     Vehicle?      @relation("RiderVehicle")
   contracts        Contract[]
   transactions     Ledger[]
-  guarantors       Guarantor[]   // NEW: Link to their guarantors
+  guarantors       Guarantor[]   // Link to their guarantors
 }
 
-// --- NEW: GUARANTOR MODEL ---
+// --- GUARANTOR MODEL ---
 model Guarantor {
   id               String          @id @default(cuid())
   riderId          String
