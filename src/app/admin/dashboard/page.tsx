@@ -1,4 +1,4 @@
-import { Users, Car, ShieldAlert, Banknote } from "lucide-react";
+import { Users, Car, ShieldAlert, Banknote, Landmark } from "lucide-react";
 import { PrismaClient } from "@prisma/client";
 
 // Initialize Prisma
@@ -30,32 +30,42 @@ export default async function AdminDashboardOverview() {
       where: { status: "SUBMITTED" },
     }),
 
-    // Fetch active contracts to calculate expected revenue
+    // Fetch active contracts to calculate BOTH expected revenue AND owner payouts
     prisma.contract.findMany({
       where: { isActive: true },
-      select: { weeklyRemittance: true },
+      select: { 
+        riderWeeklyRemittance: true, 
+        ownerWeeklyPayout: true 
+      },
     })
   ]);
 
-  // 2. Calculate total expected weekly remittance
-  const expectedRemittance = activeContracts.reduce(
-    (sum, contract) => sum + contract.weeklyRemittance,
+  // 2. Calculate totals for both sides of the marketplace
+  const expectedInflow = activeContracts.reduce(
+    (sum, contract) => sum + contract.riderWeeklyRemittance,
+    0
+  );
+
+  const expectedPayout = activeContracts.reduce(
+    (sum, contract) => sum + contract.ownerWeeklyPayout,
     0
   );
 
   // Format currency properly for Nigeria
-  const formattedRemittance = new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    maximumFractionDigits: 0,
-  }).format(expectedRemittance);
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   // 3. Map Data to the UI Widgets
   const stats = [
     { title: "Pending KYC Approvals", value: pendingUsersCount.toString(), icon: Users, color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20" },
     { title: "Active Vehicles", value: activeVehiclesCount.toString(), icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/20" },
-    { title: "Unverified Guarantors", value: unverifiedGuarantorsCount.toString(), icon: ShieldAlert, color: "text-signal-red", bg: "bg-signal-red/10", border: "border-signal-red/20" },
-    { title: "Expected Remittance (Weekly)", value: formattedRemittance, icon: Banknote, color: "text-cobalt", bg: "bg-cobalt/10", border: "border-cobalt/20" },
+    { title: "Weekly Inflow (Riders)", value: formatCurrency(expectedInflow), icon: Banknote, color: "text-cobalt", bg: "bg-cobalt/10", border: "border-cobalt/20" },
+    { title: "Weekly Payout (Owners)", value: formatCurrency(expectedPayout), icon: Landmark, color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20" },
   ];
 
   return (
@@ -72,7 +82,7 @@ export default async function AdminDashboardOverview() {
                 <stat.icon size={24} />
               </div>
             </div>
-            <h3 className="text-3xl font-bold text-crisp-white mb-1">{stat.value}</h3>
+            <h3 className="text-2xl xl:text-3xl font-bold text-crisp-white mb-1 truncate">{stat.value}</h3>
             <p className="text-sm font-medium text-slate-light">{stat.title}</p>
           </div>
         ))}
@@ -85,7 +95,7 @@ export default async function AdminDashboardOverview() {
         <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-xl p-6">
           <h2 className="text-lg font-bold text-slate-light mb-4">Platform Overview</h2>
           <div className="text-center py-12 text-gray-500 border border-dashed border-white/10 rounded-lg">
-            Dashboard is wired up. Try registering a new user to see the stats update in real-time!
+            Dashboard is wired up. Try registering a new user or assigning a vehicle to see the financial stats update in real-time!
           </div>
         </div>
 
@@ -94,10 +104,16 @@ export default async function AdminDashboardOverview() {
           <h2 className="text-lg font-bold text-slate-light mb-4">Action Items</h2>
           <div className="space-y-4">
             <div className="p-4 rounded-lg bg-void-navy border border-white/5 flex flex-col gap-3">
-              <span className="text-sm text-gray-300">You have <strong>{pendingUsersCount}</strong> users awaiting KYC verification before they can use the platform.</span>
+              <div className="flex items-center gap-3">
+                <Users className="text-amber-400" size={20} />
+                <span className="text-sm text-gray-300">You have <strong>{pendingUsersCount}</strong> users awaiting KYC verification.</span>
+              </div>
             </div>
             <div className="p-4 rounded-lg bg-void-navy border border-white/5 flex flex-col gap-3">
-              <span className="text-sm text-gray-300">You have <strong>{unverifiedGuarantorsCount}</strong> guarantors waiting for deed review.</span>
+              <div className="flex items-center gap-3">
+                <ShieldAlert className="text-signal-red" size={20} />
+                <span className="text-sm text-gray-300">You have <strong>{unverifiedGuarantorsCount}</strong> guarantors waiting for deed review.</span>
+              </div>
             </div>
           </div>
         </div>
