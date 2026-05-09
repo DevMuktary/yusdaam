@@ -18,8 +18,8 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Missing email or password");
         }
 
-        // 1. Find the user in the database
-        const user = await prisma.user.findFirst({
+        // 1. Find user in DB
+        const user = await prisma.user.findUnique({
           where: { email: credentials.email }
         });
 
@@ -27,53 +27,48 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or password");
         }
 
-        // 2. Compare the hashed password
+        // 2. Securely verify the hash
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
         if (!isPasswordValid) {
           throw new Error("Invalid email or password");
         }
 
-        // 3. Return the user data we want to store in the session
-        // We cast as 'any' here so NextAuth accepts our custom fields
+        // 3. Return exact data needed for the JWT
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role, 
-          accountStatus: user.accountStatus, 
-        } as any; 
+          role: user.role,
+          accountStatus: user.accountStatus,
+        };
       }
     })
   ],
   callbacks: {
     async jwt({ token, user }) {
+      // If user logs in, populate the token with DB data
       if (user) {
-        // Cast user to any to bypass strict type checking for custom fields
-        const customUser = user as any;
-        token.id = customUser.id;
-        token.role = customUser.role;
-        token.accountStatus = customUser.accountStatus;
+        token.id = user.id;
+        token.role = user.role;
+        token.accountStatus = user.accountStatus;
       }
       return token;
     },
     async session({ session, token }) {
+      // Send token data to the client-side session
       if (token && session.user) {
-        // Cast session.user to any to attach our custom token fields
-        const customSessionUser = session.user as any;
-        customSessionUser.id = token.id;
-        customSessionUser.role = token.role;
-        customSessionUser.accountStatus = token.accountStatus;
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.accountStatus = token.accountStatus as string;
       }
       return session;
     }
   },
-  pages: {
-    signIn: "/login", 
-  },
+  // We leave the default sign-in behavior empty because we have multiple custom login portals
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, 
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
