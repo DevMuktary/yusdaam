@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X, Eye, EyeOff, HelpCircle, UploadCloud } from "lucide-react";
 import { Country, State } from "country-state-city";
-import { CldUploadWidget } from "next-cloudinary";
 
 // --- REUSABLE TOOLTIP COMPONENT ---
 const Tooltip = ({ text }: { text: string }) => (
@@ -26,6 +25,9 @@ export default function OwnerRegistration() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const passportRef = useRef<HTMLInputElement>(null);
+  const utilityRef = useRef<HTMLInputElement>(null);
+
   const [banks, setBanks] = useState<{name: string, code: string}[]>([]);
   const [isLoadingBanks, setIsLoadingBanks] = useState(true);
   const [isVerifyingBank, setIsVerifyingBank] = useState(false);
@@ -35,7 +37,9 @@ export default function OwnerRegistration() {
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", password: "", confirmPassword: "",
     countryIso: "NG", countryName: "Nigeria", state: "", streetAddress: "", phoneCountryCode: "+234", phoneNumber: "",
-    nin: "", bvn: "", passportUrl: "", utilityBillUrl: "",
+    nin: "", bvn: "", 
+    passportBase64: "", passportName: "", 
+    utilityBillBase64: "", utilityBillName: "",
     bankName: "", bankCode: "", accountNumber: "", preferredAssetClass: "", preferredAssetClassOther: "", intendedVolume: "",
     nokFirstName: "", nokLastName: "", nokRelationship: "", nokRelationshipOther: "", nokPhone: "", nokAddress: "", nokIdNumber: ""
   });
@@ -59,11 +63,9 @@ export default function OwnerRegistration() {
         const res = await fetch("https://gist.githubusercontent.com/03balogun/c6386aaea439f18ffabd9892112ef767/raw/nigerian-banks.json");
         const data = await res.json();
         
-        // The gist returns a direct array. We check if it's an array and sort it.
         if (Array.isArray(data)) {
           setBanks(data.sort((a: any, b: any) => a.name.localeCompare(b.name)));
         } else if (data.data && Array.isArray(data.data)) {
-          // Fallback just in case the gist has a nested 'data' object
           setBanks(data.data.sort((a: any, b: any) => a.name.localeCompare(b.name)));
         }
       } catch (err) {
@@ -88,6 +90,23 @@ export default function OwnerRegistration() {
     const selectedIso = e.target.value;
     const countryData = Country.getCountryByCode(selectedIso);
     setFormData({ ...formData, countryIso: selectedIso, countryName: countryData?.name || "", phoneCountryCode: `+${countryData?.phonecode || ""}`, state: "" });
+  };
+
+  const handleFileConvert = (e: React.ChangeEvent<HTMLInputElement>, fieldPrefix: string) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        const base64Data = base64String.split(',')[1]; 
+        setFormData(prev => ({
+          ...prev, 
+          [`${fieldPrefix}Base64`]: base64Data,
+          [`${fieldPrefix}Name`]: file.name
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const passwordCriteria = [
@@ -125,13 +144,13 @@ export default function OwnerRegistration() {
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.nin || !formData.bvn || !formData.phoneNumber) return setErrorMsg("Please fill all required identity fields.");
       if (formData.nin.length !== 11) return setErrorMsg("NIN must be exactly 11 digits.");
       if (formData.bvn.length !== 11) return setErrorMsg("BVN must be exactly 11 digits.");
-      if (!formData.passportUrl) return setErrorMsg("You must upload a clear Passport Photograph.");
+      if (!formData.passportBase64) return setErrorMsg("You must upload a clear Passport Photograph.");
       if (passScore < 5) return setErrorMsg("Password does not meet security requirements.");
       if (formData.password !== formData.confirmPassword) return setErrorMsg("Passwords do not match.");
     }
     if (step === 2) {
       if (!formData.state || !formData.streetAddress) return setErrorMsg("Please complete your address details.");
-      if (!formData.utilityBillUrl) return setErrorMsg("You must upload a valid Utility Bill.");
+      if (!formData.utilityBillBase64) return setErrorMsg("You must upload a valid Utility Bill.");
     }
     if (step === 3) {
       if (!verifiedAccountName) return setErrorMsg("Please provide a verified bank account.");
@@ -248,32 +267,23 @@ export default function OwnerRegistration() {
                   </div>
                 </div>
 
-                {/* CLOUDINARY: Passport Upload */}
+                {/* BROWSER: Passport Upload */}
                 <div>
                   <label className={labelStyle}>Passport Photograph * <Tooltip text="A clear, recent photograph of your face for profile identification." /></label>
-                  <CldUploadWidget 
-                    uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-                    onSuccess={(result: any) => setFormData({ ...formData, passportUrl: result.info.secure_url })}
-                  >
-                    {({ open }) => (
-                      <div 
-                        onClick={() => open()} 
-                        className={`w-full h-24 sm:h-32 border-2 ${formData.passportUrl ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red hover:bg-void-light/10'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}
-                      >
-                        {formData.passportUrl ? (
-                          <>
-                            <CheckCircle2 size={32} className="mb-2 text-emerald-400" />
-                            <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">Passport Attached</span>
-                          </>
-                        ) : (
-                          <>
-                            <UploadCloud size={32} className="mb-2 text-cobalt" />
-                            <span className="text-xs font-bold uppercase tracking-widest text-slate-light">Click to upload image</span>
-                          </>
-                        )}
-                      </div>
+                  <input type="file" accept="image/*" className="hidden" ref={passportRef} onChange={(e) => handleFileConvert(e, "passport")} />
+                  <div onClick={() => passportRef.current?.click()} className={`w-full h-24 sm:h-32 border-2 ${formData.passportBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red hover:bg-void-light/10'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
+                    {formData.passportBase64 ? (
+                      <>
+                        <CheckCircle2 size={32} className="mb-2 text-emerald-400" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-emerald-400 truncate max-w-[80%]">{formData.passportName || "Attached"}</span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud size={32} className="mb-2 text-cobalt" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-slate-light">Click to upload image</span>
+                      </>
                     )}
-                  </CldUploadWidget>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-cobalt/20">
@@ -334,32 +344,23 @@ export default function OwnerRegistration() {
                   <input type="text" name="streetAddress" value={formData.streetAddress} onChange={handleTextChange} className={inputStyle} placeholder="Unit, House No, Street" required />
                 </div>
                 
-                {/* CLOUDINARY: Utility Bill Upload */}
+                {/* BROWSER: Utility Bill Upload */}
                 <div className="pt-4 border-t border-cobalt/20">
                   <label className={labelStyle}>Utility Bill Upload * <Tooltip text="Must be a recent PHCN, LAWMA, or Water bill showing your name and address for KYC compliance." /></label>
-                  <CldUploadWidget 
-                    uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-                    onSuccess={(result: any) => setFormData({ ...formData, utilityBillUrl: result.info.secure_url })}
-                  >
-                    {({ open }) => (
-                      <div 
-                        onClick={() => open()} 
-                        className={`w-full h-24 sm:h-32 border-2 ${formData.utilityBillUrl ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red hover:bg-void-light/10'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}
-                      >
-                        {formData.utilityBillUrl ? (
-                          <>
-                            <CheckCircle2 size={32} className="mb-2 text-emerald-400" />
-                            <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">Utility Bill Attached</span>
-                          </>
-                        ) : (
-                          <>
-                            <UploadCloud size={32} className="mb-2 text-cobalt" />
-                            <span className="text-xs font-bold uppercase tracking-widest text-slate-light">Upload Document (PDF/JPG)</span>
-                          </>
-                        )}
-                      </div>
+                  <input type="file" accept="image/*,application/pdf" className="hidden" ref={utilityRef} onChange={(e) => handleFileConvert(e, "utilityBill")} />
+                  <div onClick={() => utilityRef.current?.click()} className={`w-full h-24 sm:h-32 border-2 ${formData.utilityBillBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red hover:bg-void-light/10'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
+                    {formData.utilityBillBase64 ? (
+                      <>
+                        <CheckCircle2 size={32} className="mb-2 text-emerald-400" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-emerald-400 truncate max-w-[80%]">{formData.utilityBillName || "Attached"}</span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud size={32} className="mb-2 text-cobalt" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-slate-light">Upload Document (PDF/JPG)</span>
+                      </>
                     )}
-                  </CldUploadWidget>
+                  </div>
                 </div>
               </div>
             )}
