@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Car, User, Briefcase, CheckCircle2, AlertCircle, Loader2, ArrowRight } from "lucide-react";
+import { Car, User, Briefcase, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function AssignmentClient({ vehicles, riders, owners }: { vehicles: any[], riders: any[], owners: any[] }) {
@@ -89,12 +89,14 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
           <select 
             value={selectedVehicle} 
             onChange={(e) => setSelectedVehicle(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cobalt"
+            className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cobalt appearance-none"
             required
           >
-            <option value="">-- Choose Asset --</option>
+            <option value="" className="bg-void-navy text-white">-- Choose Asset --</option>
             {vehicles.map(v => (
-              <option key={v.id} value={v.id}>{v.registrationNumber} - {v.makeModel} ({v.type})</option>
+              <option key={v.id} value={v.id} className="bg-void-navy text-white">
+                {v.registrationNumber} - {v.makeModel} ({v.type === 'OTHERS' ? v.customType : v.type})
+              </option>
             ))}
           </select>
         </div>
@@ -107,12 +109,14 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
           <select 
             value={selectedRider} 
             onChange={(e) => setSelectedRider(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500"
+            className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500 appearance-none"
             required
           >
-            <option value="">-- Choose Approved Rider --</option>
+            <option value="" className="bg-void-navy text-white">-- Choose Approved Rider --</option>
             {riders.map(r => (
-              <option key={r.id} value={r.id}>{r.firstName} {r.lastName} ({r.phoneNumber})</option>
+              <option key={r.id} value={r.id} className="bg-void-navy text-white">
+                {r.firstName} {r.lastName} ({r.phoneNumber})
+              </option>
             ))}
           </select>
           {riders.length === 0 && <p className="text-xs text-red-400 mt-2">No approved riders available.</p>}
@@ -126,12 +130,14 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
           <select 
             value={selectedOwner} 
             onChange={(e) => setSelectedOwner(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"
+            className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 appearance-none"
             required
           >
-            <option value="">-- Choose Asset Owner --</option>
+            <option value="" className="bg-void-navy text-white">-- Choose Asset Owner --</option>
             {owners.map(o => (
-              <option key={o.id} value={o.id}>{o.firstName} {o.lastName} - {o.preferredAssetClass}</option>
+              <option key={o.id} value={o.id} className="bg-void-navy text-white">
+                {o.firstName} {o.lastName} - {o.preferredAssetClass}
+              </option>
             ))}
           </select>
           {owners.length === 0 && <p className="text-xs text-red-400 mt-2">No approved owners available.</p>}
