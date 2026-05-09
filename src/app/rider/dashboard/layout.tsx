@@ -34,6 +34,7 @@ function RiderDashboardContent({ children }: { children: React.ReactNode }) {
     { name: "Command Center", href: "/rider/dashboard", icon: LayoutDashboard },
     { name: "Remittances", href: "/rider/dashboard/remittances", icon: WalletCards },
     { name: "My Vehicle", href: "/rider/dashboard/vehicle", icon: CarFront },
+    { name: "My Profile", href: "/rider/dashboard/profile", icon: UserIcon }, // <-- Added Profile here
     { name: "Legal Vault", href: "/rider/dashboard/legal", icon: ShieldCheck },
     { name: "Support", href: "/rider/dashboard/support", icon: Wrench },
   ];
