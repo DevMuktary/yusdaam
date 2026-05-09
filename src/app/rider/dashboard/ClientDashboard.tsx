@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Copy, Wallet, CarFront, Users, CheckCircle2, Clock, ShieldAlert, CreditCard } from "lucide-react";
+import { Loader2, Copy, Wallet, CarFront, CheckCircle2, Clock, ShieldAlert, CreditCard, Activity, CalendarDays, AlertTriangle, FileText } from "lucide-react";
 
-export default function ClientDashboard({ rider, guarantors, vehicle, contract, baseUrl }: any) {
+export default function ClientDashboard({ rider, guarantors, vehicle, contract, baseUrl, payments = [] }: any) {
   const router = useRouter();
   
   const [isGenerating, setIsGenerating] = useState(false);
@@ -33,186 +33,247 @@ export default function ClientDashboard({ rider, guarantors, vehicle, contract, 
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // --- MOCK REMITTANCE LOGIC (To be replaced by your actual database ledger calculation) ---
+  const weeklyDue = contract?.weeklyRemittance || 0;
+  
+  // Generating a sample history to match your exact request
+  // When you connect the backend, replace this array with the real payment data
+  const remittanceHistory = [
+    { week: 1, date: "May 01, 2026", expected: weeklyDue, paid: weeklyDue, status: "CLEARED", overdue: 0 },
+    { week: 2, date: "May 08, 2026", expected: weeklyDue, paid: weeklyDue * 0.8, status: "PARTIAL", overdue: weeklyDue * 0.2 },
+    { week: 3, date: "May 15, 2026", expected: weeklyDue, paid: 0, status: "OVERDUE", overdue: weeklyDue },
+    { week: 4, date: "May 22, 2026", expected: weeklyDue, paid: 0, status: "PENDING", overdue: 0 }, // Future week
+  ];
+
+  const totalArrears = remittanceHistory.reduce((acc, curr) => acc + curr.overdue, 0);
+  const totalPaid = remittanceHistory.reduce((acc, curr) => acc + curr.paid, 0);
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Premium Header */}
-      <div className="bg-[#001232] px-6 py-10 sm:px-12 lg:px-20 text-white border-b-4 border-[#FFB902] shadow-md">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans text-gray-900">
+      
+      {/* CRISP CORPORATE HEADER */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex justify-between items-center">
           <div>
-            <p className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-1">Rider Command Center</p>
-            <h1 className="text-3xl font-black tracking-tight">Welcome back, {rider.firstName}</h1>
-            <p className="text-sm text-gray-300 mt-2 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Account Status: <strong className="text-emerald-400">ACTIVE</strong>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Dashboard</h1>
+            <p className="text-sm text-gray-500 font-medium mt-1 flex items-center gap-2">
+              Welcome back, {rider.firstName} {rider.lastName}
             </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              ACTIVE
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Main Dashboard Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         
         {errorMsg && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded shadow-sm flex items-center gap-3 text-red-800 text-sm font-bold">
+          <div className="bg-red-50 border-l-4 border-red-600 p-4 mb-8 rounded shadow-sm flex items-center gap-3 text-red-800 text-sm font-bold">
             <ShieldAlert size={18} /> {errorMsg}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* QUICK STATS ROW */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-center">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2"><Activity size={14} /> Total Remitted</p>
+            <p className="text-3xl font-black text-gray-900">₦{totalPaid.toLocaleString()}</p>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-center">
+            <p className="text-xs font-bold text-red-500 uppercase tracking-wider mb-2 flex items-center gap-2"><AlertTriangle size={14} /> Current Arrears (Debt)</p>
+            <p className="text-3xl font-black text-red-600">₦{totalArrears.toLocaleString()}</p>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-center">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2"><CalendarDays size={14} /> Next Payment Target</p>
+            <p className="text-3xl font-black text-gray-900">₦{weeklyDue.toLocaleString()}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* LEFT COLUMN: FINANCIALS & REMITTANCE */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* LEFT COLUMN: PAYMENTS & HISTORY */}
+          <div className="lg:col-span-2 space-y-8">
             
-            {/* Dedicated Account Fintech Card */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-              <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
-                <div className="p-3 bg-[#001232]/5 rounded-xl">
-                  <Wallet size={24} className="text-[#001232]" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-black text-[#001232] uppercase tracking-wide">Weekly Remittance Account</h2>
-                  <p className="text-xs text-gray-500 font-medium">Your dedicated static account for vehicle payments</p>
-                </div>
-              </div>
+            {/* DEDICATED VIRTUAL ACCOUNT CARD */}
+            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-gray-50 rounded-full -mr-20 -mt-20 opacity-50 pointer-events-none"></div>
+              
+              <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+                <Wallet size={18} className="text-blue-600" /> Dedicated Remittance Account
+              </h2>
 
               {rider.virtualAccountNo ? (
-                <div className="bg-gradient-to-br from-[#001232] to-gray-900 rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl">
-                  <div className="absolute top-0 right-0 p-6 opacity-10">
-                    <Wallet size={120} />
-                  </div>
-                  
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Bank Name</p>
-                  <p className="text-lg font-bold text-[#FFB902] mb-6">{rider.virtualBankName}</p>
-
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Account Number</p>
-                  <div className="flex items-center gap-4 mb-6">
-                    <p className="text-4xl font-black tracking-widest">{rider.virtualAccountNo}</p>
-                    <button 
-                      onClick={() => handleCopy(rider.virtualAccountNo)}
-                      className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
-                      title="Copy Account Number"
-                    >
-                      {copied ? <CheckCircle2 size={20} className="text-emerald-400" /> : <Copy size={20} />}
-                    </button>
+                <div className="bg-gray-900 text-white rounded-xl p-6 sm:p-8 shadow-lg relative">
+                  <div className="flex justify-between items-start mb-8">
+                    <div>
+                      <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">Bank</p>
+                      <p className="font-semibold text-lg">{rider.virtualBankName}</p>
+                    </div>
+                    <CreditCard size={32} className="text-gray-600" />
                   </div>
 
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Account Name</p>
-                  <p className="text-sm font-bold uppercase tracking-wider">{rider.virtualAccountName}</p>
+                  <div>
+                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">Account Number</p>
+                    <div className="flex items-center gap-4">
+                      <p className="text-3xl sm:text-4xl font-black tracking-widest text-white">{rider.virtualAccountNo}</p>
+                      <button 
+                        onClick={() => handleCopy(rider.virtualAccountNo)}
+                        className="p-2 bg-white/10 hover:bg-white/20 rounded-md transition"
+                      >
+                        {copied ? <CheckCircle2 size={18} className="text-emerald-400" /> : <Copy size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 pt-4 border-t border-gray-700/50 flex justify-between items-center">
+                    <div>
+                      <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">Account Name</p>
+                      <p className="text-sm font-medium tracking-wide">{rider.virtualAccountName}</p>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <div className="text-center py-10 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                  <CreditCard size={48} className="text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-gray-900 font-bold mb-2">No Payment Account Assigned</h3>
-                  <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">Generate your dedicated Paystack virtual account to start making your weekly vehicle remittances securely.</p>
+                <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                  <Wallet size={40} className="text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-gray-900 font-bold mb-2">No Payment Account</h3>
+                  <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">Generate your dedicated static account to make your weekly vehicle remittances securely.</p>
                   <button 
                     onClick={handleGenerateAccount}
                     disabled={isGenerating}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-[#001232] text-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-gray-800 transition shadow-lg disabled:opacity-50 mx-auto"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-black transition shadow disabled:opacity-50 mx-auto"
                   >
-                    {isGenerating ? <><Loader2 size={16} className="animate-spin" /> Generating Secure Account...</> : "Generate Virtual Account"}
+                    {isGenerating ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : "Generate Account Now"}
                   </button>
                 </div>
               )}
-
-              {rider.virtualAccountNo && (
-                <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800 font-medium leading-relaxed">
-                  <strong className="text-blue-900 block mb-1">Payment Instructions:</strong>
-                  Transfer your weekly remittance directly into the account details above using any bank app or USSD. Payments reflect instantly and your dashboard will be updated automatically. Cash payments are not allowed.
-                </div>
-              )}
             </div>
 
-            {/* Contract Summary */}
-            <div className="bg-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-              <h3 className="font-bold text-[#001232] uppercase tracking-wide border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
-                <Clock size={18} className="text-gray-400" /> Contract Status
-              </h3>
-              
-              {!contract ? (
-                <p className="text-sm text-gray-500 italic py-4">Financial contract details are currently being finalized by the Administrator.</p>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Weekly Due</p>
-                    <p className="text-lg font-black text-[#001232]">₦{contract.weeklyRemittance?.toLocaleString()}</p>
+            {/* REMITTANCE HISTORY TIMELINE */}
+            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-end mb-8 border-b border-gray-100 pb-4">
+                <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                  <Clock size={18} className="text-blue-600" /> Weekly Remittance Ledger
+                </h2>
+                <span className="text-xs text-gray-500 font-medium">Auto-updates upon transfer</span>
+              </div>
+
+              <div className="space-y-6">
+                {remittanceHistory.map((entry, idx) => (
+                  <div key={idx} className="flex gap-4 sm:gap-6 relative">
+                    {/* Timeline Line */}
+                    {idx !== remittanceHistory.length - 1 && (
+                      <div className="absolute left-6 sm:left-8 top-12 bottom-[-24px] w-px bg-gray-200"></div>
+                    )}
+                    
+                    {/* Week Indicator Block */}
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 bg-gray-50 border border-gray-200 rounded-xl flex flex-col items-center justify-center z-10">
+                      <span className="text-[10px] text-gray-500 font-bold uppercase">Week</span>
+                      <span className="text-lg sm:text-xl font-black text-gray-900">{entry.week}</span>
+                    </div>
+
+                    {/* Content Block */}
+                    <div className={`flex-1 border rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all
+                      ${entry.status === 'CLEARED' ? 'border-emerald-200 bg-emerald-50/30' : 
+                        entry.status === 'PARTIAL' ? 'border-orange-200 bg-orange-50/30' : 
+                        entry.status === 'OVERDUE' ? 'border-red-200 bg-red-50/30' : 'border-gray-100 bg-gray-50/50'}`}
+                    >
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium mb-1">{entry.date}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-black text-gray-900">₦{entry.paid.toLocaleString()}</span>
+                          <span className="text-xs text-gray-500">/ ₦{entry.expected.toLocaleString()} expected</span>
+                        </div>
+                        
+                        {/* Status specific text */}
+                        {entry.status === 'PARTIAL' && (
+                          <p className="text-xs font-bold text-orange-600 mt-2 bg-orange-100 inline-block px-2 py-1 rounded">
+                            Week Marked Paid — ₦{entry.overdue.toLocaleString()} Accrued as Debt
+                          </p>
+                        )}
+                        {entry.status === 'OVERDUE' && (
+                          <p className="text-xs font-bold text-red-600 mt-2 bg-red-100 inline-block px-2 py-1 rounded flex items-center gap-1">
+                            <AlertTriangle size={12} /> Completely Overdue — ₦{entry.overdue.toLocaleString()} Debt
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Status Badges */}
+                      <div>
+                        {entry.status === 'CLEARED' && <span className="flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-md"><CheckCircle2 size={14} /> Cleared</span>}
+                        {entry.status === 'PARTIAL' && <span className="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-md">Partial Payment</span>}
+                        {entry.status === 'OVERDUE' && <span className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-md"><XCircle size={14} /> Defaulted</span>}
+                        {entry.status === 'PENDING' && <span className="px-3 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded-md">Pending</span>}
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Total Target</p>
-                    <p className="text-lg font-black text-[#001232]">₦{contract.totalPrice?.toLocaleString()}</p>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Tenure</p>
-                    <p className="text-lg font-black text-[#001232]">{contract.agreedDurationMonths * 4} <span className="text-xs font-medium">Weeks</span></p>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Pay Day</p>
-                    <p className="text-sm font-bold text-red-600 uppercase mt-1">{contract.paymentDay || "Friday"}</p>
-                  </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
+
           </div>
 
-          {/* RIGHT COLUMN: FLEET & GUARANTORS */}
-          <div className="space-y-6">
+          {/* RIGHT COLUMN: CONTRACT & VEHICLE */}
+          <div className="space-y-8">
             
-            {/* Assigned Vehicle */}
-            <div className="bg-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-              <h3 className="font-bold text-[#001232] uppercase tracking-wide border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
-                <CarFront size={18} className="text-gray-400" /> Fleet Assignment
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+              <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
+                <FileText size={16} className="text-blue-600" /> Contract Details
+              </h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                  <span className="text-xs text-gray-500 font-medium">Target Price</span>
+                  <span className="text-sm font-bold text-gray-900">₦{contract?.totalPrice?.toLocaleString() || "---"}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                  <span className="text-xs text-gray-500 font-medium">Duration</span>
+                  <span className="text-sm font-bold text-gray-900">{contract?.agreedDurationMonths * 4 || "---"} Weeks</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-xs text-gray-500 font-medium">Agreement</span>
+                  {rider.hpaAgreementUrl ? (
+                    <a href={rider.hpaAgreementUrl} target="_blank" className="text-xs font-bold text-blue-600 hover:underline">View PDF</a>
+                  ) : (
+                    <span className="text-xs text-gray-400">Processing</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+              <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
+                <CarFront size={16} className="text-blue-600" /> Fleet Assignment
               </h3>
               
               {!vehicle ? (
-                <div className="text-center py-6">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <CarFront size={20} className="text-gray-400" />
-                  </div>
-                  <p className="text-sm font-bold text-gray-900">Awaiting Assignment</p>
-                  <p className="text-xs text-gray-500 mt-1">Your vehicle is being prepped for handover.</p>
+                <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                  <CarFront size={24} className="text-gray-300 mx-auto mb-2" />
+                  <p className="text-xs font-medium text-gray-500">Vehicle assignment pending.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Model</p>
-                    <p className="text-sm font-bold text-[#001232]">{vehicle.makeModel}</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Make & Model</p>
+                    <p className="text-sm font-bold text-gray-900">{vehicle.makeModel}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Plate Number</p>
-                    <p className="text-sm font-bold text-[#001232] bg-gray-100 inline-block px-2 py-1 rounded">{vehicle.registrationNumber}</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">License Plate</p>
+                    <p className="text-sm font-bold text-gray-900 bg-gray-100 inline-block px-2 py-1 rounded border border-gray-200">{vehicle.registrationNumber}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Chassis No.</p>
-                    <p className="text-xs font-mono text-gray-700">{vehicle.chassisNumber}</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Chassis</p>
+                    <p className="text-xs font-mono text-gray-600">{vehicle.chassisNumber}</p>
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Guarantors Status */}
-            <div className="bg-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-              <h3 className="font-bold text-[#001232] uppercase tracking-wide border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
-                <Users size={18} className="text-gray-400" /> Security Sureties
-              </h3>
-              
-              <div className="space-y-4">
-                {guarantors.map((g: any, index: number) => (
-                  <div key={g.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                    <div>
-                      <p className="text-xs font-bold text-[#001232]">{g.firstName} {g.lastName}</p>
-                      <p className="text-[10px] text-gray-500 capitalize">{g.relationship}</p>
-                    </div>
-                    <span className="px-2 py-1 bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase tracking-widest rounded">Verified</span>
-                  </div>
-                ))}
-
-                {guarantors.length === 0 && (
-                  <p className="text-xs text-gray-500 italic">No guarantors found.</p>
-                )}
-              </div>
             </div>
 
           </div>
         </div>
+
       </div>
     </div>
   );
