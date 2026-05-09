@@ -143,7 +143,7 @@ export const getRiderAgreementSignedEmail = (data: AgreementSignedEmailData) => 
   `;
 };
 
-// --- NEW KYC APPROVAL TEMPLATES ---
+// --- KYC APPROVAL TEMPLATES ---
 export interface AccountStatusEmailData {
   firstName: string;
   email: string;
@@ -222,6 +222,87 @@ export const getAccountRejectedEmail = (data: AccountStatusEmailData) => {
 
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9335611)</strong></p>
+        <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
+      </div>
+    </div>
+  `;
+};
+
+// --- AWAITING SIGNATURE TEMPLATES ---
+export interface AwaitingSignatureEmailData {
+  firstName: string;
+  email: string;
+  vehicleDetails: string;
+}
+
+export const getOwnerAwaitingSignatureEmail = (data: AwaitingSignatureEmailData) => {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
+      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px;">
+        <h1 style="margin: 0; font-size: 22px; color: #001232; letter-spacing: 1px;">
+          YUSDAAM<span style="color: #FFB902;">.</span>
+        </h1>
+      </div>
+      
+      <div style="font-size: 15px;">
+        <p>Hi ${data.firstName},</p>
+        
+        <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
+          <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Asset Match Successful</h3>
+          <p style="margin: 0; font-size: 14px; color: #4a4a4a;">Your fleet portfolio has been successfully updated. We have assigned a verified rider to your asset: <strong>${data.vehicleDetails}</strong>.</p>
+        </div>
+
+        <p>To finalize this deployment and activate your weekly remittance payouts, your digital signature is required on the <strong>Specific Power of Attorney</strong> document.</p>
+        
+        <div style="margin: 35px 0; text-align: center;">
+          <a href="https://yusdaamautos.com/owner/login" style="background-color: #001232; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 15px; display: inline-block;">Log in to Sign Document</a>
+        </div>
+        
+        <p style="margin-top: 35px; margin-bottom: 0;">
+          Regards,<br>
+          <strong>The YUSDAAM Fleet Operations Team</strong>
+        </p>
+      </div>
+
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong></p>
+        <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
+      </div>
+    </div>
+  `;
+};
+
+export const getRiderAwaitingSignatureEmail = (data: AwaitingSignatureEmailData) => {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
+      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px;">
+        <h1 style="margin: 0; font-size: 22px; color: #001232; letter-spacing: 1px;">
+          YUSDAAM<span style="color: #FFB902;">.</span>
+        </h1>
+      </div>
+      
+      <div style="font-size: 15px;">
+        <p>Hi ${data.firstName},</p>
+        
+        <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
+          <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Vehicle Assigned!</h3>
+          <p style="margin: 0; font-size: 14px; color: #4a4a4a;">Congratulations! You have been officially assigned to a <strong>${data.vehicleDetails}</strong>.</p>
+        </div>
+
+        <p>Before you can collect the keys and hit the road, you must log into your dashboard to review and digitally sign your <strong>Hire Purchase Agreement</strong> and <strong>Vehicle Handover Note</strong>.</p>
+        
+        <div style="margin: 35px 0; text-align: center;">
+          <a href="https://yusdaamautos.com/rider/login" style="background-color: #10B981; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 15px; display: inline-block;">Log in to Sign Agreement</a>
+        </div>
+        
+        <p style="margin-top: 35px; margin-bottom: 0;">
+          Drive safe,<br>
+          <strong>The YUSDAAM Operations Team</strong>
+        </p>
+      </div>
+
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong></p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
       </div>
     </div>
