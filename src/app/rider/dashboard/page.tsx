@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
 import { ShieldAlert, Loader2, CheckCircle2, Clock, CarFront, Banknote } from "lucide-react";
-import VirtualAgreement from "./VirtualAgreement"; // IMPORTANT: Ensure your agreement file is named exactly VirtualAgreement.tsx
+import RiderVirtualAgreement from "./RiderVirtualAgreement";
 
 const prisma = new PrismaClient();
 
@@ -10,23 +10,22 @@ export default async function RiderDashboardHome() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
 
-  // Fetch Rider, their assigned vehicle, contract, AND guarantors
+  // Fetch Rider, their assigned vehicle, the active contract, AND guarantors
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: { 
-      guarantors: true,
+    include: {
       assignedTrip: {
         include: {
           contract: true
         }
-      }
+      },
+      guarantors: true // We must fetch guarantors to pass to the agreement
     }
   });
 
   const currentStatus = String(user?.accountStatus);
   const vehicle = user?.assignedTrip;
   const contract = vehicle?.contract;
-  const guarantors = user?.guarantors || [];
 
   // --- STATE 1: PENDING KYC ---
   if (currentStatus === "PENDING" || currentStatus === "undefined" || !user?.accountStatus) {
@@ -76,12 +75,12 @@ export default async function RiderDashboardHome() {
   if (currentStatus === "AWAITING_SIGNATURE" && vehicle && contract) {
     return (
       <div className="py-6 overflow-x-hidden">
-        {/* We now pass the entire objects exactly as your VirtualAgreement expects them */}
-        <VirtualAgreement 
+        {/* Pass the exact objects the component is expecting */}
+        <RiderVirtualAgreement 
           rider={user}
           vehicle={vehicle}
           contract={contract}
-          guarantors={guarantors}
+          guarantors={user.guarantors || []}
         />
       </div>
     );
