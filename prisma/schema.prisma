@@ -260,6 +260,7 @@ model Ledger {
   type        String   // e.g., "PAYMENT_COLLECTED", "OWNER_REMITTANCE"
   reference   String   @unique // Paystack/Flutterwave transaction ref
   description String?
+  receiptUrl  String?  @db.Text // <-- ADD THIS LINE
   date        DateTime @default(now())
   
   vehicleId   String
