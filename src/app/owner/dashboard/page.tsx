@@ -100,10 +100,19 @@ export default async function DashboardHome() {
           ownerAddress={user?.streetAddress || ""}
           ownerBank={user?.bankName || ""}
           ownerAcctNo={user?.accountNumber || ""}
-          vehicleType={assignedVehicle?.type || ""}
+          // Dynamic Vehicle & Contract Details
+          vehicleType={assignedVehicle?.type === "OTHERS" ? assignedVehicle?.customType : assignedVehicle?.type}
+          makeModel={assignedVehicle?.makeModel || ""}
+          year={assignedVehicle?.year || ""}
           plateNo={assignedVehicle?.registrationNumber || ""}
-          // FIXED: Now reads ownerWeeklyPayout
-          targetWeeklyRemittance={assignedContract?.ownerWeeklyPayout?.toString() || ""}
+          chassisNo={assignedVehicle?.chassisNumber || ""}
+          engineNo={assignedVehicle?.engineNumber || ""}
+          targetWeeklyRemittance={assignedContract?.ownerWeeklyPayout?.toString() || "0"}
+          grossRemittance={assignedContract?.riderWeeklyRemittance?.toString() || "0"}
+          // Calculate the admin margin automatically
+          adminCharge={
+            (Number(assignedContract?.riderWeeklyRemittance || 0) - Number(assignedContract?.ownerWeeklyPayout || 0)).toString()
+          }
         />
       </div>
     );
@@ -205,7 +214,7 @@ export default async function DashboardHome() {
                 <div key={v.id} className="flex justify-between items-center p-3 hover:bg-void-light/5 rounded-lg transition border border-transparent hover:border-cobalt/20">
                   <div>
                     <p className="text-sm font-bold text-crisp-white uppercase tracking-wider">{v.registrationNumber || "PENDING PLATE"}</p>
-                    <p className="text-[10px] text-slate-light uppercase tracking-widest">{v.type}</p>
+                    <p className="text-[10px] text-slate-light uppercase tracking-widest">{v.type === "OTHERS" ? v.customType : v.type}</p>
                   </div>
                   <div className="text-right">
                     <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md ${
