@@ -1,3 +1,4 @@
+// --- REGISTRATION TEMPLATES ---
 export interface RegistrationEmailData {
   firstName: string;
   lastName: string;
@@ -67,6 +68,7 @@ export const getRegistrationReceivedEmail = (data: RegistrationEmailData) => {
   `;
 };
 
+// --- AGREEMENT EXECUTED TEMPLATES ---
 export interface AgreementSignedEmailData {
   firstName: string;
   email: string;
@@ -107,7 +109,6 @@ export const getAgreementSignedEmail = (data: AgreementSignedEmailData) => {
   `;
 };
 
-// --- RIDER TEMPLATE ---
 export const getRiderAgreementSignedEmail = (data: AgreementSignedEmailData) => {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
@@ -304,6 +305,69 @@ export const getRiderAwaitingSignatureEmail = (data: AwaitingSignatureEmailData)
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong></p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
+      </div>
+    </div>
+  `;
+};
+
+// --- PAYMENT MODULE TEMPLATES ---
+export interface ReceiptEmailData {
+  firstName: string;
+  email: string;
+  amount: string;
+  weekDescription: string;
+  vehiclePlate: string;
+  reference: string;
+  date: string;
+}
+
+export const getPaymentCollectedEmail = (data: ReceiptEmailData) => {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
+      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px;">
+        <h1 style="margin: 0; font-size: 22px; color: #001232; letter-spacing: 1px;">YUSDAAM<span style="color: #FFB902;">.</span></h1>
+      </div>
+      <div style="font-size: 15px;">
+        <p>Hi ${data.firstName},</p>
+        <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
+          <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Payment Received</h3>
+          <p style="margin: 0; font-size: 14px; color: #4a4a4a;">We have successfully received your payment of <strong>₦${data.amount}</strong> for <strong>${data.weekDescription}</strong>.</p>
+        </div>
+        <table style="width: 100%; font-size: 14px; border-collapse: collapse; margin-bottom: 20px;">
+          <tr><td style="padding: 8px 0; color: #888;">Vehicle:</td><td style="padding: 8px 0; font-weight: bold; text-align: right;">${data.vehiclePlate}</td></tr>
+          <tr><td style="padding: 8px 0; color: #888;">Reference:</td><td style="padding: 8px 0; font-family: monospace; text-align: right;">${data.reference}</td></tr>
+          <tr><td style="padding: 8px 0; color: #888;">Date:</td><td style="padding: 8px 0; text-align: right;">${data.date}</td></tr>
+        </table>
+        <p>Your dashboard ledger has been updated. You can log in anytime to view your cleared weeks and download your official receipt.</p>
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+          <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT</strong></p>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+export const getOwnerPayoutEmail = (data: ReceiptEmailData) => {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
+      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px;">
+        <h1 style="margin: 0; font-size: 22px; color: #001232; letter-spacing: 1px;">YUSDAAM<span style="color: #FFB902;">.</span></h1>
+      </div>
+      <div style="font-size: 15px;">
+        <p>Hi ${data.firstName},</p>
+        <div style="background-color: #f3f0ff; border-left: 4px solid #8b5cf6; padding: 15px; margin: 25px 0;">
+          <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Weekly Remittance Sent</h3>
+          <p style="margin: 0; font-size: 14px; color: #4a4a4a;">We have successfully dispatched your payout of <strong>₦${data.amount}</strong> for <strong>${data.weekDescription}</strong>.</p>
+        </div>
+        <table style="width: 100%; font-size: 14px; border-collapse: collapse; margin-bottom: 20px;">
+          <tr><td style="padding: 8px 0; color: #888;">Asset:</td><td style="padding: 8px 0; font-weight: bold; text-align: right;">${data.vehiclePlate}</td></tr>
+          <tr><td style="padding: 8px 0; color: #888;">Reference:</td><td style="padding: 8px 0; font-family: monospace; text-align: right;">${data.reference}</td></tr>
+          <tr><td style="padding: 8px 0; color: #888;">Date:</td><td style="padding: 8px 0; text-align: right;">${data.date}</td></tr>
+        </table>
+        <p>Please check your registered bank account. A copy of the payment receipt is available for download in your dashboard ledger.</p>
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+          <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT</strong></p>
+        </div>
       </div>
     </div>
   `;
