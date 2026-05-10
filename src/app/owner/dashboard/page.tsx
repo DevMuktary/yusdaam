@@ -100,8 +100,8 @@ export default async function DashboardHome() {
           ownerAddress={user?.streetAddress || ""}
           ownerBank={user?.bankName || ""}
           ownerAcctNo={user?.accountNumber || ""}
-          // Dynamic Vehicle & Contract Details
-          vehicleType={assignedVehicle?.type === "OTHERS" ? assignedVehicle?.customType : assignedVehicle?.type}
+          // FIXED: We now guarantee a string is returned, preventing the 'null' type error
+          vehicleType={assignedVehicle?.type === "OTHERS" ? (assignedVehicle?.customType || "") : (assignedVehicle?.type || "")}
           makeModel={assignedVehicle?.makeModel || ""}
           year={assignedVehicle?.year || ""}
           plateNo={assignedVehicle?.registrationNumber || ""}
