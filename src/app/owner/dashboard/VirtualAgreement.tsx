@@ -250,7 +250,7 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         <h3 className={headingStyle}>4. TENURE AND FINANCIAL PROVISIONS</h3>
         <p className="mb-2">4.1 <strong>Tenure:</strong> This Agreement shall remain valid for an estimated period of {fallback} weeks, commencing on {props.startDate || fallback} and terminating on {props.endDate || fallback}, subject to earlier termination as provided in Clause 10.</p>
-        <p className="mb-2">4.2 <strong>Target Remittance:</strong> The Owner’s Target Weekly Remittance is defined as <strong>₦{props.targetWeeklyRemittance || fallback}</strong>. The Parties acknowledge that this figure is a target based on current market data for the Asset type and is expressly not guaranteed by the Administrator.</p>
+        <p className="mb-2">4.2 <strong>Target Remittance:</strong> The Owner’s Target Weekly Remittance is defined as <strong>₦{Number(props.targetWeeklyRemittance).toLocaleString() || fallback}</strong>. The Parties acknowledge that this figure is a target based on current market data for the Asset type and is expressly not guaranteed by the Administrator.</p>
         <p className="mb-6">4.3 <strong>Payment Collection:</strong> All payments made by the Rider shall be deposited directly into the Administrator’s designated Client Remittance Account. The Administrator shall transfer the Net Weekly Remittance to the Owner’s nominated bank account (<strong>Bank:</strong> {props.ownerBank || fallback}, <strong>Account No:</strong> {props.ownerAcctNo || fallback}) within forty-eight (48) hours of cleared receipt.</p>
 
         <h3 className={headingStyle}>5. ADMINISTRATOR’S OBLIGATIONS AND REMUNERATION</h3>
@@ -259,8 +259,8 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-6">5.3 The Administrator shall not charge the Owner any administration fees. The Administrator’s sole income for its services is derived from the administrative charges paid by the Rider.</p>
 
         <h3 className={headingStyle}>6. REMITTANCE STRUCTURE AND DEDUCTIONS</h3>
-        <p className="mb-2">6.1 <strong>Gross Collection:</strong> The current target Gross Weekly Remittance expected from the Rider is <strong>₦{props.grossRemittance || fallback}</strong>.</p>
-        <p className="mb-2">6.2 <strong>Administrator’s Fee:</strong> The Administrator shall deduct <strong>₦{props.adminCharge || fallback}</strong> weekly from the Gross Weekly Remittance as a Rider Administration Fee. This fee covers GPS monitoring, enforcement, reporting, insurance facilitation, and repossession efforts. This fee is the exclusive property of the Administrator.</p>
+        <p className="mb-2">6.1 <strong>Gross Collection:</strong> The current target Gross Weekly Remittance expected from the Rider is <strong>₦{Number(props.grossRemittance).toLocaleString() || fallback}</strong>.</p>
+        <p className="mb-2">6.2 <strong>Administrator’s Fee:</strong> The Administrator shall deduct <strong>₦{Number(props.adminCharge).toLocaleString() || fallback}</strong> weekly from the Gross Weekly Remittance as a Rider Administration Fee. This fee covers GPS monitoring, enforcement, reporting, insurance facilitation, and repossession efforts. This fee is the exclusive property of the Administrator.</p>
         <p className="mb-2">6.3 <strong>Net Remittance:</strong> The Net Weekly Remittance transferred to the Owner shall be the Gross Weekly Remittance less the Administrator's Fee.</p>
         <p className="mb-6">6.4 <strong>Shortfall Non-Liability:</strong> If the Rider defaults on payment due to accidents, illness, or other unforeseen circumstances, resulting in a reduced or zero Gross Weekly Remittance, the Administrator does not guarantee the Owner’s Net Weekly Remittance. The Administrator shall not be held financially liable for such shortfalls but remains obligated to enforce recovery or repossession using the Power of Attorney.</p>
 
