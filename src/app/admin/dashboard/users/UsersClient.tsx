@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, User, ShieldAlert, CheckCircle2, Ban, Car, Briefcase, X, FileText, Banknote } from "lucide-react";
+import { Search, User, ShieldAlert, CheckCircle2, Ban, Briefcase, X, Banknote, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type UserData = any;
