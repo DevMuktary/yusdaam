@@ -54,9 +54,21 @@ export default function UsersClient({ users }: { users: UserData[] }) {
     const contract = user.assignedTrip.contract;
     const ledgers = user.assignedTrip.ledgers || [];
     
-    const totalPaid = ledgers.reduce((sum: number, l: any) => sum + l.amount, 0);
+    // 1. Calculate ONLY the weekly remittances (ledgers)
+    const totalRemitted = ledgers.reduce((sum: number, l: any) => sum + l.amount, 0);
+    
+    // 2. Get the Down Payment (Default to 0 if none)
+    const downPayment = contract.downPayment || 0;
+    
+    // 3. Total Paid is Down Payment + Remittances
+    const totalPaid = totalRemitted + downPayment;
+    
     const target = contract.riderWeeklyRemittance;
-    const weeksCleared = target > 0 ? (totalPaid / target).toFixed(1) : "0";
+    
+    // 4. Weeks Cleared should ONLY count the weekly remittances, not the down payment
+    const weeksCleared = target > 0 ? (totalRemitted / target).toFixed(1) : "0";
+    
+    // 5. Debt Remaining is Total Price minus Total Paid (which includes down payment)
     const balanceRemaining = contract.totalHirePurchasePrice - totalPaid;
 
     return { totalPaid, target, weeksCleared, balanceRemaining, totalPrice: contract.totalHirePurchasePrice };
@@ -184,7 +196,7 @@ export default function UsersClient({ users }: { users: UserData[] }) {
 
             <div className="p-6 space-y-8">
               
-              {/* FINANCIAL DOSSIER (The Exact Stats You Requested) */}
+              {/* FINANCIAL DOSSIER */}
               {selectedUser.role === "RIDER" && selectedUser.assignedTrip && (
                 <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-5">
                   <h3 className="flex items-center gap-2 text-sm font-bold text-emerald-400 uppercase tracking-wider mb-4 border-b border-emerald-500/20 pb-2">
@@ -250,11 +262,16 @@ export default function UsersClient({ users }: { users: UserData[] }) {
                 <div className="space-y-4">
                   <h3 className="text-sm font-bold text-cobalt uppercase tracking-wider border-b border-white/10 pb-2">Financial Channels</h3>
                   <div className="space-y-3 text-sm">
-                    <div className="p-3 bg-white/5 rounded-lg border border-white/5">
-                      <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Personal Bank Account</p>
-                      <p className="font-bold text-white">{selectedUser.bankName || "N/A"}</p>
-                      <p className="text-gray-300 font-mono">{selectedUser.accountNumber || "N/A"}</p>
-                    </div>
+                    
+                    {/* ONLY show Personal Bank Account if user is NOT a RIDER */}
+                    {selectedUser.role !== "RIDER" && (
+                      <div className="p-3 bg-white/5 rounded-lg border border-white/5">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Personal Bank Account</p>
+                        <p className="font-bold text-white">{selectedUser.bankName || "N/A"}</p>
+                        <p className="text-gray-300 font-mono">{selectedUser.accountNumber || "N/A"}</p>
+                      </div>
+                    )}
+                    
                     {selectedUser.role === "RIDER" && (
                       <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
                         <p className="text-[10px] text-emerald-400 uppercase tracking-widest mb-1">Virtual Remittance Account</p>
@@ -262,6 +279,7 @@ export default function UsersClient({ users }: { users: UserData[] }) {
                         <p className="text-emerald-400 font-mono text-lg">{selectedUser.virtualAccountNo || "N/A"}</p>
                       </div>
                     )}
+
                   </div>
                 </div>
 
