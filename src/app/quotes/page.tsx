@@ -127,8 +127,21 @@ export default function QuotesPage() {
           </div>
         </div>
 
+        {/* Calculation Logic Note (Moved up) */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6 mt-8">
+          <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-4">
+            <FileText size={18} className="text-emerald-400" /> Remittance Calculation Logic
+          </h4>
+          <p className="text-sm text-gray-400 mb-3">The estimated weekly remittance period and projected total remittance amount are calculated based on:</p>
+          <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-300 font-medium">
+            <li>The actual purchase price of the vehicle acquired by the Owner.</li>
+            <li>The total hire purchase value at which the vehicle is assigned to the Rider/Driver.</li>
+            <li>The agreed weekly remittance amount payable by the Rider/Driver.</li>
+          </ol>
+        </div>
+
         {/* Legal Clauses Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           
           <div className="bg-void-navy border border-white/10 p-6 rounded-xl shadow-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 p-6 opacity-10"><Clock size={64} /></div>
@@ -170,19 +183,6 @@ export default function QuotesPage() {
             </p>
           </div>
 
-        </div>
-
-        {/* Calculation Logic Note */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 mt-8">
-          <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-4">
-            <FileText size={18} className="text-emerald-400" /> Remittance Calculation Logic
-          </h4>
-          <p className="text-sm text-gray-400 mb-3">The estimated weekly remittance period and projected total remittance amount are calculated based on:</p>
-          <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-300 font-medium">
-            <li>The actual purchase price of the vehicle acquired by the Owner.</li>
-            <li>The total hire purchase value at which the vehicle is assigned to the Rider/Driver.</li>
-            <li>The agreed weekly remittance amount payable by the Rider/Driver.</li>
-          </ol>
         </div>
 
       </div>
