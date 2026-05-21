@@ -23,6 +23,8 @@ export async function POST(req: Request) {
       rideHailingActive, previousHPExperience,
       g1FirstName, g1LastName, g1Phone, g1Relationship,
       g2FirstName, g2LastName, g2Phone, g2Relationship,
+      // Extracted Next of Kin fields
+      nokFirstName, nokLastName, nokRelationship, nokPhone, nokAddress, nokIdNumber,
       // Base64 file data
       passportBase64, utilityBillBase64, driversLicenseBase64
     } = body;
@@ -90,6 +92,13 @@ export async function POST(req: Request) {
         drivingExperienceYears,
         rideHailingActive: rideHailingActive === "true",
         previousHPExperience: previousHPExperience === "true",
+        // Next of Kin mapping
+        nokFirstName,
+        nokLastName,
+        nokRelationship,
+        nokPhone,
+        nokAddress,
+        nokIdNumber,
         
         guarantors: {
           create: [
