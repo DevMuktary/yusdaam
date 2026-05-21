@@ -32,6 +32,7 @@ export async function GET(req: Request) {
     let processed = 0;
 
     for (const contract of dueContracts) {
+      if (!contract.nextDueDate) continue;
       const cycleStartDate = subDays(contract.nextDueDate, 7);
       
       // Calculate total funds collected during this specific cycle
