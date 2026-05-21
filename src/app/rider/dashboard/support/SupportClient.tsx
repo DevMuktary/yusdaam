@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, Phone, Mail, ShieldAlert, ChevronDown, ChevronUp, LifeBuoy, FileText } from "lucide-react";
+import { MessageCircle, MessageSquare, Phone, Mail, ShieldAlert, ChevronDown, ChevronUp, LifeBuoy, FileText } from "lucide-react";
 
 export default function SupportClient({ rider }: { rider: any }) {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -35,7 +35,10 @@ export default function SupportClient({ rider }: { rider: any }) {
 
   const adminPhone = "+2349065000860"; // Replace with your actual company number
   const adminEmail = "support@yusdaamautos.com";
-  const whatsappLink = `https://wa.me/2349065000860?text=${encodeURIComponent(`Hello YUSDAAM Admin, my name is ${rider.firstName} ${rider.lastName}. I need assistance regarding my fleet assignment.`)}`;
+  
+  const defaultMessage = `Hello YUSDAAM Admin, my name is ${rider.firstName} ${rider.lastName}. I need assistance regarding my fleet assignment.`;
+  const whatsappLink = `https://wa.me/2349065000860?text=${encodeURIComponent(defaultMessage)}`;
+  const smsLink = `sms:${adminPhone}?body=${encodeURIComponent(defaultMessage)}`;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
@@ -85,6 +88,15 @@ export default function SupportClient({ rider }: { rider: any }) {
               >
                 <MessageCircle size={16} /> WhatsApp Admin
               </a>
+              
+              {/* NEW SMS BUTTON */}
+              <a 
+                href={smsLink}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 font-bold uppercase tracking-wider text-xs rounded-xl transition-all"
+              >
+                <MessageSquare size={16} /> SMS Admin
+              </a>
+
               <a 
                 href={`mailto:${adminEmail}`}
                 className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-void-light/5 hover:bg-void-light/10 border border-cobalt/30 text-crisp-white font-bold uppercase tracking-wider text-xs rounded-xl transition-all"
