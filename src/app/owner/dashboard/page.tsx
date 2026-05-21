@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ShieldAlert, Loader2, CheckCircle2, Clock, TrendingUp, CarFront, Calendar, Activity } from "lucide-react";
 import VirtualAgreement from "./VirtualAgreement";
 
@@ -10,7 +11,14 @@ const prisma = new PrismaClient();
 export default async function DashboardHome() {
   const session = await getServerSession(authOptions);
   
-  if (!session?.user?.id) return null;
+  if (!session?.user?.id) {
+    redirect("/owner/login");
+  }
+
+  // FORCE SECURITY BOUNDARY: Prevent Riders from cross-rendering the Owner Dashboard
+  if (session.user.role === "RIDER") {
+    redirect("/rider/dashboard");
+  }
 
   // FETCH EVERYTHING NEEDED FOR THE AGREEMENT
   const user = await prisma.user.findUnique({
@@ -38,7 +46,6 @@ export default async function DashboardHome() {
   const currentStatus = String(user?.accountStatus);
   const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
   
-  // Grab the first assigned vehicle and its contract if they exist
   const assignedVehicle = user?.ownedVehicles?.[0];
   const assignedContract = assignedVehicle?.contract;
 
@@ -100,7 +107,6 @@ export default async function DashboardHome() {
           ownerAddress={user?.streetAddress || ""}
           ownerBank={user?.bankName || ""}
           ownerAcctNo={user?.accountNumber || ""}
-          // FIXED: We now guarantee a string is returned, preventing the 'null' type error
           vehicleType={assignedVehicle?.type === "OTHERS" ? (assignedVehicle?.customType || "") : (assignedVehicle?.type || "")}
           makeModel={assignedVehicle?.makeModel || ""}
           year={assignedVehicle?.year || ""}
@@ -109,7 +115,6 @@ export default async function DashboardHome() {
           engineNo={assignedVehicle?.engineNumber || ""}
           targetWeeklyRemittance={assignedContract?.ownerWeeklyPayout?.toString() || "0"}
           grossRemittance={assignedContract?.riderWeeklyRemittance?.toString() || "0"}
-          // Calculate the admin margin automatically
           adminCharge={
             (Number(assignedContract?.riderWeeklyRemittance || 0) - Number(assignedContract?.ownerWeeklyPayout || 0)).toString()
           }
