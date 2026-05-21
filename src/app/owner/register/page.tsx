@@ -321,7 +321,8 @@ export default function OwnerRegistration() {
                   <div>
                     <label className={labelStyle}>Confirm Password *</label>
                     <div className="relative">
-                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword} value={formData.confirmPassword} onChange={handleTextChange} className={`${inputStyle} pr-12`} required />
+                      {/* FIXED TYPO: Added missing closing quotation mark to confirmPassword */}
+                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleTextChange} className={`${inputStyle} pr-12`} required />
                       <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-light/50 hover:text-crisp-white transition-colors">
                         {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
@@ -396,7 +397,7 @@ export default function OwnerRegistration() {
                 </div>
 
                 <div className="h-12 flex items-center bg-void-navy/50 px-4 rounded-lg border border-white/10">
-                  {isVerifyingBank && <p className="text-sm text-slate-light flex items-center gap-2"><Loader2 size={16} className="animate-spin text-cobalt" /> Resolving Account...</p>}
+                  {isVerifyingBank && <p className="text-sm text-slate-light flex items-center gap-2"><Loader2 size={16} className="animate-spin text-cobalt} /> Resolving Account...</p>}
                   {bankError && <p className="text-sm text-signal-red flex items-center gap-2 font-bold"><XCircle size={16} /> {bankError}</p>}
                   {verifiedAccountName && <p className="text-sm text-emerald-400 font-bold flex items-center gap-2"><CheckCircle2 size={16} /> Verified: {verifiedAccountName}</p>}
                   {!isVerifyingBank && !bankError && !verifiedAccountName && <p className="text-[10px] uppercase tracking-widest text-slate-light/40">Awaiting 10-Digit Account Number...</p>}
