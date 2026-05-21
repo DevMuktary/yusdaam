@@ -181,7 +181,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         <p className={isPdf ? "mb-3" : "mb-6"}>6.3 <strong>Jurisdiction:</strong> This Agreement shall be governed by the laws of the Federal Republic of Nigeria. Any dispute shall be subject to the exclusive jurisdiction of the Courts of Lagos State.</p>
 
         <h3 className={headingStyle}>7. GUARANTORS' EXECUTION</h3>
-        <{/* break-inside-avoid ensures this entire box stays on one page */}
+        {/* break-inside-avoid ensures this entire box stays on one page */}
         <div className={`${isPdf ? "mb-3 p-3 border border-gray-400 bg-gray-50 break-inside-avoid" : "mb-8 p-4 border border-cobalt/30 bg-void-navy/50"}`}>
           <p className={`${isPdf ? "text-[9px]" : "text-[10px]"} italic mb-2 leading-tight`}>The Guarantors below have previously executed Sworn Guarantor Attestations digitally. Their IP addresses, identity documents, and digital signatures are verified and held by the Administrator.</p>
           
