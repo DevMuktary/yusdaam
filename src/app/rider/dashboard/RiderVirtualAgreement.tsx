@@ -43,6 +43,9 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   const currentMonth = today.toLocaleString('default', { month: 'long' });
   const currentYear = today.getFullYear();
   const formattedDate = today.toLocaleDateString('en-GB');
+  
+  // NEW: Get the current day of the week (e.g., "Monday", "Thursday")
+  const currentWeekday = today.toLocaleDateString('default', { weekday: 'long' });
 
   const g1 = guarantors[0] || {};
   const g2 = guarantors[1] || {};
@@ -148,7 +151,10 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         <p className={paraSpacing}>2.1 <strong>Total Hire Purchase Price:</strong> The total sum payable by the Driver/Rider to acquire ownership of the Asset is <strong>₦{contract?.totalHirePurchasePrice?.toLocaleString() || "---"}</strong>.</p>
         <p className={paraSpacing}>2.2 <strong>Initial Deposit:</strong> The Driver/Rider has paid a non-refundable initial commitment deposit of <strong>₦{contract?.downPayment?.toLocaleString() || "0"}</strong>.</p>
         <p className={paraSpacing}>2.3 <strong>Weekly Remittance:</strong> The Driver/Rider shall pay a fixed sum of <strong>₦{contract?.riderWeeklyRemittance?.toLocaleString() || "---"}</strong> every week directly into the Administrator’s designated Client Remittance Account.</p>
-        <p className={paraSpacing}>2.4 <strong>Payment Schedule:</strong> Payments must be made no later than <strong>Friday 11:59 PM</strong> of every week. Payments made to unauthorized staff or third parties will not be recognized.</p>
+        
+        {/* DYNAMIC WEEKDAY INSERTED HERE */}
+        <p className={paraSpacing}>2.4 <strong>Payment Schedule:</strong> Payments must be made no later than <strong>{currentWeekday} 11:59 PM</strong> of every week. Payments made to unauthorized staff or third parties will not be recognized.</p>
+        
         <p className={isPdf ? "mb-2" : "mb-6"}>2.5 <strong>Tenure:</strong> The expected duration is <strong>{contract?.riderDurationWeeks || "---"}</strong> weeks, concluding when the Total Hire Purchase Price is fully paid.</p>
 
         <h3 className={headingStyle}>3. DRIVER/RIDER’S OBLIGATIONS AND RISK</h3>
