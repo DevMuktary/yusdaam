@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X, Eye, EyeOff, UploadCloud, HelpCircle, Copy } from "lucide-react";
-import { Country, State } from "country-state-city";
+import { State } from "country-state-city";
 
 const NIGERIA_LGAS: Record<string, string[]> = {
   "Abia": ["Aba North", "Aba South", "Arochukwu", "Bende", "Ikwuano", "Isiala Ngwa North", "Isiala Ngwa South", "Isuikwuato", "Obi Ngwa", "Ohafia", "Osisioma", "Ugwunagbo", "Ukwa East", "Ukwa West", "Umuahia North", "Umuahia South", "Umunneochi"],
@@ -16,7 +17,7 @@ const NIGERIA_LGAS: Record<string, string[]> = {
   "Benue": ["Ado", "Agatu", "Apa", "Buruku", "Gboko", "Guma", "Gwer East", "Gwer West", "Katsina-Ala", "Konshisha", "Kwande", "Logo", "Makurdi", "Obi", "Ogbadibo", "Ohimini", "Oju", "Okpokwu", "Otukpo", "Tarka", "Ukum", "Ushongo", "Vandeikya"],
   "Borno": ["Abadam", "Askira/Uba", "Bama", "Bayo", "Biu", "Chibok", "Damboa", "Dikwa", "Gubio", "Guzamala", "Gwoza", "Hawul", "Jere", "Kaga", "Kala/Balge", "Konduga", "Kukawa", "Kwaya Kusar", "Mafa", "Magumeri", "Maiduguri", "Marte", "Mobbar", "Monguno", "Ngala", "Nganzai", "Shani"],
   "Cross River": ["Abi", "Akamkpa", "Akpabuyo", "Bakassi", "Bekwarra", "Biase", "Boki", "Calabar Municipal", "Calabar South", "Etung", "Ikom", "Obanliku", "Obubra", "Obudu", "Odukpani", "Ogoja", "Yakuur", "Yala"],
-  "Delta": ["Aniocha North", "Aniocha South", "Bomadi", "Burutu", "Ethiope East", "Ethiope West", "Ika North East", "Ika South", "Isoko North", "Isoko South", "Ndokwa East", "Ndokwa West", "Okpe", "Oshimili North", "Oshimili South", "Patani", "Sapele", "Udu", "Ughelli North", "Ughelli South", "Ukwuani", "Uvwie", "Warri North", "Warri South", "Warri South West"],
+  "Delta": ["Aniocha North", "Aniocha South", "Bomadi", "Burutu", "Ethiope East", "Ethiope West", "Ika North East", "Ika South", "Isoko North", "Isoko South", "Ndokwa East", "Ndokwa West", "Okpe", "Oshimili North", "Oshimili South", "Patani", "Sapele", "Udu", "Ughelli North", "Ughelli South", "Ukwuani", "Uvwie", "Warri North", "Warri South West"],
   "Ebonyi": ["Abakaliki", "Afikpo North", "Afikpo South", "Ebonyi", "Ezza North", "Ezza South", "Ikwo", "Ishielu", "Ivo", "Izzi", "Ohaozara", "Ohaukwu", "Onicha"],
   "Edo": ["Akoko-Edo", "Egor", "Esan Central", "Esan North-East", "Esan South-East", "Esan West", "Etsako Central", "Etsako East", "Etsako West", "Igueben", "Ikpoba Okha", "Orhionmwon", "Oredo", "Ovia North-East", "Ovia South-West", "Owan East", "Owan West", "Uhunmwonde"],
   "Ekiti": ["Ado Ekiti", "Efon", "Ekiti East", "Ekiti South-West", "Ekiti West", "Emure", "Gbonyin", "Ido Osi", "Ijero", "Ikere", "Ikole", "Ilejemeje", "Irepodun/Ifelodun", "Ise/Orun", "Moba", "Oye"],
@@ -24,7 +25,7 @@ const NIGERIA_LGAS: Record<string, string[]> = {
   "Federal Capital Territory": ["Abaji", "Bwari", "Gwagwalada", "Kuje", "Kwali", "Municipal Area Council"],
   "Gombe": ["Akko", "Balanga", "Billiri", "Dukku", "Funakaye", "Gombe", "Kaltungo", "Kwami", "Nafada", "Shongom", "Yamaltu/Deba"],
   "Imo": ["Aboh Mbaise", "Ahiazu Mbaise", "Ehime Mbano", "Ezinihitte", "Ideato North", "Ideato South", "Ihitte/Uboma", "Ikeduru", "Isiala Mbano", "Isu", "Mbaitoli", "Ngor Okpala", "Njaba", "Nkwerre", "Nwangele", "Obowo", "Oguta", "Ohaji/Egbema", "Okigwe", "Orlu", "Orsu", "Oru East", "Oru West", "Owerri Municipal", "Owerri North", "Owerri West", "Unuimo"],
-  "Jigawa": ["Auyo", "Babura", "Biriniwa", "Birnin Kudu", "Buji", "Dutse", "Gagarawa", "Garki", "Gumel", "Guri", "Gwaram", "Gwiwa", "Hadejia", "Jahun", "Kafin Hausa", "Kaugama", "Kazaure", "Kiri Kasama", "Kiyawa", "Kaugama", "Maigatari", "Malam Madori", "Miga", "Ringim", "Roni", "Sule Tankarkar", "Taura", "Yankwashi"],
+  "Jigawa": ["Auyo", "Babura", "Biriniwa", "Birnin Kudu", "Buji", "Dutse", "Gagarawa", "Garki", "Gumel", "Guri", "Gwaram", "Gwiwa", "Hadejia", "Jahun", "Kafin Hausa", "Kaugama", "Kazaure", "Kiri Kasama", "Kiyawa", "Maigatari", "Malam Madori", "Miga", "Ringim", "Roni", "Sule Tankarkar", "Taura", "Yankwashi"],
   "Kaduna": ["Birnin Gwari", "Chikun", "Giwa", "Igabi", "Ikara", "Jaba", "Jema'a", "Kachia", "Kaduna North", "Kaduna South", "Kagarko", "Kajuru", "Kaura", "Kauru", "Kubau", "Kudan", "Lere", "Makarfi", "Sabon Gari", "Sanga", "Soba", "Zangon Kataf", "Zaria"],
   "Kano": ["Ajingi", "Albasu", "Bagwai", "Bebeji", "Bichi", "Bunkure", "Dala", "Dambatta", "Dawakin Kudu", "Dawakin Tofa", "Doguwa", "Fagge", "Gabasawa", "Garko", "Garun Mallam", "Gaya", "Gezawa", "Gwale", "Gwarzo", "Kabo", "Kano Municipal", "Karaye", "Kibiya", "Kiru", "Kumbotso", "Kunchi", "Kura", "Madobi", "Makoda", "Minjibir", "Nasarawa", "Rano", "Rimin Gado", "Rogo", "Shanono", "Sumaila", "Takai", "Tarauni", "Tofa", "Tsanyawa", "Tudun Wada", "Ungogo", "Warawa", "Wudil"],
   "Katsina": ["Bakori", "Batagarawa", "Batsari", "Baure", "Bindawa", "Charanchi", "Dandume", "Danja", "Dan Musa", "Daura", "Dutsi", "Dutsin Ma", "Faskari", "Funtua", "Ingawa", "Jibia", "Kafur", "Kaita", "Kankara", "Kankia", "Katsina", "Kurfi", "Kusada", "Mai'Adua", "Malumfashi", "Mani", "Mashi", "Matazu", "Musawa", "Rimi", "Sabuwa", "Safana", "Sandamu", "Zango"],
@@ -65,7 +66,6 @@ export default function RiderRegistration() {
   const [errorMsg, setErrorMsg] = useState("");
   const [success, setSuccess] = useState(false);
   
-  // State to hold generated URLs from the backend
   const [guarantorLinks, setGuarantorLinks] = useState<{g1Name: string, g1Link: string, g2Name: string, g2Link: string} | null>(null);
   const [copiedObj, setCopiedObj] = useState<number | null>(null);
 
@@ -79,25 +79,21 @@ export default function RiderRegistration() {
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", password: "", confirmPassword: "",
     phoneCountryCode: "+234", phoneNumber: "", nin: "", bvn: "", 
-    
-    // File Base64 & Names
     passportBase64: "", passportName: "",
     utilityBillBase64: "", utilityBillName: "",
     driversLicenseBase64: "", driversLicenseName: "",
-    
     countryIso: "NG", countryName: "Nigeria", state: "", lga: "", streetAddress: "", 
     driversLicenseNo: "", lasdriNo: "", 
-    
     preferredAssetClass: "", preferredAssetClassOther: "",
     drivingExperienceYears: "", rideHailingActive: "false", previousHPExperience: "false",
-    
     g1FirstName: "", g1LastName: "", g1Phone: "", g1Relationship: "", g1RelationshipOther: "",
-    g2FirstName: "", g2LastName: "", g2Phone: "", g2Relationship: "", g2RelationshipOther: ""
+    g2FirstName: "", g2LastName: "", g2Phone: "", g2Relationship: "", g2RelationshipOther: "",
+    // Next of Kin Fields
+    nokFirstName: "", nokLastName: "", nokRelationship: "", nokRelationshipOther: "", nokPhone: "", nokAddress: "", nokIdNumber: ""
   });
 
   const [availableLgas, setAvailableLgas] = useState<string[]>([]);
 
-  // Prevent iOS Safari auto-zoom on input focus
   useEffect(() => {
     const meta = document.createElement('meta');
     meta.name = 'viewport';
@@ -185,6 +181,10 @@ export default function RiderRegistration() {
       if (!formData.preferredAssetClass || !formData.drivingExperienceYears) return setErrorMsg("Please select your operational preferences.");
       if (formData.preferredAssetClass === "Others" && !formData.preferredAssetClassOther) return setErrorMsg("Please specify your preferred asset.");
     }
+    if (step === 4) {
+      if (!formData.nokFirstName || !formData.nokAddress || !formData.nokIdNumber || !formData.nokRelationship) return setErrorMsg("Please complete all Next of Kin details.");
+      if (formData.nokRelationship === "Others" && !formData.nokRelationshipOther) return setErrorMsg("Please specify your Next of Kin relationship.");
+    }
 
     setStep(step + 1);
     scrollToTop();
@@ -212,6 +212,7 @@ export default function RiderRegistration() {
         preferredAssetClass: formData.preferredAssetClass === "Others" ? formData.preferredAssetClassOther : formData.preferredAssetClass,
         g1Relationship: formData.g1Relationship === "Others" ? formData.g1RelationshipOther : formData.g1Relationship,
         g2Relationship: formData.g2Relationship === "Others" ? formData.g2RelationshipOther : formData.g2Relationship,
+        nokRelationship: formData.nokRelationship === "Others" ? formData.nokRelationshipOther : formData.nokRelationship
       };
 
       const res = await fetch("/api/rider/auth/register", {
@@ -222,7 +223,6 @@ export default function RiderRegistration() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
       
-      // Build the URLs based on the current domain
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
       setGuarantorLinks({
         g1Name: data.tokens.g1Name,
@@ -254,30 +254,22 @@ export default function RiderRegistration() {
           </div>
 
           <div className="space-y-4 mb-8">
-            {/* Guarantor 1 Link Box */}
             <div className="bg-void-navy/80 border border-signal-red/30 p-5 rounded-xl flex items-center justify-between">
               <div className="pr-4 overflow-hidden">
                 <p className="text-[10px] font-bold text-signal-red uppercase tracking-widest mb-1">Guarantor 1: {guarantorLinks.g1Name}</p>
                 <p className="text-sm text-slate-light font-mono truncate">{guarantorLinks.g1Link}</p>
               </div>
-              <button 
-                onClick={() => copyToClipboard(guarantorLinks.g1Link, 1)} 
-                className="shrink-0 p-3 bg-void-light/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition"
-              >
+              <button type="button" onClick={() => copyToClipboard(guarantorLinks.g1Link, 1)} className="shrink-0 p-3 bg-void-light/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition">
                 {copiedObj === 1 ? <Check size={20} /> : <Copy size={20} />}
               </button>
             </div>
 
-            {/* Guarantor 2 Link Box */}
             <div className="bg-void-navy/80 border border-signal-red/30 p-5 rounded-xl flex items-center justify-between">
               <div className="pr-4 overflow-hidden">
                 <p className="text-[10px] font-bold text-signal-red uppercase tracking-widest mb-1">Guarantor 2: {guarantorLinks.g2Name}</p>
                 <p className="text-sm text-slate-light font-mono truncate">{guarantorLinks.g2Link}</p>
               </div>
-              <button 
-                onClick={() => copyToClipboard(guarantorLinks.g2Link, 2)} 
-                className="shrink-0 p-3 bg-void-light/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition"
-              >
+              <button type="button" onClick={() => copyToClipboard(guarantorLinks.g2Link, 2)} className="shrink-0 p-3 bg-void-light/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition">
                 {copiedObj === 2 ? <Check size={20} /> : <Copy size={20} />}
               </button>
             </div>
@@ -291,7 +283,6 @@ export default function RiderRegistration() {
     );
   }
 
-  // THE RESTORED RED GLOW INPUT STYLE
   const inputStyle = "w-full bg-void-light/5 border border-signal-red/60 rounded-lg px-4 py-3.5 text-base text-crisp-white focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/40 transition-all placeholder:text-slate-light/40 shadow-[0_0_10px_rgba(233,69,96,0.05)]";
   const labelStyle = "flex items-center text-[10px] sm:text-xs font-bold text-slate-light/70 uppercase tracking-widest mb-1.5 sm:mb-2";
 
@@ -299,16 +290,19 @@ export default function RiderRegistration() {
     <main className="min-h-screen bg-void-navy flex flex-col lg:flex-row text-crisp-white">
       
       {/* LEFT SIDE: Branding & Desktop Timeline */}
-      <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-cobalt/20 p-5 sm:p-10 lg:p-12 flex flex-col justify-between">
+      <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-white/10 p-5 sm:p-10 lg:p-12 flex flex-col justify-between">
         <div>
-          <Link href="/" className="text-xl sm:text-3xl font-black tracking-wider hover:opacity-80 transition block mb-4 lg:mb-12">YUSDAAM<span className="text-signal-red">.</span></Link>
-          <div className="hidden sm:block space-y-10 border-l border-cobalt/20 ml-2">
-            {[1, 2, 3, 4].map((s) => (
+          <Link href="/" className="mb-4 lg:mb-12 block hover:opacity-80 transition">
+            <Image src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" width={200} height={55} className="object-contain" priority />
+          </Link>
+          <div className="hidden sm:block space-y-10 border-l border-white/10 ml-2">
+            {[1, 2, 3, 4, 5].map((s) => (
               <div key={s} className={`relative pl-8 transition-opacity duration-500 ${step === s ? 'opacity-100' : 'opacity-40'}`}>
-                {/* The Red Dot Timeline Indicator */}
                 <span className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${step === s ? 'bg-signal-red shadow-[0_0_10px_rgba(233,69,96,0.8)]' : 'bg-cobalt'}`} />
                 <div className="text-[10px] font-bold text-signal-red uppercase mb-1">Phase 0{s}</div>
-                <h3 className="font-bold text-sm">{s === 1 ? 'Core Identity' : s === 2 ? 'Licensing & Docs' : s === 3 ? 'Operations' : 'Guarantors'}</h3>
+                <h3 className="font-bold text-sm">
+                  {s === 1 ? 'Core Identity' : s === 2 ? 'Licensing & Docs' : s === 3 ? 'Operations' : s === 4 ? 'Succession' : 'Guarantors'}
+                </h3>
               </div>
             ))}
           </div>
@@ -322,23 +316,17 @@ export default function RiderRegistration() {
         <div className="max-w-2xl w-full pt-4 sm:pt-0">
           
           <div className="sm:hidden flex items-center justify-between mb-8 px-1">
-            {[1, 2, 3, 4].map(s => (
+            {[1, 2, 3, 4, 5].map(s => (
               <div key={s} className={`h-1.5 flex-1 mx-1 rounded-full ${step >= s ? 'bg-signal-red shadow-[0_0_8px_rgba(233,69,96,0.6)]' : 'bg-void-light/10'}`} />
             ))}
           </div>
 
-          <div className="mb-6 sm:mb-12 border-b border-cobalt/20 pb-4 sm:pb-8">
+          <div className="mb-6 sm:mb-12 border-b border-white/10 pb-4 sm:pb-8">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase mb-2">Rider Application</h1>
             <p className="text-xs sm:text-base text-slate-light">Complete your KYC to access commercial fleet assignments.</p>
           </div>
 
-          {errorMsg && (
-            <div className="bg-signal-red/10 border border-signal-red text-signal-red px-4 py-3 rounded-lg mb-8 text-sm font-medium flex gap-2 items-start animate-in fade-in slide-in-from-top-2">
-              <XCircle size={18} className="shrink-0 mt-0.5" /> <p>{errorMsg}</p>
-            </div>
-          )}
-
-          <form onSubmit={step === 4 ? handleSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-6 sm:space-y-8">
+          <form onSubmit={step === 5 ? handleSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-6 sm:space-y-8">
             
             {/* STEP 1: IDENTITY */}
             {step === 1 && (
@@ -370,7 +358,7 @@ export default function RiderRegistration() {
                 <div>
                   <label className={labelStyle}>Passport Photograph * <Tooltip text="A clear, recent photograph of your face for your driver profile." /></label>
                   <input type="file" accept="image/*" className="hidden" ref={passportRef} onChange={(e) => handleFileConvert(e, "passport")} />
-                  <div onClick={() => passportRef.current?.click()} className={`w-full h-24 sm:h-32 border-2 ${formData.passportBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
+                  <div onClick={() => passportRef.current?.click()} className={`w-full h-24 sm:h-32 border-2 ${formData.passportBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-white/20 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
                     {formData.passportBase64 ? (
                       <><CheckCircle2 size={32} className="mb-2 text-emerald-400" /><span className="text-xs font-bold uppercase tracking-widest text-emerald-400 truncate max-w-[80%]">{formData.passportName || "Attached"}</span></>
                     ) : (
@@ -379,7 +367,7 @@ export default function RiderRegistration() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-cobalt/20">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-white/10">
                   <div className="relative">
                     <label className={labelStyle}>Password *</label>
                     <div className="relative">
@@ -389,7 +377,8 @@ export default function RiderRegistration() {
                       </button>
                     </div>
                     {formData.password && (
-                      <div className="mt-3 space-y-1.5 bg-void-light/5 border border-cobalt/20 p-3 rounded-lg">
+                      <div className="mt-3 space-y-1.5 bg-void-light/5 border border-white/10 p-3 rounded-lg">
+                        <p className="text-[10px] font-bold text-slate-light/60 uppercase tracking-widest mb-2 border-b border-white/10 pb-1">Security Requirements</p>
                         {passwordCriteria.map((req, i) => (
                           <div key={i} className={`flex items-center gap-2 text-xs font-medium ${req.met ? 'text-emerald-400' : 'text-slate-light/50'}`}>
                             {req.met ? <Check size={14} /> : <X size={14} />} {req.label}
@@ -401,7 +390,6 @@ export default function RiderRegistration() {
                   <div>
                     <label className={labelStyle}>Confirm Password *</label>
                     <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleTextChange} className={`${inputStyle} ${!isPasswordMatch && formData.confirmPassword.length > 0 ? 'border-signal-red/60 focus:ring-signal-red/40' : ''}`} required />
-                    
                     {!isPasswordMatch && formData.confirmPassword.length > 0 && (
                       <p className="text-[10px] text-signal-red mt-2 font-bold uppercase tracking-wider flex items-center gap-1.5 animate-in slide-in-from-top-1"><XCircle size={12}/> Passwords do not match</p>
                     )}
@@ -435,7 +423,7 @@ export default function RiderRegistration() {
                   <input type="text" name="streetAddress" value={formData.streetAddress} onChange={handleTextChange} className={inputStyle} placeholder="Unit, House No, Street" required />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-cobalt/20">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-white/10">
                   <div>
                     <label className={labelStyle}>Driver's License No. *</label>
                     <input type="text" name="driversLicenseNo" value={formData.driversLicenseNo} onChange={handleTextChange} className={inputStyle} placeholder="Valid License Number" required />
@@ -448,16 +436,16 @@ export default function RiderRegistration() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className={labelStyle}>License Upload * <Tooltip text="Upload a clear picture of your valid Driver's License." /></label>
+                    <label className={labelStyle}>License Upload *</label>
                     <input type="file" accept="image/*,application/pdf" className="hidden" ref={licenseRef} onChange={(e) => handleFileConvert(e, "driversLicense")} />
-                    <div onClick={() => licenseRef.current?.click()} className={`w-full h-24 border-2 ${formData.driversLicenseBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
+                    <div onClick={() => licenseRef.current?.click()} className={`w-full h-24 border-2 ${formData.driversLicenseBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-white/20 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
                       {formData.driversLicenseBase64 ? <span className="text-xs font-bold text-emerald-400 truncate px-4">{formData.driversLicenseName}</span> : <span className="text-xs font-bold text-slate-light">Upload License</span>}
                     </div>
                   </div>
                   <div>
-                    <label className={labelStyle}>Utility Bill Upload * <Tooltip text="Must be a recent PHCN, LAWMA, or Water bill showing your address." /></label>
+                    <label className={labelStyle}>Utility Bill Upload *</label>
                     <input type="file" accept="image/*,application/pdf" className="hidden" ref={utilityRef} onChange={(e) => handleFileConvert(e, "utilityBill")} />
-                    <div onClick={() => utilityRef.current?.click()} className={`w-full h-24 border-2 ${formData.utilityBillBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
+                    <div onClick={() => utilityRef.current?.click()} className={`w-full h-24 border-2 ${formData.utilityBillBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-white/20 bg-void-light/5 hover:border-signal-red'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
                       {formData.utilityBillBase64 ? <span className="text-xs font-bold text-emerald-400 truncate px-4">{formData.utilityBillName}</span> : <span className="text-xs font-bold text-slate-light">Upload Bill</span>}
                     </div>
                   </div>
@@ -497,21 +485,9 @@ export default function RiderRegistration() {
                       </select>
                     </div>
                   )}
-
-                  {formData.preferredAssetClass === "Others" && (
-                    <div className="sm:col-span-2">
-                      <label className={labelStyle}>Commercial Experience *</label>
-                      <select name="drivingExperienceYears" value={formData.drivingExperienceYears} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
-                        <option value="" className="bg-void-navy">Select...</option>
-                        <option value="0-2 Years" className="bg-void-navy text-crisp-white">0 - 2 Years</option>
-                        <option value="3-5 Years" className="bg-void-navy text-crisp-white">3 - 5 Years</option>
-                        <option value="5+ Years" className="bg-void-navy text-crisp-white">5+ Years</option>
-                      </select>
-                    </div>
-                  )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-cobalt/20">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-white/10">
                   <div>
                     <label className={labelStyle}>Active on Uber/Bolt/inDrive? *</label>
                     <select name="rideHailingActive" value={formData.rideHailingActive} onChange={handleTextChange} className={`${inputStyle} appearance-none`}>
@@ -530,8 +506,59 @@ export default function RiderRegistration() {
               </div>
             )}
 
-            {/* STEP 4: GUARANTORS */}
+            {/* STEP 4: SUCCESSION (NEW NEXT OF KIN) */}
             {step === 4 && (
+              <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-500">
+                <div className="bg-signal-red/10 border border-signal-red/30 p-4 rounded-xl mb-4">
+                  <p className="text-[11px] sm:text-xs text-slate-light leading-relaxed">
+                    <strong className="text-signal-red uppercase tracking-wider block mb-1">Succession Beneficiary Details</strong> 
+                    Provide details for your family successor. This individual will inherit access options, contractual assignment transitions, and payment balances in the case of complete incapacitation.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div><label className={labelStyle}>NOK First Name *</label><input type="text" name="nokFirstName" value={formData.nokFirstName} onChange={handleTextChange} className={inputStyle} required /></div>
+                  <div><label className={labelStyle}>NOK Last Name *</label><input type="text" name="nokLastName" value={formData.nokLastName} onChange={handleTextChange} className={inputStyle} required /></div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className={labelStyle}>NOK NIN / Identifier *</label>
+                    <input type="text" inputMode="numeric" name="nokIdNumber" value={formData.nokIdNumber} onChange={(e) => handleNumberOnlyChange(e, 11)} className={inputStyle} placeholder="11 Digits" required />
+                  </div>
+                  <div>
+                    <label className={labelStyle}>Relationship *</label>
+                    <select name="nokRelationship" value={formData.nokRelationship} onChange={handleTextChange} className={`${inputStyle} appearance-none`} required>
+                      <option value="" className="bg-void-navy">Select...</option>
+                      <option value="Spouse" className="bg-void-navy text-crisp-white">Spouse</option>
+                      <option value="Child" className="bg-void-navy text-crisp-white">Child</option>
+                      <option value="Sibling" className="bg-void-navy text-crisp-white">Sibling</option>
+                      <option value="Parent" className="bg-void-navy text-crisp-white">Parent</option>
+                      <option value="Others" className="bg-void-navy text-crisp-white">Others (Specify)</option>
+                    </select>
+                  </div>
+                  {formData.nokRelationship === "Others" && (
+                    <div className="sm:col-span-2 animate-in slide-in-from-top-2 duration-300">
+                      <label className={labelStyle}>Specify Relationship *</label>
+                      <input type="text" name="nokRelationshipOther" value={formData.nokRelationshipOther} onChange={handleTextChange} className={inputStyle} placeholder="Specify relation status" required />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className={labelStyle}>NOK WhatsApp / Phone *</label>
+                  <input type="text" inputMode="numeric" name="nokPhone" value={formData.nokPhone} onChange={(e) => handleNumberOnlyChange(e, 11)} className={inputStyle} placeholder="080..." required />
+                </div>
+
+                <div>
+                  <label className={labelStyle}>Residential Address *</label>
+                  <input type="text" name="nokAddress" value={formData.nokAddress} onChange={handleTextChange} className={inputStyle} placeholder="Full Home Address of Successor" required />
+                </div>
+              </div>
+            )}
+
+            {/* STEP 5: GUARANTORS */}
+            {step === 5 && (
               <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-500">
                 <div className="bg-signal-red/10 border border-signal-red/30 p-4 rounded-xl mb-4">
                   <p className="text-[11px] sm:text-xs text-slate-light leading-relaxed">
@@ -540,9 +567,8 @@ export default function RiderRegistration() {
                   </p>
                 </div>
 
-                {/* Guarantor 1 */}
-                <div className="p-5 border border-cobalt/30 rounded-xl bg-void-navy/50 space-y-4">
-                  <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest border-b border-cobalt/20 pb-2">Primary Guarantor</h4>
+                <div className="p-5 border border-white/10 rounded-xl bg-void-navy/50 space-y-4">
+                  <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest border-b border-white/10 pb-2">Primary Guarantor</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className={labelStyle}>First Name *</label><input type="text" name="g1FirstName" value={formData.g1FirstName} onChange={handleTextChange} className={inputStyle} required /></div>
                     <div><label className={labelStyle}>Last Name *</label><input type="text" name="g1LastName" value={formData.g1LastName} onChange={handleTextChange} className={inputStyle} required /></div>
@@ -568,9 +594,8 @@ export default function RiderRegistration() {
                   </div>
                 </div>
 
-                {/* Guarantor 2 */}
-                <div className="p-5 border border-cobalt/30 rounded-xl bg-void-navy/50 space-y-4">
-                  <h4 className="text-xs font-bold text-cobalt uppercase tracking-widest border-b border-cobalt/20 pb-2">Secondary Guarantor</h4>
+                <div className="p-5 border border-white/10 rounded-xl bg-void-navy/50 space-y-4">
+                  <h4 className="text-xs font-bold text-cobalt uppercase tracking-widest border-b border-white/10 pb-2">Secondary Guarantor</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className={labelStyle}>First Name *</label><input type="text" name="g2FirstName" value={formData.g2FirstName} onChange={handleTextChange} className={inputStyle} required /></div>
                     <div><label className={labelStyle}>Last Name *</label><input type="text" name="g2LastName" value={formData.g2LastName} onChange={handleTextChange} className={inputStyle} required /></div>
@@ -599,7 +624,7 @@ export default function RiderRegistration() {
             )}
 
             {/* FORM CONTROLS */}
-            <div className="pt-8 flex items-center justify-between mt-8 border-t border-cobalt/20">
+            <div className="pt-8 flex items-center justify-between mt-8 border-t border-white/10">
               {step > 1 ? (
                 <button type="button" onClick={prevStep} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-light hover:text-crisp-white transition">
                   <ArrowLeft size={14} /> Back
@@ -607,7 +632,7 @@ export default function RiderRegistration() {
               ) : <div />}
               
               <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl shadow-lg hover:bg-signal-red/90 transition disabled:opacity-50">
-                {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing</> : <>{step === 4 ? "Complete Profile" : "Proceed"} {step !== 4 && <ChevronRight size={16} />}</>}
+                {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing</> : <>{step === 5 ? "Complete Profile" : "Proceed"} {step !== 5 && <ChevronRight size={16} />}</>}
               </button>
             </div>
           </form>
