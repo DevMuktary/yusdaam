@@ -1,15 +1,23 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import { ShieldAlert, Loader2, CheckCircle2, Clock, CarFront, Banknote, UserCheck, Copy, ExternalLink } from "lucide-react";
+import { redirect } from "next/navigation";
+import { ShieldAlert, Loader2, CheckCircle2, Clock, CarFront, Banknote } from "lucide-react";
 import RiderVirtualAgreement from "./RiderVirtualAgreement";
-import CopyLinkHelper from "./CopyLinkHelper"; // We will create this simple helper below
+import CopyLinkHelper from "./CopyLinkHelper";
 
 const prisma = new PrismaClient();
 
 export default async function RiderDashboardHome() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return null;
+  if (!session?.user?.id) {
+    redirect("/rider/login");
+  }
+
+  // FORCE SECURITY BOUNDARY: Prevent Asset Owners from cross-rendering the Rider Dashboard
+  if (session.user.role === "ASSET_OWNER") {
+    redirect("/owner/dashboard");
+  }
 
   // Fetch Rider, assigned vehicle, active contract, AND guarantors
   const user = await prisma.user.findUnique({
@@ -29,13 +37,11 @@ export default async function RiderDashboardHome() {
   const contract = vehicle?.contract;
   const guarantors = user?.guarantors || [];
 
-  // Check if any guarantors are still pending out of the expected 2
   const pendingGuarantors = guarantors.filter(g => g.status === "PENDING");
   const isWaitingForGuarantors = pendingGuarantors.length > 0 || guarantors.length < 2;
 
   // --- STATE 1: PENDING KYC OR WAITING FOR GUARANTORS ---
   if (currentStatus === "PENDING" || currentStatus === "undefined" || !user?.accountStatus) {
-    // Get the base URL dynamically for the guarantor tokens
     const baseUrl = process.env.NEXTAUTH_URL || "https://yusdaamautos.com";
 
     return (
@@ -50,8 +56,6 @@ export default async function RiderDashboardHome() {
           </p>
 
           <div className="space-y-4">
-            
-            {/* Step 1: Core Application Submission */}
             <div className="flex items-center gap-4 bg-void-navy/50 border border-emerald-500/20 p-4 rounded-xl">
               <CheckCircle2 className="text-emerald-400 shrink-0" size={24} />
               <div>
@@ -60,7 +64,6 @@ export default async function RiderDashboardHome() {
               </div>
             </div>
             
-            {/* Step 2: Guarantor Attestations Track Block */}
             <div className={`flex flex-col p-4 rounded-xl border relative overflow-hidden transition-all ${
               isWaitingForGuarantors 
                 ? 'bg-signal-red/10 border-signal-red/30' 
@@ -86,7 +89,6 @@ export default async function RiderDashboardHome() {
                 </div>
               </div>
 
-              {/* DYNAMIC GUARANTOR STATUS ITEMS AND ACTIONABLE LINKS */}
               <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
                 {guarantors.map((g, idx) => {
                   const fullLink = `${baseUrl}/guarantor/${g.token}`;
@@ -98,7 +100,7 @@ export default async function RiderDashboardHome() {
                         <p className="text-xs font-bold text-white uppercase tracking-wide">
                           Guarantor {idx + 1}: {g.firstName} {g.lastName}
                         </p>
-                        <p className="text-[11px] text-gray-400 font-mono truncate max-w-[250px] sm:max-w-xs">{fullLink}</p>
+                        <p className="text-sm text-slate-light font-mono truncate max-w-[250px] sm:max-w-xs">{fullLink}</p>
                       </div>
                       
                       <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -117,13 +119,9 @@ export default async function RiderDashboardHome() {
                     </div>
                   );
                 })}
-                {guarantors.length === 0 && (
-                  <p className="text-xs text-signal-red italic">No guarantor entities connected to profile. Contact admin support.</p>
-                )}
               </div>
             </div>
 
-            {/* Step 3: Admin KYC Review (Stalls until Guarantors are done) */}
             <div className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
               isWaitingForGuarantors 
                 ? 'bg-void-navy/50 border-white/5 opacity-40 select-none' 
@@ -148,7 +146,6 @@ export default async function RiderDashboardHome() {
               </div>
             </div>
 
-            {/* Step 4: Vehicle Allocation & Agreement */}
             <div className="flex items-center gap-4 bg-void-navy/50 border border-white/5 p-4 rounded-xl opacity-40 select-none">
               <Clock className="text-slate-light shrink-0" size={24} />
               <div>
