@@ -246,6 +246,7 @@ model Contract {
   ownerDurationWeeks     Int      // How many weeks the owner receives this payout
 
   isActive               Boolean  @default(true)
+  nextDueDate            DateTime?
   signedDocumentUrl      String?  
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
