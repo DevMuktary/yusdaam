@@ -193,7 +193,7 @@ export default function VirtualAgreement(props: AgreementProps) {
           {/* LOGO REDIRECT FOR EMBEDDED RENDER */}
           <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: "45px", width: "auto", margin: "0 auto 10px auto", display: "block", objectFit: "contain" }} />
           <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
-          <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
+          <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher's Quarter Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
         </div>
 
         <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-6" : "text-lg text-signal-red mb-8"}`}>HIRE PURCHASE ADMINISTRATION AGREEMENT</h2>
