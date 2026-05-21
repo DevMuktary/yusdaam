@@ -55,7 +55,7 @@ export default function RiderCall() {
           </ul>
 
           <Link 
-            href="/riders/register"
+            href="/rider/register"
             className="inline-flex items-center justify-center w-full sm:w-auto px-6 sm:px-8 py-4 bg-transparent border-2 border-signal-red text-signal-red hover:bg-signal-red hover:text-crisp-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(233,69,96,0.2)]"
           >
             Apply to Drive With Us
