@@ -95,6 +95,22 @@ export default async function DashboardHome() {
 
   // --- STATE 2: VIRTUAL AGREEMENT READY ---
   if (currentStatus === "AWAITING_SIGNATURE") {
+    
+    // Dynamically calculate Contract Start and End Dates for the PDF
+    let startDateStr = "TBD";
+    let endDateStr = "TBD";
+    
+    if (assignedContract?.createdAt) {
+      const sDate = new Date(assignedContract.createdAt);
+      startDateStr = sDate.toLocaleDateString('en-GB');
+      
+      if (assignedContract.ownerDurationWeeks) {
+        const eDate = new Date(sDate);
+        eDate.setDate(eDate.getDate() + (assignedContract.ownerDurationWeeks * 7)); // Add exact weeks
+        endDateStr = eDate.toLocaleDateString('en-GB');
+      }
+    }
+
     return (
       <div className="py-6 overflow-x-hidden">
         <VirtualAgreement 
@@ -118,6 +134,9 @@ export default async function DashboardHome() {
           adminCharge={
             (Number(assignedContract?.riderWeeklyRemittance || 0) - Number(assignedContract?.ownerWeeklyPayout || 0)).toString()
           }
+          startDate={startDateStr}
+          endDate={endDateStr}
+          policyNo="To Be Provided By Admin"
         />
       </div>
     );
