@@ -18,7 +18,10 @@ import {
   AlertTriangle, 
   Receipt, 
   ClipboardList, 
-  ArrowDownLeft 
+  ArrowDownLeft,
+  Banknote,
+  Calendar,
+  CreditCard
 } from "lucide-react";
 import RiderVirtualAgreement from "./RiderVirtualAgreement";
 
