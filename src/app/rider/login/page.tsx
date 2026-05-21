@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Loader2, XCircle, Eye, EyeOff, CarFront, ArrowRight } from "lucide-react";
 
 export default function RiderLogin() {
@@ -59,13 +60,19 @@ export default function RiderLogin() {
     <main className="min-h-screen bg-void-navy flex flex-col lg:flex-row text-crisp-white">
       
       {/* LEFT SIDE: Branding Sidebar */}
-      <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-cobalt/20 p-6 sm:p-10 lg:p-12 flex flex-col justify-between">
+      <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-white/10 p-6 sm:p-10 lg:p-12 flex flex-col justify-between">
         <div>
-          <Link href="/" className="text-2xl sm:text-3xl font-black tracking-wider hover:opacity-80 transition block mb-8">
-            YUSDAAM<span className="text-signal-red">.</span>
+          <Link href="/" className="mb-8 block hover:opacity-80 transition">
+            <Image 
+              src="/images/logo2.PNG" 
+              alt="YUSDAAM AUTOS Logo" 
+              width={180} 
+              height={50} 
+              className="object-contain" 
+              priority
+            />
           </Link>
           <div className="hidden sm:block mt-12">
-            {/* Swapped to CarFront here */}
             <CarFront size={48} className="text-cobalt mb-6 opacity-50" />
             <h2 className="text-lg font-bold mb-2">Fleet Operations Portal</h2>
             <p className="text-xs text-slate-light leading-relaxed">
@@ -75,7 +82,7 @@ export default function RiderLogin() {
         </div>
         
         <div className="hidden lg:block text-[10px] text-slate-light/50 uppercase tracking-widest">
-          &copy; {new Date().getFullYear()} Yusdaam Autos
+          &copy; {new Date().getFullYear()} YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED
         </div>
       </div>
 
@@ -148,7 +155,7 @@ export default function RiderLogin() {
             </button>
           </form>
 
-          <div className="mt-8 text-center border-t border-cobalt/20 pt-8">
+          <div className="mt-8 text-center border-t border-white/10 pt-8">
             <p className="text-xs text-slate-light">
               Not yet registered for asset allocation? <br className="sm:hidden" />
               <Link href="/rider/register" className="text-cobalt font-bold hover:text-signal-red transition-colors ml-1 uppercase tracking-wider">
