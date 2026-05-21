@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Add Vehicle
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -39,6 +40,58 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, vehicle: newVehicle });
   } catch (error) {
     console.error("Add Vehicle Error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+// NEW: Update Status and Handle Unassignment
+export async function PUT(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { vehicleId, action } = await req.json();
+
+    if (!vehicleId || !action) {
+      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+
+    if (action === "MAINTENANCE") {
+      await prisma.vehicle.update({
+        where: { id: vehicleId },
+        data: { status: "MAINTENANCE" }
+      });
+    } 
+    else if (action === "ACTIVE") {
+      await prisma.vehicle.update({
+        where: { id: vehicleId },
+        data: { status: "ACTIVE" }
+      });
+    } 
+    else if (action === "UNASSIGN") {
+      // Disconnect the Rider and Owner, Set Status to UNASSIGNED
+      await prisma.vehicle.update({
+        where: { id: vehicleId },
+        data: { 
+          status: "UNASSIGNED",
+          rider: { disconnect: true },
+          owner: { disconnect: true }
+        }
+      });
+
+      // Clear existing contract attached to this vehicle.
+      // This is crucial, because vehicleId is @unique in the Contract model.
+      // Without deleting it, you will get a Prisma constraint error when trying to re-assign.
+      await prisma.contract.deleteMany({
+        where: { vehicleId: vehicleId }
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Update Vehicle Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
