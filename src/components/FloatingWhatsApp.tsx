@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function FloatingWhatsApp() {
   // The wa.me link directly opens WhatsApp with a pre-filled introductory message
-  const whatsappUrl = "https://wa.me/2349013013910?text=Hello%20YUSDAAM%20Autos,%20I%20am%20interested%20in%20your%20transport%20management%20services.";
+  const whatsappUrl = "https://wa.me/2349065000860?text=Hello%20YUSDAAM%20Autos,%20I%20am%20interested%20in%20your%20transport%20management%20services.";
 
   return (
     <div className="fixed bottom-6 right-6 z-[100] group">
