@@ -354,7 +354,7 @@ export default function ClientDashboard({
                     {contract?.downPayment > 0 && (
                       <tr className="hover:bg-white/5 transition duration-150">
                         <td className="p-4">
-                          <p className="font-bold text-white">{new Date(contract.startDate || rider.createdAt).toLocaleDateString('en-GB')}</p>
+                          <p className="font-bold text-white">{new Date(contract.createdAt || rider.createdAt).toLocaleDateString('en-GB')}</p>
                         </td>
                         <td className="p-4">
                           <p className="text-xs text-gray-300 font-medium">Initial Commitment Down Payment</p>
