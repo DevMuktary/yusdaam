@@ -24,7 +24,7 @@ export default function VehicleClient({ rider, vehicle }: { rider: any, vehicle:
       case "CAR_UBER": return "Standard Car";
       case "TIPPER": return "Tipper / Truck";
       case "MOTORCYCLE": return "Motorcycle";
-      default: return type;
+      default: return type || "Vehicle";
     }
   };
 
@@ -91,7 +91,7 @@ export default function VehicleClient({ rider, vehicle }: { rider: any, vehicle:
                   </div>
                   <div className="bg-signal-red/10 border border-signal-red/20 px-4 py-2 rounded-lg inline-block">
                     <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest text-center mb-0.5">Plate Number</p>
-                    <p className="text-lg font-black text-crisp-white tracking-widest">{vehicle.registrationNumber}</p>
+                    <p className="text-lg font-black text-crisp-white tracking-widest">{vehicle.registrationNumber || "PENDING"}</p>
                   </div>
                 </div>
 
@@ -138,23 +138,23 @@ export default function VehicleClient({ rider, vehicle }: { rider: any, vehicle:
                 <div className="space-y-6">
                   <div>
                     <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Total Asset Value</p>
-                    <p className="text-xl font-black text-crisp-white font-mono">₦{vehicle.contract.totalPrice?.toLocaleString()}</p>
+                    <p className="text-xl font-black text-crisp-white font-mono">₦{vehicle.contract.totalHirePurchasePrice?.toLocaleString() || "0"}</p>
                   </div>
                   
                   <div>
                     <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Weekly Remittance</p>
-                    <p className="text-xl font-black text-signal-red font-mono">₦{vehicle.contract.weeklyRemittance?.toLocaleString()}</p>
+                    <p className="text-xl font-black text-signal-red font-mono">₦{vehicle.contract.riderWeeklyRemittance?.toLocaleString() || "0"}</p>
                   </div>
 
                   <div>
-                    <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Payment Day</p>
-                    <p className="text-sm font-bold text-crisp-white uppercase">{vehicle.contract.paymentDay || "Friday 11:59 PM"}</p>
+                    <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Payment Target Window</p>
+                    <p className="text-sm font-bold text-crisp-white uppercase">Every Week</p>
                   </div>
 
                   <div>
                     <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Contract Tenure</p>
                     <div className="flex items-end gap-2">
-                      <p className="text-2xl font-black text-crisp-white">{vehicle.contract.agreedDurationMonths * 4}</p>
+                      <p className="text-2xl font-black text-crisp-white">{vehicle.contract.riderDurationWeeks || "---"}</p>
                       <p className="text-xs text-slate-light font-bold uppercase tracking-widest pb-1">Weeks</p>
                     </div>
                   </div>
@@ -170,7 +170,9 @@ export default function VehicleClient({ rider, vehicle }: { rider: any, vehicle:
                         Download Contract
                       </a>
                     ) : (
-                      <p className="text-xs text-signal-red italic">Contract document not found.</p>
+                      <p className="text-[10px] text-slate-light/60 italic leading-relaxed border border-dashed border-white/10 p-3 rounded-lg text-center">
+                        Digital contract has been securely dispatched to your registered email address.
+                      </p>
                     )}
                   </div>
                 </div>
