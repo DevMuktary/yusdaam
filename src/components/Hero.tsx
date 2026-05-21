@@ -45,7 +45,6 @@ export default function Hero() {
   };
 
   return (
-    // FIXED: Changed pt-24 to pt-6 on mobile and pt-12 on desktop to remove the massive top gap
     <section className="relative min-h-[85svh] md:min-h-[100svh] flex items-center justify-center pt-6 md:pt-12 pb-8 md:pb-12 overflow-hidden w-full">
       
       <div className="absolute inset-0 w-full h-full z-0">
@@ -65,9 +64,9 @@ export default function Hero() {
         <div ref={textRef} className="max-w-5xl flex flex-col items-center w-full">
           
           <div className="reveal-text flex flex-col sm:flex-row items-center justify-center px-4 py-2 sm:py-1.5 rounded-xl sm:rounded-full bg-void-navy/70 backdrop-blur-md border border-cobalt/50 text-slate-light text-[10px] sm:text-xs font-semibold mb-6 tracking-widest uppercase text-center w-max mx-auto">
-            <span>Yusdaam Autos Investment Mgt Nig Ltd.</span>
+            <span>YUSDAAM AUTOS FLEET MGT NIG LTD.</span>
             <span className="hidden sm:inline mx-2 text-cobalt">|</span>
-            <span className="mt-1 sm:mt-0 text-signal-red">(RC-9335611)</span>
+            <span className="mt-1 sm:mt-0 text-signal-red">(RC-9562528)</span>
           </div>
           
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-crisp-white leading-[1.1] mb-4 drop-shadow-2xl uppercase">
@@ -107,10 +106,10 @@ export default function Hero() {
             </div>
             
             <Link 
-              href="/services"
+              href="/owner/register"
               className="flex items-center justify-center w-full sm:w-auto px-8 py-4 bg-void-navy/40 backdrop-blur-md border-2 border-slate-light/20 hover:border-slate-light/60 hover:bg-void-light/60 text-crisp-white text-base font-bold rounded-xl transition-all shadow-lg"
             >
-              View Vehicle Options
+              Register as Asset Owner
             </Link>
           </div>
 
