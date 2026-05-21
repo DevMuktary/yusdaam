@@ -6,40 +6,33 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    // 1. Admin Route Protection
-    if (path.startsWith("/admin/dashboard")) {
-      if (token?.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/admin/login", req.url));
-      }
+    // 1. Strict Protection for Admin Routes
+    if (path.startsWith("/admin/dashboard") && token?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/admin/login", req.url));
     }
 
-    // 2. Asset Owner Route Protection
-    if (path.startsWith("/owner/dashboard")) {
-      if (token?.role !== "ASSET_OWNER") {
-        return NextResponse.redirect(new URL("/owner/login", req.url));
-      }
+    // 2. Strict Protection for Asset Owner Routes
+    if (path.startsWith("/owner/dashboard") && token?.role !== "ASSET_OWNER") {
+      return NextResponse.redirect(new URL("/owner/login", req.url));
     }
 
-    // 3. Rider Route Protection
-    if (path.startsWith("/rider/dashboard")) {
-      if (token?.role !== "RIDER") {
-        return NextResponse.redirect(new URL("/rider/login", req.url));
-      }
+    // 3. Strict Protection for Rider Routes
+    if (path.startsWith("/rider/dashboard") && token?.role !== "RIDER") {
+      return NextResponse.redirect(new URL("/rider/login", req.url));
     }
 
     return NextResponse.next();
   },
   {
     callbacks: {
-      // This ensures the middleware logic above only runs IF a token exists
+      // Middleware only executes if this returns true (user is authenticated)
       authorized: ({ token }) => !!token,
     },
   }
 );
 
+// Define exactly which routes are intercepted by the security middleware
 export const config = {
-  // We strictly match the dashboards. We DO NOT match the login pages 
-  // (/admin/login) because we want unauthenticated users to be able to reach them.
   matcher: [
     "/admin/dashboard/:path*",
     "/owner/dashboard/:path*",
