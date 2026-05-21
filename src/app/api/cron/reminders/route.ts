@@ -32,6 +32,9 @@ export async function GET(req: Request) {
     });
 
     for (const contract of upcomingContracts) {
+      // TypeScript fix: Guarantee nextDueDate is a valid Date object before formatting
+      if (!contract.nextDueDate) continue;
+
       const rider = contract.vehicle.rider;
       if (!rider || !rider.email) continue;
 
