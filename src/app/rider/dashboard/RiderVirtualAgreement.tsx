@@ -104,11 +104,9 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         
         {/* LETTERHEAD */}
         <div className={`text-center ${isPdf ? "border-b-2 border-[#001232] pb-2 mb-3 break-after-avoid" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
-          <h1 className={`${isPdf ? "text-2xl text-[#001232]" : "text-3xl text-crisp-white"} font-black tracking-widest mb-1`}>
-            YUSDAAM<span className="text-[#FFB902]">.</span>
-          </h1>
-          <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM Autos Fleet Management Nigeria Limited</p>
-          <p className={`${isPdf ? "text-[8px]" : "text-[10px] text-slate-light"} mt-0.5`}>RC: 9335611 | 84, Addo Road, Oke-Ira Kekere, Ajah, Lagos | admin@yusdaamautos.com</p>
+          <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: "45px", width: "auto", margin: "0 auto 10px auto", display: "block", objectFit: "contain" }} />
+          <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
+          <p className={`${isPdf ? "text-[8px]" : "text-[10px] text-slate-light"} mt-0.5`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
         </div>
 
         <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-3 break-after-avoid" : "text-lg text-signal-red mb-8"}`}>DRIVER/RIDER HIRE PURCHASE AGREEMENT</h2>
@@ -116,7 +114,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         <p className={paraSpacing}><strong>THIS AGREEMENT</strong> is made this <strong>{currentDay}</strong> day of <strong>{currentMonth}</strong>, <strong>{currentYear}</strong>.</p>
 
         <p className={`font-bold ${isPdf ? "mb-0.5" : "mb-1"}`}>BETWEEN</p>
-        <p className={paraSpacing}><strong>YUSDAAM AUTOS FLEET ADMINISTRATORS NIGERIA LIMITED</strong>, a company duly incorporated under the Companies and Allied Matters Act (CAMA) with RC: 9335611, having its registered office at 84, Addo Road, Oke-Ira Kekere, Ajah, Lagos, Nigeria (hereinafter referred to as the <strong>“Administrator”</strong>, acting as the lawful Attorney for the Asset Owner), of the first part;</p>
+        <p className={paraSpacing}><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company duly incorporated under the Companies and Allied Matters Act (CAMA) with RC: 9562528, having its registered office at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos., Nigeria (hereinafter referred to as the <strong>“Administrator”</strong>, acting as the lawful Attorney for the Asset Owner), of the first part;</p>
 
         <p className={`font-bold ${isPdf ? "mb-0.5" : "mb-1"}`}>AND</p>
         <p className={paraSpacing}><strong>{rider?.firstName} {rider?.lastName}</strong>, NIN: {rider?.nin}, residing at {rider?.streetAddress}, Email: {rider?.email || "N/A"}, Phone: {rider?.phoneNumber} (hereinafter referred to as the <strong>“Driver/Rider”</strong>), of the second part;</p>
@@ -183,7 +181,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         <p className={isPdf ? "mb-3" : "mb-6"}>6.3 <strong>Jurisdiction:</strong> This Agreement shall be governed by the laws of the Federal Republic of Nigeria. Any dispute shall be subject to the exclusive jurisdiction of the Courts of Lagos State.</p>
 
         <h3 className={headingStyle}>7. GUARANTORS' EXECUTION</h3>
-        {/* break-inside-avoid ensures this entire box stays on one page */}
+        <{/* break-inside-avoid ensures this entire box stays on one page */}
         <div className={`${isPdf ? "mb-3 p-3 border border-gray-400 bg-gray-50 break-inside-avoid" : "mb-8 p-4 border border-cobalt/30 bg-void-navy/50"}`}>
           <p className={`${isPdf ? "text-[9px]" : "text-[10px]"} italic mb-2 leading-tight`}>The Guarantors below have previously executed Sworn Guarantor Attestations digitally. Their IP addresses, identity documents, and digital signatures are verified and held by the Administrator.</p>
           
@@ -207,7 +205,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
                 <li>NIN: {g2?.nin || "N/A"} | Phone: {g2?.phone || "N/A"}</li>
               </ul>
               <div className={`flex items-end gap-2 ${isPdf ? "h-8" : "h-10"}`}>
-                <span className={isPdf ? "text-[9px]" : "text-xs"}>Signature:</span>
+                <span className={isPdf ? "text-[9px]" : "text-[10px]"}>Signature:</span>
                 {g2?.signatureUrl ? <img src={g2.signatureUrl} alt="G2 Sig" className={`${isPdf ? "h-6" : "h-8"} object-contain`} /> : <span className="border-b border-black w-16 inline-block"></span>}
               </div>
               <p className={isPdf ? "text-[8px]" : "text-[10px]"}>Signed: {g2?.signedAt ? new Date(g2.signedAt).toLocaleDateString('en-GB') : "N/A"}</p>
