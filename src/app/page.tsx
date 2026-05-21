@@ -98,7 +98,7 @@ export default function Home() {
               onClick={() => setIsMobileMenuOpen(false)}
               className="mt-2 text-sm text-slate-light hover:text-signal-red normal-case"
             >
-              Looking to drive? Apply as a Rider
+              Looking to drive? Apply as a Driver
             </Link>
           </div>
         </div>
