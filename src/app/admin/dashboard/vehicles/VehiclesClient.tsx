@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Car, Plus, X, Loader2, Search } from "lucide-react";
+import { Car, Plus, X, Loader2, Search, Wrench, CheckCircle2, UserMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Vehicle = any;
@@ -11,6 +11,7 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     type: "TRICYCLE",
@@ -30,7 +31,6 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Safety check for custom type
     if (formData.type === "OTHERS" && !formData.customType) {
       alert("Please specify the custom asset type.");
       setIsSubmitting(false);
@@ -57,6 +57,36 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
       alert(err.message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // NEW: Handle changing vehicle status or unassigning
+  const handleVehicleAction = async (vehicleId: string, action: "MAINTENANCE" | "ACTIVE" | "UNASSIGN") => {
+    if (action === "UNASSIGN") {
+      const confirmUnassign = window.confirm(
+        "Are you sure you want to unassign this vehicle? This will remove the current rider and owner assignments, and delete the active contract so it can be reassigned."
+      );
+      if (!confirmUnassign) return;
+    }
+
+    setUpdatingId(vehicleId);
+    try {
+      const res = await fetch("/api/admin/vehicles", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehicleId, action }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update vehicle");
+      }
+
+      router.refresh();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -92,45 +122,84 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
       {/* Vehicle Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredVehicles.map(vehicle => (
-          <div key={vehicle.id} className="bg-white/5 border border-white/10 rounded-xl p-5 hover:border-white/20 transition relative overflow-hidden group">
+          <div key={vehicle.id} className="bg-white/5 border border-white/10 rounded-xl p-5 hover:border-white/20 transition relative overflow-hidden flex flex-col justify-between group">
             
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Car size={20} className="text-gray-300" />
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                    <Car size={20} className="text-gray-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white leading-tight">{vehicle.makeModel || "Unknown Make"}</h3>
+                    <p className="text-xs text-gray-400">
+                      {vehicle.year} • {vehicle.type === 'OTHERS' ? vehicle.customType : vehicle.type.replace('_', ' ')}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-white leading-tight">{vehicle.makeModel || "Unknown Make"}</h3>
-                  <p className="text-xs text-gray-400">
-                    {vehicle.year} • {vehicle.type === 'OTHERS' ? vehicle.customType : vehicle.type.replace('_', ' ')}
-                  </p>
+                <span className={`px-2.5 py-1 rounded text-[10px] font-bold tracking-wider ${
+                  vehicle.status === 'UNASSIGNED' ? 'bg-amber-500/20 text-amber-400' : 
+                  vehicle.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400' :
+                  'bg-red-500/20 text-red-400'
+                }`}>
+                  {vehicle.status}
+                </span>
+              </div>
+
+              <div className="space-y-2 text-xs bg-void-navy p-3 rounded-lg border border-white/5 mb-4">
+                <div className="flex justify-between"><span className="text-gray-500">Plate No:</span> <span className="font-mono text-white tracking-wider">{vehicle.registrationNumber}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Chassis:</span> <span className="font-mono text-white">{vehicle.chassisNumber || "N/A"}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Engine:</span> <span className="font-mono text-white">{vehicle.engineNumber || "N/A"}</span></div>
+              </div>
+
+              <div className="space-y-1.5 text-xs mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 w-12">Owner:</span> 
+                  {vehicle.owner ? <span className="text-emerald-400 font-medium">{vehicle.owner.firstName} {vehicle.owner.lastName}</span> : <span className="text-gray-600 italic">None</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 w-12">Rider:</span> 
+                  {vehicle.rider ? <span className="text-cobalt font-medium">{vehicle.rider.firstName} {vehicle.rider.lastName}</span> : <span className="text-gray-600 italic">None</span>}
                 </div>
               </div>
-              <span className={`px-2.5 py-1 rounded text-[10px] font-bold tracking-wider ${
-                vehicle.status === 'UNASSIGNED' ? 'bg-amber-500/20 text-amber-400' : 
-                vehicle.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400' :
-                'bg-red-500/20 text-red-400'
-              }`}>
-                {vehicle.status}
-              </span>
             </div>
 
-            <div className="space-y-2 text-xs bg-void-navy p-3 rounded-lg border border-white/5 mb-4">
-              <div className="flex justify-between"><span className="text-gray-500">Plate No:</span> <span className="font-mono text-white tracking-wider">{vehicle.registrationNumber}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Chassis:</span> <span className="font-mono text-white">{vehicle.chassisNumber || "N/A"}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Engine:</span> <span className="font-mono text-white">{vehicle.engineNumber || "N/A"}</span></div>
+            {/* NEW: Action Buttons */}
+            <div className="pt-4 border-t border-white/10 flex flex-wrap gap-2">
+              {vehicle.status === 'ACTIVE' && (
+                <button
+                  onClick={() => handleVehicleAction(vehicle.id, 'MAINTENANCE')}
+                  disabled={updatingId === vehicle.id}
+                  className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 py-2 rounded-lg text-xs font-bold transition flex justify-center items-center gap-1.5"
+                >
+                  {updatingId === vehicle.id ? <Loader2 size={14} className="animate-spin"/> : <Wrench size={14} />}
+                  Maintenance
+                </button>
+              )}
+              
+              {vehicle.status === 'MAINTENANCE' && (
+                <button
+                  onClick={() => handleVehicleAction(vehicle.id, 'ACTIVE')}
+                  disabled={updatingId === vehicle.id}
+                  className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 py-2 rounded-lg text-xs font-bold transition flex justify-center items-center gap-1.5"
+                >
+                  {updatingId === vehicle.id ? <Loader2 size={14} className="animate-spin"/> : <CheckCircle2 size={14} />}
+                  Set Active
+                </button>
+              )}
+
+              {vehicle.rider && (
+                <button
+                  onClick={() => handleVehicleAction(vehicle.id, 'UNASSIGN')}
+                  disabled={updatingId === vehicle.id}
+                  className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 py-2 rounded-lg text-xs font-bold transition flex justify-center items-center gap-1.5"
+                >
+                  {updatingId === vehicle.id ? <Loader2 size={14} className="animate-spin"/> : <UserMinus size={14} />}
+                  Unassign Rider
+                </button>
+              )}
             </div>
 
-            <div className="space-y-1.5 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-12">Owner:</span> 
-                {vehicle.owner ? <span className="text-emerald-400 font-medium">{vehicle.owner.firstName} {vehicle.owner.lastName}</span> : <span className="text-gray-600 italic">None</span>}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-12">Rider:</span> 
-                {vehicle.rider ? <span className="text-cobalt font-medium">{vehicle.rider.firstName} {vehicle.rider.lastName}</span> : <span className="text-gray-600 italic">None</span>}
-              </div>
-            </div>
           </div>
         ))}
       </div>
@@ -154,7 +223,6 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
             <form onSubmit={handleAddVehicle} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Asset Type *</label>
-                {/* Changed background to bg-void-navy to fix the white selection bug */}
                 <select name="type" value={formData.type} onChange={handleTextChange} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt appearance-none" required>
                   <option value="TRICYCLE" className="bg-void-navy text-white">Tricycle (Keke)</option>
                   <option value="MINIBUS_KOROPE" className="bg-void-navy text-white">Mini-Bus (Korope)</option>
@@ -164,7 +232,6 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
                 </select>
               </div>
 
-              {/* Conditional Input Box for 'OTHERS' */}
               {formData.type === "OTHERS" && (
                 <div className="animate-in slide-in-from-top-2 duration-300">
                   <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Specify Custom Asset *</label>
@@ -188,7 +255,6 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
                 <input type="text" name="registrationNumber" value={formData.registrationNumber} onChange={handleTextChange} placeholder="e.g. KJA-123XY" className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt uppercase" required />
               </div>
 
-              {/* All fields are now COMPULSORY (required) */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Chassis Number *</label>
