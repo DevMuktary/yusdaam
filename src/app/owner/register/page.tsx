@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, ArrowLeft, Loader2, CheckCircle2, ShieldCheck, XCircle, Check, X, Eye, EyeOff, HelpCircle, UploadCloud } from "lucide-react";
 import { Country, State } from "country-state-city";
 
@@ -208,10 +209,19 @@ export default function OwnerRegistration() {
     <main className="min-h-screen bg-void-navy flex flex-col lg:flex-row text-crisp-white">
       
       {/* LEFT SIDE: Branding */}
-      <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-cobalt/20 p-5 sm:p-10 lg:p-12 flex flex-col justify-between">
+      <div className="lg:w-1/3 xl:w-1/4 bg-void-navy border-b lg:border-b-0 lg:border-r border-white/10 p-5 sm:p-10 lg:p-12 flex flex-col justify-between">
         <div>
-          <Link href="/" className="text-xl sm:text-3xl font-black tracking-wider hover:opacity-80 transition block mb-4 lg:mb-12">YUSDAAM<span className="text-signal-red">.</span></Link>
-          <div className="hidden sm:block space-y-10 border-l border-cobalt/20 ml-2">
+          <Link href="/" className="mb-4 lg:mb-12 block hover:opacity-80 transition">
+            <Image 
+              src="/images/logo2.PNG" 
+              alt="YUSDAAM AUTOS Logo" 
+              width={200} 
+              height={55} 
+              className="object-contain" 
+              priority
+            />
+          </Link>
+          <div className="hidden sm:block space-y-10 border-l border-white/10 ml-2">
             {[1, 2, 3, 4].map((s) => (
               <div key={s} className={`relative pl-8 transition-opacity duration-500 ${step === s ? 'opacity-100' : 'opacity-40'}`}>
                 <span className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${step === s ? 'bg-signal-red shadow-[0_0_10px_rgba(233,69,96,0.8)]' : 'bg-cobalt'}`} />
@@ -227,7 +237,7 @@ export default function OwnerRegistration() {
       <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-8 lg:p-16 overflow-y-auto">
         <div className="max-w-2xl w-full">
           
-          <div className="mb-6 sm:mb-12 border-b border-cobalt/20 pb-4 sm:pb-8">
+          <div className="mb-6 sm:mb-12 border-b border-white/10 pb-4 sm:pb-8">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase mb-2">Asset Owner Registry</h1>
             <p className="text-xs sm:text-base text-slate-light">Complete KYC profiling for portal access.</p>
           </div>
@@ -267,11 +277,11 @@ export default function OwnerRegistration() {
                   </div>
                 </div>
 
-                {/* BROWSER: Passport Upload */}
+                {/* Passport Upload */}
                 <div>
                   <label className={labelStyle}>Passport Photograph * <Tooltip text="A clear, recent photograph of your face for profile identification." /></label>
                   <input type="file" accept="image/*" className="hidden" ref={passportRef} onChange={(e) => handleFileConvert(e, "passport")} />
-                  <div onClick={() => passportRef.current?.click()} className={`w-full h-24 sm:h-32 border-2 ${formData.passportBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red hover:bg-void-light/10'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
+                  <div onClick={() => passportRef.current?.click()} className={`w-full h-24 sm:h-32 border-2 ${formData.passportBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-white/20 bg-void-light/5 hover:border-signal-red hover:bg-void-light/10'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
                     {formData.passportBase64 ? (
                       <>
                         <CheckCircle2 size={32} className="mb-2 text-emerald-400" />
@@ -286,7 +296,7 @@ export default function OwnerRegistration() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-cobalt/20">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-white/10">
                   <div className="relative">
                     <label className={labelStyle}>Password *</label>
                     <div className="relative">
@@ -296,8 +306,8 @@ export default function OwnerRegistration() {
                       </button>
                     </div>
                     {formData.password && (
-                      <div className="mt-3 space-y-1.5 bg-void-light/5 border border-cobalt/20 p-3 rounded-lg">
-                        <p className="text-[10px] font-bold text-slate-light/60 uppercase tracking-widest mb-2 border-b border-cobalt/20 pb-1">Security Requirements</p>
+                      <div className="mt-3 space-y-1.5 bg-void-light/5 border border-white/10 p-3 rounded-lg">
+                        <p className="text-[10px] font-bold text-slate-light/60 uppercase tracking-widest mb-2 border-b border-white/10 pb-1">Security Requirements</p>
                         {passwordCriteria.map((req, i) => (
                           <div key={i} className={`flex items-center gap-2 text-xs font-medium transition-colors ${req.met ? 'text-emerald-400' : 'text-slate-light/50'}`}>
                             {req.met ? <Check size={14} /> : <X size={14} />}
@@ -311,7 +321,7 @@ export default function OwnerRegistration() {
                   <div>
                     <label className={labelStyle}>Confirm Password *</label>
                     <div className="relative">
-                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleTextChange} className={`${inputStyle} pr-12`} required />
+                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword} value={formData.confirmPassword} onChange={handleTextChange} className={`${inputStyle} pr-12`} required />
                       <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-light/50 hover:text-crisp-white transition-colors">
                         {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
@@ -344,11 +354,11 @@ export default function OwnerRegistration() {
                   <input type="text" name="streetAddress" value={formData.streetAddress} onChange={handleTextChange} className={inputStyle} placeholder="Unit, House No, Street" required />
                 </div>
                 
-                {/* BROWSER: Utility Bill Upload */}
-                <div className="pt-4 border-t border-cobalt/20">
+                {/* Utility Bill Upload */}
+                <div className="pt-4 border-t border-white/10">
                   <label className={labelStyle}>Utility Bill Upload * <Tooltip text="Must be a recent PHCN, LAWMA, or Water bill showing your name and address for KYC compliance." /></label>
                   <input type="file" accept="image/*,application/pdf" className="hidden" ref={utilityRef} onChange={(e) => handleFileConvert(e, "utilityBill")} />
-                  <div onClick={() => utilityRef.current?.click()} className={`w-full h-24 sm:h-32 border-2 ${formData.utilityBillBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-cobalt/40 bg-void-light/5 hover:border-signal-red hover:bg-void-light/10'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
+                  <div onClick={() => utilityRef.current?.click()} className={`w-full h-24 sm:h-32 border-2 ${formData.utilityBillBase64 ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-dashed border-white/20 bg-void-light/5 hover:border-signal-red hover:bg-void-light/10'} rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer`}>
                     {formData.utilityBillBase64 ? (
                       <>
                         <CheckCircle2 size={32} className="mb-2 text-emerald-400" />
@@ -385,14 +395,14 @@ export default function OwnerRegistration() {
                   </div>
                 </div>
 
-                <div className="h-12 flex items-center bg-void-navy/50 px-4 rounded-lg border border-cobalt/20">
+                <div className="h-12 flex items-center bg-void-navy/50 px-4 rounded-lg border border-white/10">
                   {isVerifyingBank && <p className="text-sm text-slate-light flex items-center gap-2"><Loader2 size={16} className="animate-spin text-cobalt" /> Resolving Account...</p>}
                   {bankError && <p className="text-sm text-signal-red flex items-center gap-2 font-bold"><XCircle size={16} /> {bankError}</p>}
                   {verifiedAccountName && <p className="text-sm text-emerald-400 font-bold flex items-center gap-2"><CheckCircle2 size={16} /> Verified: {verifiedAccountName}</p>}
                   {!isVerifyingBank && !bankError && !verifiedAccountName && <p className="text-[10px] uppercase tracking-widest text-slate-light/40">Awaiting 10-Digit Account Number...</p>}
                 </div>
 
-                <div className="pt-4 pb-2"><h4 className="text-base font-bold border-b border-cobalt/20 pb-3">Administration Intent</h4></div>
+                <div className="pt-4 pb-2"><h4 className="text-base font-bold border-b border-white/10 pb-3">Administration Intent</h4></div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
@@ -502,7 +512,7 @@ export default function OwnerRegistration() {
             )}
 
             {/* FORM CONTROLS */}
-            <div className="pt-8 flex items-center justify-between mt-8 border-t border-cobalt/20">
+            <div className="pt-8 flex items-center justify-between mt-8 border-t border-white/10">
               {step > 1 ? (
                 <button type="button" onClick={prevStep} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-light hover:text-crisp-white transition">
                   <ArrowLeft size={14} /> Back
