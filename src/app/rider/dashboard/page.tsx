@@ -181,8 +181,8 @@ export default async function RiderDashboardHome() {
     });
 
     // Remittance cycle calendar logic calculation: rolling cycle from the day agreement was executed
-    if (contract?.startDate) {
-      const contractCreationDate = new Date(contract.startDate);
+    if (contract?.createdAt) {
+      const contractCreationDate = new Date(contract.createdAt);
       const todayDate = new Date();
       
       // Keep adding blocks of 7 days until the due timestamp passes the current moment
