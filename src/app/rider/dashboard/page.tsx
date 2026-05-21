@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { ShieldAlert, Loader2, CheckCircle2, Clock, CarFront, Banknote } from "lucide-react";
 import RiderVirtualAgreement from "./RiderVirtualAgreement";
 import CopyLinkHelper from "./CopyLinkHelper";
+import ClientDashboard from "./ClientDashboard";
 
 const prisma = new PrismaClient();
 
@@ -14,12 +15,11 @@ export default async function RiderDashboardHome() {
     redirect("/rider/login");
   }
 
-  // FORCE SECURITY BOUNDARY: Prevent Asset Owners from cross-rendering the Rider Dashboard
-  if (session.user.role === "ASSET_OWNER") {
+  if (session.user.role !== "RIDER") {
     redirect("/owner/dashboard");
   }
 
-  // Fetch Rider, assigned vehicle, active contract, AND guarantors
+  // Fetch Rider, assigned vehicle, active contract, guarantors, AND performance logs
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
@@ -28,20 +28,22 @@ export default async function RiderDashboardHome() {
           contract: true
         }
       },
-      guarantors: true 
+      guarantors: true
     }
   });
 
-  const currentStatus = String(user?.accountStatus);
-  const vehicle = user?.assignedTrip;
+  if (!user) return null;
+
+  const currentStatus = String(user.accountStatus);
+  const vehicle = user.assignedTrip;
   const contract = vehicle?.contract;
-  const guarantors = user?.guarantors || [];
+  const guarantors = user.guarantors || [];
 
   const pendingGuarantors = guarantors.filter(g => g.status === "PENDING");
   const isWaitingForGuarantors = pendingGuarantors.length > 0 || guarantors.length < 2;
 
   // --- STATE 1: PENDING KYC OR WAITING FOR GUARANTORS ---
-  if (currentStatus === "PENDING" || currentStatus === "undefined" || !user?.accountStatus) {
+  if (currentStatus === "PENDING" || currentStatus === "undefined" || !user.accountStatus) {
     const baseUrl = process.env.NEXTAUTH_URL || "https://yusdaamautos.com";
 
     return (
@@ -52,7 +54,7 @@ export default async function RiderDashboardHome() {
           <ShieldAlert className="w-16 h-16 text-cobalt mb-6" />
           <h1 className="text-2xl sm:text-3xl font-black uppercase mb-2">Application Pipeline</h1>
           <p className="text-slate-light leading-relaxed mb-10 text-sm sm:text-base">
-            Welcome back, {user?.firstName}. Your application status is tracked below in real-time. Please complete all pending external requirements.
+            Welcome back, {user.firstName}. Your application status is tracked below in real-time. Please complete all pending external requirements.
           </p>
 
           <div className="space-y-4">
@@ -65,9 +67,7 @@ export default async function RiderDashboardHome() {
             </div>
             
             <div className={`flex flex-col p-4 rounded-xl border relative overflow-hidden transition-all ${
-              isWaitingForGuarantors 
-                ? 'bg-signal-red/10 border-signal-red/30' 
-                : 'bg-void-navy/50 border-emerald-500/20'
+              isWaitingForGuarantors ? 'bg-signal-red/10 border-signal-red/30' : 'bg-void-navy/50 border-emerald-500/20'
             }`}>
               {isWaitingForGuarantors && <div className="absolute inset-y-0 left-0 w-1 bg-signal-red animate-pulse" />}
               
@@ -105,16 +105,11 @@ export default async function RiderDashboardHome() {
                       
                       <div className="flex items-center gap-2 self-end sm:self-auto">
                         <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${
-                          isPending 
-                            ? 'bg-amber-400/10 text-amber-400 border-amber-400/20' 
-                            : 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20'
+                          isPending ? 'bg-amber-400/10 text-amber-400 border-amber-400/20' : 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20'
                         }`}>
                           {isPending ? 'Awaiting Signature' : 'Signed'}
                         </span>
-                        
-                        {isPending && (
-                          <CopyLinkHelper link={fullLink} />
-                        )}
+                        {isPending && <CopyLinkHelper link={fullLink} />}
                       </div>
                     </div>
                   );
@@ -123,9 +118,7 @@ export default async function RiderDashboardHome() {
             </div>
 
             <div className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-              isWaitingForGuarantors 
-                ? 'bg-void-navy/50 border-white/5 opacity-40 select-none' 
-                : 'bg-signal-red/10 border-signal-red/30 relative overflow-hidden'
+              isWaitingForGuarantors ? 'bg-void-navy/50 border-white/5 opacity-40 select-none' : 'bg-signal-red/10 border-signal-red/30 relative overflow-hidden'
             }`}>
               {!isWaitingForGuarantors && (
                 <>
@@ -153,7 +146,6 @@ export default async function RiderDashboardHome() {
                 <p className="text-xs text-slate-light">Awaiting operational confirmation and digital contract routing.</p>
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -174,27 +166,41 @@ export default async function RiderDashboardHome() {
     );
   }
 
-  // --- STATE 3: FULLY ACTIVE DASHBOARD ---
-  return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden">
-      <div className="border-b border-cobalt/20 pb-6">
-        <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-wide mb-2">Command Center</h1>
-        <p className="text-slate-light">Welcome back, {user?.firstName}. Here is your active trip status.</p>
-      </div>
+  // --- STATE 3: FULLY ACTIVE COMMAND DASHBOARD ---
+  // Fetch complete historical collection logs from Ledger table link for this vehicle
+  let transactionLogs: any[] = [];
+  let nextDueDateStr = "—";
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-void-light/5 border border-cobalt/20 p-6 rounded-xl shadow-lg">
-          <div className="p-3 bg-cobalt/10 text-cobalt rounded-lg w-fit mb-4"><CarFront size={24} /></div>
-          <h3 className="text-2xl font-black text-crisp-white mb-1">{vehicle?.registrationNumber}</h3>
-          <p className="text-xs font-bold text-slate-light uppercase tracking-widest">Assigned Vehicle</p>
-        </div>
-        
-        <div className="bg-void-light/5 border border-cobalt/20 p-6 rounded-xl shadow-lg">
-          <div className="p-3 bg-emerald-400/10 text-emerald-400 rounded-lg w-fit mb-4"><Banknote size={24} /></div>
-          <h3 className="text-2xl font-black text-crisp-white mb-1">₦{contract?.riderWeeklyRemittance?.toLocaleString() || "0"}</h3>
-          <p className="text-xs font-bold text-slate-light uppercase tracking-widest">Weekly Target</p>
-        </div>
-      </div>
-    </div>
+  if (vehicle) {
+    transactionLogs = await prisma.ledger.findMany({
+      where: { 
+        vehicleId: vehicle.id,
+        type: "PAYMENT_COLLECTED"
+      },
+      orderBy: { date: 'desc' }
+    });
+
+    // Remittance cycle calendar logic calculation: rolling cycle from the day agreement was executed
+    if (contract?.startDate) {
+      const contractCreationDate = new Date(contract.startDate);
+      const todayDate = new Date();
+      
+      // Keep adding blocks of 7 days until the due timestamp passes the current moment
+      let rollingDue = new Date(contractCreationDate.getTime());
+      while (rollingDue <= todayDate) {
+        rollingDue.setDate(rollingDue.getDate() + 7);
+      }
+      nextDueDateStr = rollingDue.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+  }
+
+  return (
+    <ClientDashboard 
+      rider={user}
+      vehicle={vehicle}
+      contract={contract}
+      history={transactionLogs}
+      nextDueDate={nextDueDateStr}
+    />
   );
 }
