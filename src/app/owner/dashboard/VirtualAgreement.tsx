@@ -190,11 +190,10 @@ export default function VirtualAgreement(props: AgreementProps) {
     return (
       <div className={textStyle}>
         <div className={`text-center ${isPdf ? "border-b-2 border-[#001232] pb-4 mb-6" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
-          <h1 className={`${isPdf ? "text-3xl text-[#001232]" : "text-3xl text-crisp-white"} font-black tracking-widest mb-1`}>
-            YUSDAAM<span className="text-[#FFB902]">.</span>
-          </h1>
-          <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM Autos Fleet Management Nigeria Limited</p>
-          <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9335611 | 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
+          {/* LOGO REDIRECT FOR EMBEDDED RENDER */}
+          <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: "45px", width: "auto", margin: "0 auto 10px auto", display: "block", objectFit: "contain" }} />
+          <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
+          <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
         </div>
 
         <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-6" : "text-lg text-signal-red mb-8"}`}>HIRE PURCHASE ADMINISTRATION AGREEMENT</h2>
@@ -202,7 +201,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-4"><strong>THIS AGREEMENT</strong> is made this <strong>{currentDay}</strong> day of <strong>{currentMonth}</strong>, <strong>{currentYear}</strong>.</p>
 
         <p className="mb-2 font-bold">BETWEEN</p>
-        <p className="mb-6"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company duly incorporated under the Companies and Allied Matters Act (CAMA) with RC: 9335611, having its registered office at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos., Nigeria, Email: admin@yusdaamautos.com (hereinafter referred to as the <strong>“Administrator”</strong>, which expression shall, where the context so admits, include its successors-in-title and assigns) of the first part;</p>
+        <p className="mb-6"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company duly incorporated under the Companies and Allied Matters Act (CAMA) with RC: 9562528, having its registered office at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos., Nigeria, Email: admin@yusdaamautos.com (hereinafter referred to as the <strong>“Administrator”</strong>, which expression shall, where the context so admits, include its successors-in-title and assigns) of the first part;</p>
 
         <p className="mb-2 font-bold">AND</p>
         <p className="mb-6"><strong>{props.ownerName || fallback}</strong>, BVN: {props.bvn || fallback}, NIN: {props.nin || fallback}, residing at {props.ownerAddress || fallback}, Email: {props.ownerEmail || fallback}, Phone: {props.ownerPhone || fallback} (hereinafter referred to as the <strong>“Owner”</strong>, which expression shall, where the context so admits, include their heirs, personal representatives, and assigns) of the second part.</p>
@@ -341,7 +340,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             <p className="font-bold mb-6">SIGNED by the within-named OWNER</p>
             <div className="relative h-20 w-48 mt-4 mb-2">
               {hpaOwnerSig ? (
-                <img src={hpaOwnerSig} alt="Owner Signature" className={`absolute left-0 bottom-0 h-20 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
+                <img src={hpaOwnerSig} alt="Owner Signature" className={`absolute left-0 bottom-0 h-20 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
               ) : (
                 <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
               )}
@@ -356,7 +355,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             <div className="relative h-12 mt-2 w-48">
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
                {hpaWitnessSig ? (
-                 <img src={hpaWitnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
+                 <img src={hpaWitnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
                ) : (
                  <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
                )}
@@ -382,17 +381,15 @@ export default function VirtualAgreement(props: AgreementProps) {
     return (
       <div className={textStyle}>
         <div className={`text-center ${isPdf ? "border-b-2 border-[#001232] pb-4 mb-6" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
-          <h1 className={`${isPdf ? "text-3xl text-[#001232]" : "text-3xl text-crisp-white"} font-black tracking-widest mb-1`}>
-            YUSDAAM<span className="text-[#FFB902]">.</span>
-          </h1>
-          <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM Autos Fleet Management Nigeria Limited</p>
-          <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9335611 | 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
+          <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: "45px", width: "auto", margin: "0 auto 10px auto", display: "block", objectFit: "contain" }} />
+          <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
+          <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
         </div>
 
         <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-8" : "text-lg text-signal-red mb-8"}`}>SPECIFIC POWER OF ATTORNEY</h2>
 
         <p className="mb-6 leading-relaxed">
-          <strong>KNOW ALL MEN BY THESE PRESENTS</strong> that I, <strong>{props.ownerName}</strong>, of {props.ownerAddress || fallback}, holding Bank Verification Number (BVN) {props.bvn || fallback} and National Identification Number (NIN) {props.nin || fallback} (hereinafter referred to as the <strong>"Donor"</strong>), DO HEREBY APPOINT <strong>YUSDAAM AUTOS FLEET ADMINISTRATORS NIGERIA LIMITED</strong>, a company incorporated under the laws of the Federal Republic of Nigeria with RC: 9335611, having its registered address at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos. (hereinafter referred to as the <strong>"Donee"</strong>), to be my true and lawful Attorney, to act in my name and on my behalf to do all or any of the following acts and things in respect of my commercial transport asset (hereinafter referred to as the <strong>"Asset"</strong>):
+          <strong>KNOW ALL MEN BY THESE PRESENTS</strong> that I, <strong>{props.ownerName}</strong>, of {props.ownerAddress || fallback}, holding Bank Verification Number (BVN) {props.bvn || fallback} and National Identification Number (NIN) {props.nin || fallback} (hereinafter referred to as the <strong>"Donor"</strong>), DO HEREBY APPOINT <strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company incorporated under the laws of the Federal Republic of Nigeria with RC: 9562528, having its registered address at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos. (hereinafter referred to as the <strong>"Donee"</strong>), to be my true and lawful Attorney, to act in my name and on my behalf to do all or any of the following acts and things in respect of my commercial transport asset (hereinafter referred to as the <strong>"Asset"</strong>):
         </p>
 
         <h3 className={headingStyle}>ASSET DESCRIPTION:</h3>
@@ -439,7 +436,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             
             <div className="relative h-20 w-48 mt-4 mb-2">
               {poaOwnerSig ? (
-                <img src={poaOwnerSig} alt="Donor Signature" className={`absolute left-0 bottom-0 h-20 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
+                <img src={poaOwnerSig} alt="Donor Signature" className={`absolute left-0 bottom-0 h-20 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
               ) : (
                 <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
               )}
@@ -455,7 +452,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             <div className="relative h-12 mt-2 w-48">
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
                {hpaWitnessSig ? (
-                 <img src={hpaWitnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
+                 <img src={hpaWitnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
                ) : (
                  <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
                )}
@@ -466,7 +463,7 @@ export default function VirtualAgreement(props: AgreementProps) {
           {/* Donee Side */}
           <div className="space-y-4">
             <p className="font-bold underline text-xs">ACCEPTED BY THE DONEE:</p>
-            <p className="font-bold text-xs uppercase">YUSDAAM AUTOS FLEET ADMINISTRATORS NIGERIA LIMITED</p>
+            <p className="font-bold text-xs uppercase">YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
             
             <div className="relative h-20 w-48 mt-4 mb-2">
                <img src="/images/stamp.png" alt="Company Seal" className="absolute left-0 -top-4 h-24 opacity-80 object-contain" />
