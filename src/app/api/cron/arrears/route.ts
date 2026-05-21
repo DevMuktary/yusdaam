@@ -5,6 +5,7 @@ import { startOfDay, endOfDay, subDays, addDays } from "date-fns";
 const prisma = new PrismaClient();
 
 export async function GET(req: Request) {
+  // Security protocol to ensure only cron-job.org or internal systems trigger this
   const authHeader = req.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
@@ -32,6 +33,9 @@ export async function GET(req: Request) {
     let processed = 0;
 
     for (const contract of dueContracts) {
+      // Type safety check: Ensure nextDueDate exists before math operations
+      if (!contract.nextDueDate) continue;
+
       const cycleStartDate = subDays(contract.nextDueDate, 7);
       
       // Calculate total funds collected during this specific cycle
@@ -58,10 +62,10 @@ export async function GET(req: Request) {
         if (contract.vehicle.rider) {
            await prisma.user.update({
              where: { id: contract.vehicle.rider.id },
-             data: { accountStatus: "SUSPENDED" } // Or create an "ARREARS" enum
+             data: { accountStatus: "SUSPENDED" } 
            });
            
-           // A system email dispatch should be placed here regarding the suspension
+           // TODO: Integrate system email dispatch here notifying the rider of suspension
         }
       }
 
