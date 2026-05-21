@@ -1,36 +1,53 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { ShieldAlert, CheckCircle2, Clock, Copy, Lock, CarFront, WalletCards, ShieldCheck, Check, MessageCircle, Hourglass, Loader2, Landmark, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { 
+  ShieldAlert, 
+  CheckCircle2, 
+  Clock, 
+  Copy, 
+  Lock, 
+  CarFront, 
+  WalletCards, 
+  ShieldCheck, 
+  Check, 
+  MessageCircle, 
+  Hourglass, 
+  Loader2, 
+  Landmark, 
+  AlertTriangle, 
+  Receipt, 
+  ClipboardList, 
+  ArrowDownLeft 
+} from "lucide-react";
 import RiderVirtualAgreement from "./RiderVirtualAgreement";
 
 export default function ClientDashboard({ 
   rider, 
-  guarantors, 
-  baseUrl, 
   vehicle, 
-  contract 
+  contract, 
+  history, 
+  nextDueDate 
 }: { 
   rider: any, 
-  guarantors: any[], 
-  baseUrl: string, 
   vehicle: any, 
-  contract: any 
+  contract: any, 
+  history: any[], 
+  nextDueDate: string 
 }) {
-  const router = useRouter();
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  
-  // Paystack Virtual Account State
   const [isGenerating, setIsGenerating] = useState(false);
   const [accountError, setAccountError] = useState("");
 
-  // Real Ledger State
-  const [ledgerData, setLedgerData] = useState<any[]>([]);
-  const [isLoadingLedger, setIsLoadingLedger] = useState(true);
+  const [virtualAccount, setVirtualAccount] = useState({
+    no: rider.virtualAccountNo || null,
+    bank: rider.virtualBankName || null
+  });
 
+  const guarantors = rider.guarantors || [];
   const g1 = guarantors[0];
   const g2 = guarantors[1];
+  
   const allGuarantorsSubmitted = g1?.status !== "PENDING" && g2?.status !== "PENDING";
   const isPendingReview = allGuarantorsSubmitted && rider.accountStatus === "PENDING";
   const isActive = rider.accountStatus === "ACTIVE";
@@ -45,7 +62,9 @@ export default function ClientDashboard({
     }
   };
 
-  const getWhatsAppLink = (name: string, link: string) => {
+  const getWhatsAppLink = (name: string, token: string) => {
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://yusdaamautos.com";
+    const link = `${baseUrl}/guarantor/${token}`;
     const text = `Hello ${name}, I have nominated you as a guarantor for my commercial vehicle allocation with YUSDAAM Autos. Please click this secure link to complete your legal attestation: ${link}`;
     return `https://wa.me/?text=${encodeURIComponent(text)}`;
   };
@@ -58,7 +77,7 @@ export default function ClientDashboard({
       const data = await res.json();
       
       if (!res.ok) throw new Error(data.error || "Failed to generate account");
-      router.refresh(); 
+      setVirtualAccount({ no: data.accountNumber, bank: data.bankName });
     } catch (err: any) {
       setAccountError(err.message);
     } finally {
@@ -66,29 +85,13 @@ export default function ClientDashboard({
     }
   };
 
-  // Fetch Real Ledger Data
-  useEffect(() => {
-    if (isActive) {
-      fetch("/api/rider/ledger")
-        .then(res => res.json())
-        .then(data => {
-          if (data.ledger) setLedgerData(data.ledger);
-          setIsLoadingLedger(false);
-        })
-        .catch(err => {
-          console.error("Ledger Error", err);
-          setIsLoadingLedger(false);
-        });
-    } else {
-      setIsLoadingLedger(false);
-    }
-  }, [isActive]);
+  const totalPaidSum = history.reduce((sum, current) => sum + current.amount, 0) + (contract?.downPayment || 0);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 px-4 sm:px-0 pb-20">
       
-      {/* VIRTUAL AGREEMENT MODAL */}
-      {isAwaitingSignature && (
+      {/* VIRTUAL AGREEMENT OVERLAY MODAL */}
+      {isAwaitingSignature && vehicle && contract && (
         <RiderVirtualAgreement 
           rider={rider} 
           vehicle={vehicle} 
@@ -97,17 +100,23 @@ export default function ClientDashboard({
         />
       )}
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-wider mb-2">Command Center</h1>
-        <p className="text-sm text-slate-light">Welcome back, {rider.firstName}. Review your operational status below.</p>
+      {/* Header Banner */}
+      <div className="border-b border-white/10 pb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black uppercase tracking-wide text-crisp-white">Command Center</h1>
+          <p className="text-sm text-slate-light">Track your active deployment financials, operational timelines, and status logs.</p>
+        </div>
+        <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl flex items-center gap-2 w-fit text-xs font-mono">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Profile Status: <span className="text-emerald-400 font-bold uppercase tracking-wider">{rider.accountStatus}</span>
+        </div>
       </div>
 
-      {/* PHASE TRACKER (Hidden when Active to clean up the dashboard) */}
+      {/* PHASE STEP PROGRESS TIMELINE (Hidden once active) */}
       {!isActive && (
         <div className="bg-void-dark border border-cobalt/20 rounded-xl p-6 sm:p-8 shadow-lg">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative">
-            <div className="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-0.5 bg-void-light/10 -translate-y-1/2 z-0"></div>
+            <div className="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-0.5 bg-white/5 -translate-y-1/2 z-0"></div>
 
             <div className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-3 bg-void-dark pr-4 md:pr-0">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 ${allGuarantorsSubmitted ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-signal-red/20 border-signal-red text-signal-red shadow-[0_0_15px_rgba(233,69,96,0.3)]'}`}>
@@ -115,12 +124,12 @@ export default function ClientDashboard({
               </div>
               <div className="text-left md:text-center">
                 <p className="text-xs font-bold uppercase tracking-widest text-crisp-white">Phase 1</p>
-                <p className="text-[10px] text-slate-light uppercase tracking-wider">{allGuarantorsSubmitted ? 'Guarantors Cleared' : 'Pending Guarantors'}</p>
+                <p className="text-[10px] text-slate-light uppercase tracking-wider">{allGuarantorsSubmitted ? 'Sureties Cleared' : 'Pending Sureties'}</p>
               </div>
             </div>
 
             <div className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-3 bg-void-dark pr-4 md:pr-0">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 ${isFullyApproved ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : isPendingReview ? 'bg-cobalt/20 border-cobalt text-cobalt shadow-[0_0_15px_rgba(77,148,255,0.3)]' : 'bg-void-light/5 border-void-light/10 text-slate-light/40'}`}>
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 ${isFullyApproved ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : isPendingReview ? 'bg-cobalt/20 border-cobalt text-cobalt shadow-[0_0_15px_rgba(77,148,255,0.3)]' : 'bg-white/5 border-white/10 text-slate-light/40'}`}>
                 {isFullyApproved ? <CheckCircle2 size={24} /> : isPendingReview ? <Hourglass size={24} /> : <Clock size={24} />}
               </div>
               <div className="text-left md:text-center">
@@ -130,45 +139,46 @@ export default function ClientDashboard({
             </div>
 
             <div className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-3 bg-void-dark pr-4 md:pr-0">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 ${isActive ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : isAwaitingSignature ? 'bg-signal-red/20 border-signal-red text-signal-red shadow-[0_0_15px_rgba(233,69,96,0.3)]' : 'bg-void-light/5 border-void-light/10 text-slate-light/40'}`}>
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 ${isActive ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : isAwaitingSignature ? 'bg-signal-red/20 border-signal-red text-signal-red shadow-[0_0_15px_rgba(233,69,96,0.3)]' : 'bg-white/5 border-white/10 text-slate-light/40'}`}>
                 {isActive ? <CarFront size={24} /> : isAwaitingSignature ? <ShieldCheck size={24} /> : <Lock size={20} />}
               </div>
               <div className="text-left md:text-center">
                 <p className={`text-xs font-bold uppercase tracking-widest ${isActive || isAwaitingSignature ? 'text-crisp-white' : 'text-slate-light/40'}`}>Phase 3</p>
-                <p className={`text-[10px] uppercase tracking-wider ${isActive ? 'text-slate-light' : isAwaitingSignature ? 'text-signal-red' : 'text-slate-light/40'}`}>{isAwaitingSignature ? 'Sign Agreement' : 'Fleet Allocation'}</p>
+                <p className={`text-[10px] uppercase tracking-wider ${isActive ? 'text-slate-light' : isAwaitingSignature ? 'text-signal-red' : 'text-slate-light/40'}`}>{isAwaitingSignature ? 'Sign Handover' : 'Fleet Activation'}</p>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ADMIN REVIEW BANNER */}
+      {/* BACKGROUND VETTING ADMIN REVIEW BANNER */}
       {isPendingReview && (
         <div className="bg-cobalt/10 border border-cobalt/30 p-6 rounded-xl flex flex-col md:flex-row md:items-center gap-6 animate-in slide-in-from-bottom-2">
           <div className="shrink-0 bg-cobalt/20 p-4 rounded-full text-cobalt">
             <Hourglass size={32} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-cobalt uppercase tracking-widest mb-1">Pending Admin Review</h2>
+            <h2 className="text-lg font-bold text-cobalt uppercase tracking-widest mb-1">Corporate Compliance Processing</h2>
             <p className="text-sm text-slate-light leading-relaxed">
-              Both of your guarantors have successfully executed their deeds. Your application is currently under final review by Administration. You will be contacted shortly regarding your fleet assignment.
+              Both of your guarantors have completed verification tracking. Your profile metrics are currently inside our background screening loop (Validating license history, routing address parameters, and scheduling fleet pairing assignments).
             </p>
           </div>
         </div>
       )}
 
-      {/* GUARANTOR ACTION CARDS */}
+      {/* INTERACTIVE GUARANTOR SHARING COMPONENT */}
       {!isFullyApproved && (
         <div className="bg-void-dark border border-cobalt/20 rounded-xl overflow-hidden shadow-xl">
-          <div className="p-6 border-b border-cobalt/20 bg-void-light/5">
-            <h3 className="text-lg font-bold uppercase tracking-wider">Guarantor Protocol</h3>
-            <p className="text-xs text-slate-light">Forward these unique links to your guarantors to complete your KYC.</p>
+          <div className="p-6 border-b border-cobalt/20 bg-white/5">
+            <h3 className="text-lg font-bold uppercase tracking-wider">Guarantor Verification Tracking</h3>
+            <p className="text-xs text-slate-light">Forward these individual security entry links to your designees via WhatsApp or copy directly.</p>
           </div>
           
-          <div className="divide-y divide-cobalt/20">
+          <div className="divide-y divide-white/5">
             {[g1, g2].map((g, index) => {
               if (!g) return null;
-              const link = `${baseUrl}/guarantor/${g.token}`;
+              const baseUrlString = typeof window !== "undefined" ? window.location.origin : "https://yusdaamautos.com";
+              const link = `${baseUrlString}/guarantor/${g.token}`;
               const isDone = g.status !== "PENDING";
               
               return (
@@ -181,30 +191,31 @@ export default function ClientDashboard({
                     )}
                     <div>
                       <p className="font-bold uppercase tracking-widest text-sm md:text-base">{g.firstName} {g.lastName}</p>
-                      <p className="text-xs text-slate-light uppercase tracking-widest">{g.relationship} • Guarantor {index + 1}</p>
+                      <p className="text-xs text-slate-light uppercase tracking-widest">{g.relationship.replace('_', ' ')} • Surety Profile 0{index + 1}</p>
                     </div>
                   </div>
                   
                   {!isDone ? (
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
                       <button 
+                        type="button"
                         onClick={() => copyToClipboard(link, g.id)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-void-light/5 hover:bg-void-light/10 border border-cobalt/30 text-crisp-white font-bold uppercase tracking-wider text-xs rounded-xl transition-all"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-crisp-white font-bold uppercase tracking-wider text-xs rounded-xl transition-all"
                       >
-                        {copiedId === g.id ? <><Check size={16} className="text-emerald-400"/> Copied!</> : <><Copy size={16} className="text-cobalt"/> Copy Link</>}
+                        {copiedId === g.id ? <><Check size={16} className="text-emerald-400"/> Copied!</> : <><Copy size={16} className="text-cobalt"/> Copy Verification Link</>}
                       </button>
                       <a 
-                        href={getWhatsAppLink(g.firstName, link)}
+                        href={getWhatsAppLink(g.firstName, g.token)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold uppercase tracking-wider text-xs rounded-xl transition-all"
                       >
-                        <MessageCircle size={16} /> WhatsApp
+                        <MessageCircle size={16} /> WhatsApp Dispatch
                       </a>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold uppercase tracking-wider text-xs rounded-xl w-full lg:w-auto justify-center">
-                      <CheckCircle2 size={16} /> Deed Executed
+                      <CheckCircle2 size={16} /> Legal Attestation Executed
                     </div>
                   )}
                 </div>
@@ -214,156 +225,166 @@ export default function ClientDashboard({
         </div>
       )}
 
-      {/* DASHBOARD AREA */}
+      {/* MASTER OPERATIONS PORTAL BOUNDARY CONTAINER */}
       <div className="relative pt-4">
         
-        {/* Glassmorphism Lock Overlay for Non-Active Riders */}
+        {/* Dynamic Security Veil Layer */}
         {!isActive && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-void-navy/60 backdrop-blur-sm rounded-xl border border-void-light/10 mt-10">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-void-navy/60 backdrop-blur-sm rounded-xl border border-white/5 mt-10 min-h-[300px]">
             <Lock size={48} className="text-slate-light mb-4 opacity-50" />
-            <p className="text-sm font-bold uppercase tracking-widest text-slate-light text-center px-4">
-              {isAwaitingSignature ? "Action Required: Sign Handover Agreement" : "Dashboard Locked Pending Asset Assignment"}
+            <p className="text-sm font-bold uppercase tracking-widest text-slate-light text-center px-4 max-w-md leading-relaxed">
+              {isAwaitingSignature ? "Action Mandatory: Review & Execute Vehicle Handover Agreement Above" : "Dashboard Metrics Vaulted Pending Vetting & Asset Deployment"}
             </p>
           </div>
         )}
 
-        <div className={`transition-all duration-500 ${!isActive ? "opacity-40 grayscale pointer-events-none" : "flex flex-col gap-6"}`}>
+        <div className={`transition-all duration-500 space-y-8 ${!isActive ? "opacity-30 grayscale pointer-events-none" : ""}`}>
           
-          {/* 1. TOP SECTION: VIRTUAL ACCOUNT CARD */}
-          <div className="bg-void-dark border border-cobalt/20 rounded-xl p-6 lg:p-8 shadow-lg">
-            <h3 className="font-bold border-b border-cobalt/20 pb-3 mb-6 uppercase tracking-wider flex items-center gap-2">
-              <Landmark size={18} className="text-cobalt"/> Payment Account
-            </h3>
+          {/* CORE STATS GRID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <div className="bg-white/5 border border-white/10 p-5 rounded-xl shadow-lg relative overflow-hidden">
+              <div className="p-3 bg-cobalt/10 text-cobalt rounded-lg w-fit mb-4"><CarFront size={20} /></div>
+              <h3 className="text-2xl font-black text-crisp-white mb-1 uppercase tracking-wide">{vehicle?.registrationNumber || "PENDING"}</h3>
+              <p className="text-[10px] font-bold text-slate-light/60 uppercase tracking-widest">Assigned Fleet Plate</p>
+            </div>
 
-            {accountError && <p className="text-signal-red text-xs font-bold mb-4">{accountError}</p>}
+            <div className="bg-white/5 border border-white/10 p-5 rounded-xl shadow-lg relative overflow-hidden">
+              <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg w-fit mb-4"><Banknote size={20} /></div>
+              <h3 className="text-2xl font-black text-emerald-400 mb-1">₦{contract?.riderWeeklyRemittance?.toLocaleString() || "0"}</h3>
+              <p className="text-[10px] font-bold text-slate-light/60 uppercase tracking-widest">Target Weekly Installment</p>
+            </div>
 
-            {rider.virtualAccountNo ? (
-              <div className="flex flex-col lg:flex-row gap-6 items-center">
-                <div className="w-full lg:w-1/2 bg-gradient-to-br from-cobalt/20 to-void-navy border border-cobalt/30 rounded-xl p-6 relative overflow-hidden shrink-0">
-                  <div className="absolute -right-4 -top-4 opacity-10">
-                    <Landmark size={100} />
+            <div className="bg-white/5 border border-white/10 p-5 rounded-xl shadow-lg relative overflow-hidden">
+              <div className="p-3 bg-amber-400/10 text-amber-400 rounded-lg w-fit mb-4"><Calendar size={20} /></div>
+              <h3 className="text-xl font-black text-crisp-white mb-1 tracking-tight">{nextDueDate}</h3>
+              <p className="text-[10px] font-bold text-slate-light/60 uppercase tracking-widest">Next Remittance Target</p>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 p-5 rounded-xl shadow-lg relative overflow-hidden">
+              <div className="p-3 bg-purple-500/10 text-purple-400 rounded-lg w-fit mb-4"><ClipboardList size={20} /></div>
+              <h3 className="text-2xl font-black text-crisp-white mb-1">₦{totalPaidSum.toLocaleString()}</h3>
+              <p className="text-[10px] font-bold text-slate-light/60 uppercase tracking-widest">Total Capital Capitalized</p>
+            </div>
+
+          </div>
+
+          {/* LOWER RECONCILIATION CHANNELS DISPLAY */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* VIRTUAL ACCOUNT CARD COMPONENT */}
+            <div className="bg-gradient-to-br from-white/5 to-white/10 border border-white/10 rounded-2xl p-6 shadow-xl flex flex-col justify-between h-fit lg:col-span-1">
+              <div>
+                <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-4">
+                  <div className="p-2 bg-emerald-400/10 text-emerald-400 rounded-lg"><Landmark size={20} /></div>
+                  <div>
+                    <h3 className="font-bold text-white uppercase tracking-wider text-sm">Remittance Account</h3>
+                    <p className="text-[10px] text-slate-light">Dedicated platform collection portal</p>
                   </div>
-                  <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Bank Name</p>
-                  <p className="text-sm font-bold text-emerald-400 mb-4">{rider.virtualBankName}</p>
+                </div>
 
-                  <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Account Number</p>
-                  <div className="flex items-center gap-3 mb-4">
-                    <p className="text-2xl font-black tracking-widest text-crisp-white font-mono">{rider.virtualAccountNo}</p>
-                    <button onClick={() => copyToClipboard(rider.virtualAccountNo, 'acc')} className="p-2 bg-void-light/10 hover:bg-void-light/20 rounded-lg transition">
-                      {copiedId === 'acc' ? <CheckCircle2 size={16} className="text-emerald-400" /> : <Copy size={16} className="text-slate-light" />}
+                {accountError && <p className="text-signal-red text-xs font-bold mb-3">{accountError}</p>}
+
+                <p className="text-xs text-slate-light leading-relaxed mb-6">
+                  All manual or dynamic weekly hire purchase installments must be channeled to your custom processing details listed below. Deposits route directly into your statement tracking.
+                </p>
+
+                {virtualAccount.no ? (
+                  <div className="bg-black/30 border border-emerald-500/20 rounded-xl p-4 space-y-3 shadow-inner">
+                    <div>
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-emerald-400 block mb-0.5">Institution Node</span>
+                      <p className="text-sm font-black text-white uppercase font-sans">{virtualAccount.bank}</p>
+                    </div>
+                    <div>
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-emerald-400 block mb-0.5">Remittance Account No</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-2xl font-mono font-bold tracking-wider text-emerald-400">{virtualAccount.no}</p>
+                        <button type="button" onClick={() => copyToClipboard(virtualAccount.no, 'vacc')} className="p-1.5 bg-white/5 hover:bg-white/10 rounded transition text-gray-400 hover:text-white">
+                          {copiedId === 'vacc' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-black/20 border border-dashed border-white/10 rounded-xl p-6 text-center">
+                    <p className="text-xs text-gray-500 mb-4">No dedicated automated account link active for your profile yet.</p>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAccount}
+                      disabled={isGenerating}
+                      className="inline-flex items-center gap-2 bg-cobalt px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:bg-void-light transition disabled:opacity-50"
+                    >
+                      {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <CreditCard size={14} />}
+                      Generate Payment Account
                     </button>
                   </div>
-
-                  <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Account Name</p>
-                  <p className="text-xs font-bold uppercase tracking-wider text-crisp-white">{rider.virtualAccountName}</p>
-                </div>
-                
-                <div className="w-full lg:w-1/2 p-6 bg-signal-red/5 border border-signal-red/10 rounded-xl text-sm text-slate-light leading-relaxed">
-                  <h4 className="flex items-center gap-2 text-signal-red font-bold uppercase tracking-wider mb-2">
-                    <AlertTriangle size={18} /> Important Notice
-                  </h4>
-                  <p className="mb-4">This is your dedicated static account for all vehicle remittances. Any funds transferred to this account will be automatically credited to your weekly ledger.</p>
-                  <p className="font-bold text-crisp-white">Do not hand cash to any staff. Always use this account.</p>
-                </div>
+                )}
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <WalletCards size={40} className="text-slate-light/30 mx-auto mb-4" />
-                <p className="text-sm font-bold text-crisp-white mb-2">No Account Found</p>
-                <p className="text-xs text-slate-light mb-6 max-w-sm mx-auto">Generate your dedicated Paystack virtual account to securely make your weekly vehicle remittances.</p>
-                <button 
-                  onClick={handleGenerateAccount}
-                  disabled={isGenerating}
-                  className="flex items-center justify-center gap-2 px-8 py-4 bg-cobalt hover:bg-cobalt/90 text-crisp-white font-bold uppercase tracking-wider text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(77,148,255,0.3)] disabled:opacity-50 mx-auto"
-                >
-                  {isGenerating ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : "Generate Virtual Account"}
-                </button>
-              </div>
-            )}
-          </div>
 
-          {/* 2. MIDDLE SECTION: QUICK STATS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-void-dark border border-cobalt/20 p-6 rounded-xl shadow-lg">
-              <CarFront className="text-cobalt mb-4" size={32} />
-              <p className="text-xs text-slate-light font-bold uppercase tracking-widest mb-1">Assigned Asset</p>
-              <p className="text-xl font-black">{vehicle?.makeModel || "---"}</p>
-              <p className="text-xs text-emerald-400 mt-2 bg-emerald-500/10 inline-block px-2 py-1 rounded">{vehicle?.registrationNumber || "---"}</p>
+              <div className="mt-6 pt-4 border-t border-white/5 text-[10px] text-gray-500 leading-tight">
+                <span className="text-signal-red font-bold uppercase block mb-1">Notice:</span>
+                Never give cash to staff. Always route operations via this tracking account to safeguard balances.
+              </div>
             </div>
-            <div className="bg-void-dark border border-cobalt/20 p-6 rounded-xl shadow-lg">
-              <WalletCards className="text-cobalt mb-4" size={32} />
-              <p className="text-xs text-slate-light font-bold uppercase tracking-widest mb-1">Weekly Target</p>
-              <p className="text-xl font-black font-mono">₦{contract?.weeklyRemittance?.toLocaleString() || "---"}</p>
-              <p className="text-[10px] text-slate-light uppercase mt-2">Due: {contract?.paymentDay || "Friday"}</p>
-            </div>
-            <div className="bg-void-dark border border-cobalt/20 p-6 rounded-xl shadow-lg">
-              <ShieldCheck className="text-cobalt mb-4" size={32} />
-              <p className="text-xs text-slate-light font-bold uppercase tracking-widest mb-1">Total Outstanding</p>
-              <p className="text-xl font-black font-mono text-signal-red">₦{contract?.totalPrice?.toLocaleString() || "---"}</p>
-              <p className="text-[10px] text-slate-light uppercase mt-2">Tenure: {contract?.agreedDurationMonths ? contract.agreedDurationMonths * 4 : "---"} Weeks</p>
-            </div>
-          </div>
 
-          {/* 3. BOTTOM SECTION: REMITTANCE LEDGER */}
-          <div className="bg-void-dark border border-cobalt/20 rounded-xl p-6 shadow-lg">
-            <h3 className="font-bold border-b border-cobalt/20 pb-3 mb-6 uppercase tracking-wider flex items-center gap-2">
-              <Clock size={18} className="text-cobalt"/> Weekly Remittance Ledger
-            </h3>
+            {/* STATEMENT HISTORY TABLE MODULE */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl shadow-xl overflow-hidden lg:col-span-2 flex flex-col">
+              <div className="p-5 border-b border-white/10 bg-black/10">
+                <h3 className="font-bold text-white uppercase tracking-wider text-sm flex items-center gap-2">
+                  <Receipt size={18} className="text-cobalt" /> Operational Payment History
+                </h3>
+              </div>
 
-            {isLoadingLedger ? (
-              <div className="flex justify-center items-center py-10">
-                <Loader2 size={32} className="text-cobalt animate-spin" />
-              </div>
-            ) : ledgerData.length === 0 ? (
-              <div className="text-center py-10">
-                <p className="text-sm text-slate-light">No remittance history found.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+              <div className="flex-1 overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
-                    <tr className="border-b border-cobalt/20">
-                      <th className="py-3 px-4 text-[10px] font-bold text-slate-light uppercase tracking-widest whitespace-nowrap">Week</th>
-                      <th className="py-3 px-4 text-[10px] font-bold text-slate-light uppercase tracking-widest whitespace-nowrap">Target</th>
-                      <th className="py-3 px-4 text-[10px] font-bold text-slate-light uppercase tracking-widest whitespace-nowrap">Paid</th>
-                      <th className="py-3 px-4 text-[10px] font-bold text-slate-light uppercase tracking-widest whitespace-nowrap">Arrears/Debt</th>
-                      <th className="py-3 px-4 text-[10px] font-bold text-slate-light uppercase tracking-widest whitespace-nowrap text-right">Status</th>
+                    <tr className="bg-black/20 text-[10px] uppercase tracking-widest text-gray-400 border-b border-white/10">
+                      <th className="p-4">Transaction Date</th>
+                      <th className="p-4">Description</th>
+                      <th className="p-4">Reference ID</th>
+                      <th className="p-4 text-right">Amount</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-cobalt/10">
-                    {ledgerData.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-void-light/5 transition-colors">
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <p className="text-sm font-bold text-crisp-white">Week {row.week}</p>
-                          <p className="text-[10px] text-slate-light">{row.date}</p>
+                  <tbody className="divide-y divide-white/5 text-sm">
+                    
+                    {/* Inject original commitment down payment as initial baseline if contract exists */}
+                    {contract?.downPayment > 0 && (
+                      <tr className="hover:bg-white/5 transition duration-150">
+                        <td className="p-4">
+                          <p className="font-bold text-white">{new Date(contract.startDate || rider.createdAt).toLocaleDateString('en-GB')}</p>
                         </td>
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <p className="text-sm font-mono text-slate-light">₦{row.target.toLocaleString()}</p>
+                        <td className="p-4">
+                          <p className="text-xs text-gray-300 font-medium">Initial Commitment Down Payment</p>
                         </td>
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <p className="text-sm font-mono font-bold text-crisp-white">₦{row.paid.toLocaleString()}</p>
+                        <td className="p-4 font-mono text-[11px] text-gray-500">YUS-DEPOSIT-INIT</td>
+                        <td className="p-4 text-right font-bold text-emerald-400">₦{contract.downPayment.toLocaleString()}</td>
+                      </tr>
+                    )}
+
+                    {history.map((tx) => (
+                      <tr key={tx.id} className="hover:bg-white/5 transition duration-150">
+                        <td className="p-4">
+                          <p className="font-bold text-white">{new Date(tx.date).toLocaleDateString('en-GB')}</p>
+                          <p className="text-[10px] text-gray-500">{new Date(tx.date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
                         </td>
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <p className={`text-sm font-mono font-bold ${row.arrears > 0 ? 'text-signal-red' : 'text-slate-light'}`}>
-                            {row.arrears > 0 ? `₦${row.arrears.toLocaleString()}` : "---"}
-                          </p>
+                        <td className="p-4">
+                          <p className="text-xs text-gray-300 font-medium">{tx.description || "Weekly Installment"}</p>
                         </td>
-                        <td className="py-4 px-4 text-right whitespace-nowrap">
-                          <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded text-[9px] font-black uppercase tracking-widest
-                            ${row.status === 'CLEARED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-                              row.status === 'PARTIAL' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' : 
-                              row.status === 'OVERDUE' || row.status === 'ARREARS' ? 'bg-signal-red/10 text-signal-red border border-signal-red/20' : 
-                              'bg-void-light/10 text-slate-light border border-void-light/20'}`}
-                          >
-                            {row.status}
-                          </span>
-                        </td>
+                        <td className="p-4 font-mono text-[11px] text-gray-500 tracking-wider">{tx.reference}</td>
+                        <td className="p-4 text-right font-black text-emerald-400">₦{tx.amount.toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                {history.length === 0 && (!contract || !contract.downPayment) && (
+                  <div className="p-12 text-center text-gray-500 flex flex-col items-center justify-center">
+                    <ArrowDownLeft size={36} className="text-gray-600 mb-2 opacity-40" />
+                    <p className="text-xs">No transaction statement lines tracked on profile ledger.</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
           </div>
 
         </div>
