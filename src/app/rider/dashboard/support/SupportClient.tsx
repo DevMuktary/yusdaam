@@ -33,9 +33,9 @@ export default function SupportClient({ rider }: { rider: any }) {
     }
   ];
 
-  const adminPhone = "+2348000000000"; // Replace with your actual company number
-  const adminEmail = "admin@yusdaamautos.com";
-  const whatsappLink = `https://wa.me/2348000000000?text=${encodeURIComponent(`Hello YUSDAAM Admin, my name is ${rider.firstName} ${rider.lastName}. I need assistance regarding my fleet assignment.`)}`;
+  const adminPhone = "+2349065000860"; // Replace with your actual company number
+  const adminEmail = "support@yusdaamautos.com";
+  const whatsappLink = `https://wa.me/2349065000860?text=${encodeURIComponent(`Hello YUSDAAM Admin, my name is ${rider.firstName} ${rider.lastName}. I need assistance regarding my fleet assignment.`)}`;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
