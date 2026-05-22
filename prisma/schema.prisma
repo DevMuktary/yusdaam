@@ -116,6 +116,10 @@ model User {
   hpaAgreementUrl  String?
   poaAgreementUrl  String?
 
+  // --- NEW: SAVED WITNESS DATA FOR AGREEMENTS ---
+  defaultWitnessName         String?
+  defaultWitnessSignatureUrl String? @db.Text
+
   // --- NEW: RIDER LICENSING & OPS DATA ---
   driversLicenseNo       String?
   lasdriNo               String?
@@ -214,7 +218,7 @@ model Vehicle {
   year               String?       // e.g., "2023"
   engineNumber       String?  
   customType         String?
-  chassisNumber      String?        
+  chassisNumber      String?       
   registrationNumber String        
   status             VehicleStatus @default(UNASSIGNED)
   createdAt          DateTime      @default(now())
@@ -245,6 +249,12 @@ model Contract {
   // --- OWNER TERMS ---
   ownerWeeklyPayout      Float    // What the investor/owner receives weekly
   ownerDurationWeeks     Int      // How many weeks the owner receives this payout
+
+  // --- NEW: PER-CONTRACT SIGNATURE TRACKING ---
+  isSigned               Boolean  @default(false)
+  ownerSignatureUrl      String?  @db.Text
+  witnessName            String?
+  witnessSignatureUrl    String?  @db.Text
 
   isActive               Boolean  @default(true)
   nextDueDate            DateTime?
