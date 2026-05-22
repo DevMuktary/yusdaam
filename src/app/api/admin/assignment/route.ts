@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       vehicleId, riderId, ownerId,
       totalHirePurchasePrice, downPayment,
       riderWeeklyRemittance, riderDurationWeeks,
-      weeklyServiceFee, // <-- ADDED: Captures the service fee from the frontend
+      weeklyServiceFee,
       ownerWeeklyPayout, ownerDurationWeeks
     } = body;
 
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing identity IDs" }, { status: 400 });
     }
 
-    // NEW: Check if the owner is already active (has signed before)
+    // Check if the owner is already active (has signed before)
     const existingOwner = await prisma.user.findUnique({
       where: { id: ownerId },
       select: { accountStatus: true, firstName: true, lastName: true, email: true }
@@ -61,10 +61,11 @@ export async function POST(req: Request) {
           downPayment: Number(downPayment) || 0,
           riderWeeklyRemittance: Number(riderWeeklyRemittance),
           riderDurationWeeks: Number(riderDurationWeeks),
-          weeklyServiceFee: Number(weeklyServiceFee) || 0, // <-- ADDED: Saved to the database
+          weeklyServiceFee: Number(weeklyServiceFee) || 0,
           ownerWeeklyPayout: Number(ownerWeeklyPayout),
           ownerDurationWeeks: Number(ownerDurationWeeks),
-          isActive: true
+          isActive: true,
+          isSigned: false // Mark as not signed explicitly
         }
       });
 
@@ -108,18 +109,18 @@ export async function POST(req: Request) {
     // Email to Owner
     if (result.updatedOwner.email) {
       if (isOwnerAlreadyActive) {
-        // Send a simple notification since they don't need to sign again
+        // Inform them they have a new asset and MUST sign the specific agreement
         sendSystemEmail({
           toEmail: result.updatedOwner.email,
           toName: `${result.updatedOwner.firstName} ${result.updatedOwner.lastName}`,
-          subject: "New Asset Deployed to Your Portfolio!",
+          subject: "Action Required: Sign Agreement for New Asset",
           htmlBody: `
             <div style="font-family: sans-serif; color: #333;">
-              <h2>New Asset Added!</h2>
+              <h2>New Asset Deployed!</h2>
               <p>Hello ${result.updatedOwner.firstName},</p>
-              <p>Great news! A new asset <strong>${vehicleString}</strong> has been successfully assigned to your portfolio and deployed to a vetted rider.</p>
-              <p>Because you have already signed the Master Hire Purchase Administration Agreement, no further signatures are required. The asset is now active on your dashboard.</p>
-              <p><a href="https://yusdaamautos.com/owner/login" style="padding: 10px 20px; background-color: #001232; color: white; text-decoration: none; border-radius: 5px;">View Dashboard</a></p>
+              <p>A new asset <strong>${vehicleString}</strong> has been assigned to your portfolio.</p>
+              <p>Please log in to your dashboard and navigate to your Fleet Portfolio to sign the specific Power of Attorney and Administration Agreement for this new vehicle.</p>
+              <p><a href="https://yusdaamautos.com/owner/dashboard/assets" style="padding: 10px 20px; background-color: #001232; color: white; text-decoration: none; border-radius: 5px;">Go to Fleet Portfolio</a></p>
             </div>
           `
         }).catch(err => console.error("Failed to email assigned owner:", err));
