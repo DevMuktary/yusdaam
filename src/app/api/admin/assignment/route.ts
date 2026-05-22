@@ -19,6 +19,7 @@ export async function POST(req: Request) {
       vehicleId, riderId, ownerId,
       totalHirePurchasePrice, downPayment,
       riderWeeklyRemittance, riderDurationWeeks,
+      weeklyServiceFee, // <-- ADDED: Captures the service fee from the frontend
       ownerWeeklyPayout, ownerDurationWeeks
     } = body;
 
@@ -60,6 +61,7 @@ export async function POST(req: Request) {
           downPayment: Number(downPayment) || 0,
           riderWeeklyRemittance: Number(riderWeeklyRemittance),
           riderDurationWeeks: Number(riderDurationWeeks),
+          weeklyServiceFee: Number(weeklyServiceFee) || 0, // <-- ADDED: Saved to the database
           ownerWeeklyPayout: Number(ownerWeeklyPayout),
           ownerDurationWeeks: Number(ownerDurationWeeks),
           isActive: true
