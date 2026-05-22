@@ -11,16 +11,35 @@ export async function POST(req: Request) {
     if (!session || !session.user?.id) return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
 
     const body = await req.json();
-    const { signature } = body;
-    if (!signature) return NextResponse.json({ error: "Signature is required to proceed" }, { status: 400 });
+    const { signature, witnessName, witnessSignature, contractId } = body;
+    
+    if (!signature || !contractId) {
+      return NextResponse.json({ error: "Signature and Contract ID are required" }, { status: 400 });
+    }
 
-    // Just update the database to unlock the dashboard
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { accountStatus: "ACTIVE", signatureUrl: signature },
+    // 1. Update the specific Contract
+    await prisma.contract.update({
+      where: { id: contractId },
+      data: { 
+        isSigned: true,
+        ownerSignatureUrl: signature,
+        witnessName: witnessName,
+        witnessSignatureUrl: witnessSignature
+      },
     });
 
-    return NextResponse.json({ message: "Agreements signed successfully" }, { status: 200 });
+    // 2. Update the User (Unlock dashboard if pending, and save default witness for future)
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { 
+        accountStatus: "ACTIVE", 
+        signatureUrl: signature, // Keeps the master signature
+        defaultWitnessName: witnessName,
+        defaultWitnessSignatureUrl: witnessSignature
+      },
+    });
+
+    return NextResponse.json({ message: "Agreement signed successfully" }, { status: 200 });
   } catch (error) {
     console.error("Signature Processing Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
