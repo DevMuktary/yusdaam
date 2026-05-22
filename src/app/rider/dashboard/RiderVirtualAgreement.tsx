@@ -9,13 +9,12 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   const router = useRouter();
   const topRef = useRef<HTMLDivElement>(null);
   
-  // Prevent iOS Safari pinch-zoom & rubber-band scroll
   useEffect(() => {
     const meta = document.createElement('meta');
     meta.name = 'viewport';
     meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
     document.head.appendChild(meta);
-    document.body.style.overflow = "hidden"; // Lock background scroll
+    document.body.style.overflow = "hidden"; 
     return () => { 
       document.head.removeChild(meta); 
       document.body.style.overflow = "auto";
@@ -43,9 +42,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   const currentMonth = today.toLocaleString('default', { month: 'long' });
   const currentYear = today.getFullYear();
   const formattedDate = today.toLocaleDateString('en-GB');
-  
-  // NEW: Get the current day of the week (e.g., "Monday", "Thursday")
-  const currentWeekday = today.toLocaleDateString('default', { weekday: 'long' });
 
   const g1 = guarantors[0] || {};
   const g2 = guarantors[1] || {};
@@ -64,11 +60,11 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
       // @ts-ignore
       const html2pdf = (await import("html2pdf.js")).default;
       const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5], // Standard 0.5 inch A4 margins
+        margin: [0.5, 0.5, 0.5, 0.5],
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, windowWidth: 800 },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }, // Strict A4 format
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // Smart page breaking
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
       const dataUri = await html2pdf().set({ ...opt, filename: 'HPA.pdf' }).from(pdfContractRef.current).output('datauristring');
@@ -94,9 +90,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     }
   };
 
-  // --- THE DOCUMENT COMPONENT (Handles both UI Reading & Hidden PDF Render) ---
   const HpaDocument = ({ isPdf = false }: { isPdf?: boolean }) => {
-    // Heavily condensed styles for PDF, relaxed styles for Web
     const textStyle = isPdf ? "text-[11px] leading-snug text-black font-serif text-justify" : "text-sm text-slate-light leading-relaxed font-sans text-justify";
     const headingStyle = isPdf ? "font-bold text-[12px] border-b border-gray-400 pb-0.5 mt-3 mb-1.5 text-black uppercase break-after-avoid" : "font-bold text-crisp-white text-base mt-8 border-b border-cobalt/20 pb-2 uppercase";
     const paraSpacing = isPdf ? "mb-1.5" : "mb-4";
@@ -105,7 +99,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     return (
       <div className={textStyle}>
         
-        {/* LETTERHEAD */}
         <div className={`text-center ${isPdf ? "border-b-2 border-[#001232] pb-2 mb-3 break-after-avoid" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
           <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: "45px", width: "auto", margin: "0 auto 10px auto", display: "block", objectFit: "contain" }} />
           <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
@@ -148,14 +141,18 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         </ul>
 
         <h3 className={headingStyle}>2. FINANCIAL TERMS AND REMITTANCE</h3>
-        <p className={paraSpacing}>2.1 <strong>Total Hire Purchase Price:</strong> The total sum payable by the Driver/Rider to acquire ownership of the Asset is <strong>₦{contract?.totalHirePurchasePrice?.toLocaleString() || "---"}</strong>.</p>
+        
+        <p className={paraSpacing}>2.1 <strong>Total Hire Purchase Price:</strong> The total principal sum payable by the Driver/Rider to acquire ownership of the Asset is <strong>₦{contract?.totalHirePurchasePrice?.toLocaleString() || "---"}</strong>.</p>
+        
         <p className={paraSpacing}>2.2 <strong>Initial Deposit:</strong> The Driver/Rider has paid a non-refundable initial commitment deposit of <strong>₦{contract?.downPayment?.toLocaleString() || "0"}</strong>.</p>
-        <p className={paraSpacing}>2.3 <strong>Weekly Remittance:</strong> The Driver/Rider shall pay a fixed sum of <strong>₦{contract?.riderWeeklyRemittance?.toLocaleString() || "---"}</strong> every week directly into the Administrator’s designated Client Remittance Account.</p>
         
-        {/* DYNAMIC WEEKDAY INSERTED HERE */}
-        <p className={paraSpacing}>2.4 <strong>Payment Schedule:</strong> Payments must be made no later than <strong>{currentWeekday} 11:59 PM</strong> of every week. Payments made to unauthorized staff or third parties will not be recognized.</p>
+        <p className={paraSpacing}>2.3 <strong>Weekly Remittance & Service Fee:</strong> The Driver/Rider shall pay a fixed sum of <strong>₦{contract?.riderWeeklyRemittance?.toLocaleString() || "---"}</strong> every week directly into the Administrator’s designated Client Remittance Account.</p>
         
-        <p className={isPdf ? "mb-2" : "mb-6"}>2.5 <strong>Tenure:</strong> The expected duration is <strong>{contract?.riderDurationWeeks || "---"}</strong> weeks, concluding when the Total Hire Purchase Price is fully paid.</p>
+        <p className={paraSpacing}>2.4 <strong>Fee Breakdown:</strong> Out of the ₦{contract?.riderWeeklyRemittance?.toLocaleString() || "---"} weekly remittance, the sum of <strong>₦{contract?.weeklyServiceFee?.toLocaleString() || "---"}</strong> is explicitly allocated and applied as the Hire Purchase Administration Service Fee. Mind you, the Total Hire Purchase Price stated in Clause 2.1 does not contain this service fee at all.</p>
+        
+        <p className={paraSpacing}>2.5 <strong>Payment Schedule:</strong> Payments must be made no later than <strong>Friday 11:59 PM</strong> of every week. Payments made to unauthorized staff or third parties will not be recognized.</p>
+        
+        <p className={isPdf ? "mb-2" : "mb-6"}>2.6 <strong>Tenure:</strong> The expected duration is <strong>{contract?.riderDurationWeeks || "---"}</strong> weeks, concluding when the Total Hire Purchase Price is fully paid.</p>
 
         <h3 className={headingStyle}>3. DRIVER/RIDER’S OBLIGATIONS AND RISK</h3>
         <p className={paraSpacing}>3.1 <strong>Absolute Risk:</strong> The Driver/Rider assumes 100% financial and operational risk for the Asset from the moment of handover. The Administrator makes no warranties regarding the mechanical longevity of the Asset.</p>
@@ -187,7 +184,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         <p className={isPdf ? "mb-3" : "mb-6"}>6.3 <strong>Jurisdiction:</strong> This Agreement shall be governed by the laws of the Federal Republic of Nigeria. Any dispute shall be subject to the exclusive jurisdiction of the Courts of Lagos State.</p>
 
         <h3 className={headingStyle}>7. GUARANTORS' EXECUTION</h3>
-        {/* break-inside-avoid ensures this entire box stays on one page */}
         <div className={`${isPdf ? "mb-3 p-3 border border-gray-400 bg-gray-50 break-inside-avoid" : "mb-8 p-4 border border-cobalt/30 bg-void-navy/50"}`}>
           <p className={`${isPdf ? "text-[9px]" : "text-[10px]"} italic mb-2 leading-tight`}>The Guarantors below have previously executed Sworn Guarantor Attestations digitally. Their IP addresses, identity documents, and digital signatures are verified and held by the Administrator.</p>
           
@@ -222,7 +218,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         <h3 className={headingStyle}>8. SIGNATURES</h3>
         <p className={paraSpacing}>IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
         
-        {/* break-inside-avoid prevents signatures from splitting */}
         <div className={`grid grid-cols-2 gap-6 ${isPdf ? "mb-4 break-inside-avoid" : "mb-8"}`}>
           <div>
             <p className="font-bold mb-1 text-[10px]">SIGNED by the ADMINISTRATOR</p>
@@ -271,7 +266,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     );
   };
 
-  // --- STEP 2: SUCCESS VIEW ---
   if (step === 2) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-4 h-screen w-screen overflow-y-auto">
@@ -299,12 +293,10 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     );
   }
 
-  // --- STEP 1: UI VIEW ---
   return (
     <div className="fixed inset-0 z-[100] bg-void-navy/95 backdrop-blur-md overflow-y-auto h-screen w-screen px-2 sm:px-6 py-10">
       <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-hidden relative">
         
-        {/* Header */}
         <div className="bg-void-navy p-6 border-b border-cobalt/30 flex items-center gap-4 shrink-0 shadow-md">
           <ShieldCheck size={32} className="text-signal-red shrink-0" />
           <div>
@@ -313,16 +305,13 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           </div>
         </div>
 
-        {/* 1. Document Reader */}
         <div className="p-6 sm:p-12 bg-void-navy/50">
           <HpaDocument isPdf={false} />
         </div>
 
-        {/* 2. Form Inputs */}
         <div className="p-6 sm:p-12 border-t border-cobalt/30 bg-void-navy">
           {errorMsg && <p className="text-signal-red text-sm font-bold mb-6 bg-signal-red/10 border border-signal-red/20 p-4 rounded-lg">{errorMsg}</p>}
           
-          {/* Witness Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-void-light/5 border border-cobalt/20 rounded-xl">
             <div className="md:col-span-2"><h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Independent Witness</h4></div>
             <div>
@@ -335,7 +324,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
             </div>
             <div className="md:col-span-2">
               <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
-              {/* WHITE BACKGROUND FOR CANVAS */}
               <div className="bg-white rounded-lg border-2 border-cobalt/30 overflow-hidden shadow-inner">
                 <SignatureCanvas ref={witnessSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} onEnd={() => setWitnessSig(witnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)} />
               </div>
@@ -345,10 +333,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
             </div>
           </div>
 
-          {/* Rider Signature */}
           <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
             <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Your Signature</label>
-            {/* WHITE BACKGROUND FOR CANVAS */}
             <div className="bg-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
               <SignatureCanvas ref={riderSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} onEnd={() => setRiderSig(riderSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)} />
             </div>
@@ -367,9 +353,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           </button>
         </div>
 
-        {/* Hidden Render for PDF Generation */}
         <div className="absolute top-[-10000px] left-[-10000px]">
-          {/* Note: p-8 w-[800px] bounds the PDF properly without excess margins */}
           <div ref={pdfContractRef} className="bg-white p-8 w-[800px] text-black">
             <HpaDocument isPdf={true} />
           </div>
