@@ -18,13 +18,13 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
     totalHirePurchasePrice: "",
     downPayment: "",
     riderWeeklyRemittance: "",
+    weeklyServiceFee: "", // <-- NEW STATE
     riderDurationWeeks: "",
     ownerWeeklyPayout: "",
     ownerDurationWeeks: ""
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow numbers
     const value = e.target.value.replace(/\D/g, '');
     setFormData({ ...formData, [e.target.name]: value });
   };
@@ -55,9 +55,8 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
 
       alert("Success! Vehicle assigned, contract generated, and notifications dispatched.");
       router.refresh();
-      // Reset form
       setSelectedVehicle(""); setSelectedRider(""); setSelectedOwner("");
-      setFormData({ totalHirePurchasePrice: "", downPayment: "", riderWeeklyRemittance: "", riderDurationWeeks: "", ownerWeeklyPayout: "", ownerDurationWeeks: "" });
+      setFormData({ totalHirePurchasePrice: "", downPayment: "", riderWeeklyRemittance: "", weeklyServiceFee: "", riderDurationWeeks: "", ownerWeeklyPayout: "", ownerDurationWeeks: "" });
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -81,66 +80,34 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
       {/* SELECTION GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        {/* Step 1: Vehicle */}
         <div className={`p-6 rounded-xl border transition-all ${selectedVehicle ? 'bg-cobalt/10 border-cobalt/40' : 'bg-void-navy border-white/10'}`}>
           <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-4 uppercase tracking-wider">
             <Car size={18} className="text-cobalt" /> 1. Select Vehicle
           </h3>
-          <select 
-            value={selectedVehicle} 
-            onChange={(e) => setSelectedVehicle(e.target.value)}
-            className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cobalt appearance-none"
-            required
-          >
+          <select value={selectedVehicle} onChange={(e) => setSelectedVehicle(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cobalt appearance-none" required>
             <option value="" className="bg-void-navy text-white">-- Choose Asset --</option>
-            {vehicles.map(v => (
-              <option key={v.id} value={v.id} className="bg-void-navy text-white">
-                {v.registrationNumber} - {v.makeModel} ({v.type === 'OTHERS' ? v.customType : v.type})
-              </option>
-            ))}
+            {vehicles.map(v => <option key={v.id} value={v.id} className="bg-void-navy text-white">{v.registrationNumber} - {v.makeModel} ({v.type === 'OTHERS' ? v.customType : v.type})</option>)}
           </select>
         </div>
 
-        {/* Step 2: Rider */}
         <div className={`p-6 rounded-xl border transition-all ${selectedRider ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-void-navy border-white/10'}`}>
           <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-4 uppercase tracking-wider">
             <User size={18} className="text-emerald-400" /> 2. Select Rider
           </h3>
-          <select 
-            value={selectedRider} 
-            onChange={(e) => setSelectedRider(e.target.value)}
-            className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500 appearance-none"
-            required
-          >
+          <select value={selectedRider} onChange={(e) => setSelectedRider(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500 appearance-none" required>
             <option value="" className="bg-void-navy text-white">-- Choose Approved Rider --</option>
-            {riders.map(r => (
-              <option key={r.id} value={r.id} className="bg-void-navy text-white">
-                {r.firstName} {r.lastName} ({r.phoneNumber})
-              </option>
-            ))}
+            {riders.map(r => <option key={r.id} value={r.id} className="bg-void-navy text-white">{r.firstName} {r.lastName} ({r.phoneNumber})</option>)}
           </select>
-          {riders.length === 0 && <p className="text-xs text-red-400 mt-2">No approved riders available.</p>}
         </div>
 
-        {/* Step 3: Owner */}
         <div className={`p-6 rounded-xl border transition-all ${selectedOwner ? 'bg-purple-500/10 border-purple-500/40' : 'bg-void-navy border-white/10'}`}>
           <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-4 uppercase tracking-wider">
             <Briefcase size={18} className="text-purple-400" /> 3. Select Asset Owner
           </h3>
-          <select 
-            value={selectedOwner} 
-            onChange={(e) => setSelectedOwner(e.target.value)}
-            className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 appearance-none"
-            required
-          >
+          <select value={selectedOwner} onChange={(e) => setSelectedOwner(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 appearance-none" required>
             <option value="" className="bg-void-navy text-white">-- Choose Asset Owner --</option>
-            {owners.map(o => (
-              <option key={o.id} value={o.id} className="bg-void-navy text-white">
-                {o.firstName} {o.lastName} - {o.preferredAssetClass}
-              </option>
-            ))}
+            {owners.map(o => <option key={o.id} value={o.id} className="bg-void-navy text-white">{o.firstName} {o.lastName} - {o.preferredAssetClass}</option>)}
           </select>
-          {owners.length === 0 && <p className="text-xs text-red-400 mt-2">No approved owners available.</p>}
         </div>
 
       </div>
@@ -175,9 +142,14 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
                 <input type="text" name="riderWeeklyRemittance" value={formData.riderWeeklyRemittance} onChange={handleInputChange} placeholder="e.g. 30000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Duration (Weeks) *</label>
-                <input type="text" name="riderDurationWeeks" value={formData.riderDurationWeeks} onChange={handleInputChange} placeholder="e.g. 104" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required />
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Service Fee (₦) *</label>
+                <input type="text" name="weeklyServiceFee" value={formData.weeklyServiceFee} onChange={handleInputChange} placeholder="e.g. 5000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Duration (Weeks) *</label>
+              <input type="text" name="riderDurationWeeks" value={formData.riderDurationWeeks} onChange={handleInputChange} placeholder="e.g. 104" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required />
             </div>
           </div>
 
@@ -205,11 +177,7 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
         </div>
 
         <div className="p-6 bg-white/5 border-t border-white/10 flex justify-end">
-          <button 
-            type="submit" 
-            disabled={isSubmitting}
-            className="flex items-center gap-2 bg-cobalt hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-bold transition disabled:opacity-50"
-          >
+          <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 bg-cobalt hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-bold transition disabled:opacity-50">
             {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <><CheckCircle2 size={20} /> Execute Assignment & Contract</>}
           </button>
         </div>
