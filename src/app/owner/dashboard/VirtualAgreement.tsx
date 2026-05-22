@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export interface AgreementProps {
+  contractId: string; // <-- NEW
+  initialWitnessName?: string | null; // <-- NEW
+  initialWitnessSignature?: string | null; // <-- NEW
   ownerName: string;
   bvn?: string;
   nin?: string;
@@ -33,7 +36,6 @@ export default function VirtualAgreement(props: AgreementProps) {
   const router = useRouter();
   const topRef = useRef<HTMLDivElement>(null);
   
-  // Prevent iOS Safari pinch-zoom by injecting meta tag on mount
   useEffect(() => {
     const meta = document.createElement('meta');
     meta.name = 'viewport';
@@ -48,13 +50,16 @@ export default function VirtualAgreement(props: AgreementProps) {
 
   const hpaOwnerSigCanvas = useRef<SignatureCanvas>(null);
   const hpaWitnessSigCanvas = useRef<SignatureCanvas>(null);
-  const [hpaAgreed, setHpaAgreed] = useState(false);
-  const [witnessName, setWitnessName] = useState("");
-  const [witnessAddress, setWitnessAddress] = useState("");
-  const [hpaOwnerSig, setHpaOwnerSig] = useState<string | null>(null);
-  const [hpaWitnessSig, setHpaWitnessSig] = useState<string | null>(null);
-
   const poaOwnerSigCanvas = useRef<SignatureCanvas>(null);
+
+  const [hpaAgreed, setHpaAgreed] = useState(false);
+  
+  // PRE-FILL STATE FROM PROPS
+  const [witnessName, setWitnessName] = useState(props.initialWitnessName || "");
+  const [witnessAddress, setWitnessAddress] = useState(""); // Can add to DB later if needed
+  const [hpaOwnerSig, setHpaOwnerSig] = useState<string | null>(null);
+  const [hpaWitnessSig, setHpaWitnessSig] = useState<string | null>(props.initialWitnessSignature || null);
+
   const [poaAgreed, setPoaAgreed] = useState(false);
   const [poaOwnerSig, setPoaOwnerSig] = useState<string | null>(null);
 
@@ -63,11 +68,16 @@ export default function VirtualAgreement(props: AgreementProps) {
   const [isDownloadingHpa, setIsDownloadingHpa] = useState(false);
   const [isDownloadingPoa, setIsDownloadingPoa] = useState(false);
   
-  // Step 3 Background Dispatch State
   const [isDispatching, setIsDispatching] = useState(false);
   const [dispatchComplete, setDispatchComplete] = useState(false);
 
-  // Dynamic Date Helpers
+  // PRE-LOAD WITNESS SIGNATURE INTO CANVAS
+  useEffect(() => {
+    if (step === 1 && props.initialWitnessSignature && hpaWitnessSigCanvas.current) {
+      hpaWitnessSigCanvas.current.fromDataURL(props.initialWitnessSignature);
+    }
+  }, [step, props.initialWitnessSignature]);
+
   const today = new Date();
   const currentDay = today.getDate();
   const currentMonth = today.toLocaleString('default', { month: 'long' });
@@ -80,7 +90,11 @@ export default function VirtualAgreement(props: AgreementProps) {
     setErrorMsg("");
     if (!witnessName || !witnessAddress) return setErrorMsg("Please provide your witness's name and address.");
     if (hpaOwnerSigCanvas.current?.isEmpty()) return setErrorMsg("Please provide your owner signature.");
-    if (hpaWitnessSigCanvas.current?.isEmpty()) return setErrorMsg("Please provide your witness signature.");
+    
+    // Ensure we have a witness signature (either pre-loaded or newly drawn)
+    const currentWitnessSig = hpaWitnessSigCanvas.current?.isEmpty() ? null : hpaWitnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png");
+    if (!currentWitnessSig && !hpaWitnessSig) return setErrorMsg("Please provide your witness signature.");
+    
     if (!hpaAgreed) return setErrorMsg("You must check the agreement box to proceed.");
 
     setStep(2);
@@ -98,7 +112,12 @@ export default function VirtualAgreement(props: AgreementProps) {
       const res = await fetch("/api/owner/agreement/sign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ signature: hpaOwnerSig }), 
+        body: JSON.stringify({ 
+          signature: hpaOwnerSig,
+          witnessName: witnessName,
+          witnessSignature: hpaWitnessSig, // Collected from step 1
+          contractId: props.contractId
+        }), 
       });
 
       if (!res.ok) throw new Error("Failed to process agreements.");
@@ -113,7 +132,6 @@ export default function VirtualAgreement(props: AgreementProps) {
     }
   };
 
-  // BACKGROUND TASK: Compile PDFs and Email them
   useEffect(() => {
     if (step === 3 && isDispatching && !dispatchComplete) {
       const compileAndSend = async () => {
@@ -151,7 +169,6 @@ export default function VirtualAgreement(props: AgreementProps) {
     }
   }, [step, isDispatching, dispatchComplete]);
 
-  // Safari-safe Blob Download
   const handleDownloadPDF = async (ref: React.RefObject<HTMLDivElement>, filename: string, setLoader: (val: boolean) => void) => {
     if (!ref.current) return;
     setLoader(true);
@@ -190,7 +207,6 @@ export default function VirtualAgreement(props: AgreementProps) {
     return (
       <div className={textStyle}>
         <div className={`text-center ${isPdf ? "border-b-2 border-[#001232] pb-4 mb-6" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
-          {/* LOGO REDIRECT FOR EMBEDDED RENDER */}
           <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: "45px", width: "auto", margin: "0 auto 10px auto", display: "block", objectFit: "contain" }} />
           <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
           <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher&apos;s Quarter Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
@@ -363,13 +379,6 @@ export default function VirtualAgreement(props: AgreementProps) {
             <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {formattedDate}</p>
           </div>
         </div>
-
-        <div className={`mt-16 pt-8 ${isPdf ? "text-[10px]" : "text-xs text-slate-light"}`}>
-          <p><strong>SCHEDULE A:</strong> Dealer Invoice + Proof of Payment by Owner</p>
-          <p><strong>SCHEDULE B:</strong> Insurance Certificate</p>
-          <p><strong>SCHEDULE C:</strong> Owner KYC Documents</p>
-          <p><strong>SCHEDULE D:</strong> Power of Attorney</p>
-        </div>
       </div>
     );
   };
@@ -386,13 +395,13 @@ export default function VirtualAgreement(props: AgreementProps) {
           <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher&apos;s Quater Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
         </div>
 
-        <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-8" : "text-lg text-signal-red mb-8"}`}>MASTER POWER OF ATTORNEY</h2>
+        <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-8" : "text-lg text-signal-red mb-8"}`}>SPECIFIC POWER OF ATTORNEY</h2>
 
         <p className="mb-6 leading-relaxed">
-          <strong>KNOW ALL MEN BY THESE PRESENTS</strong> that I, <strong>{props.ownerName}</strong>, of {props.ownerAddress || fallback}, holding Bank Verification Number (BVN) {props.bvn || fallback} and National Identification Number (NIN) {props.nin || fallback} (hereinafter referred to as the <strong>"Donor"</strong>), DO HEREBY APPOINT <strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company incorporated under the laws of the Federal Republic of Nigeria with RC: 9562528, having its registered address at 18, Alhaji Olakunle Close Selewu Teacher&apos;s Quater Igbogbo Ikorodu Lagos. (hereinafter referred to as the <strong>"Donee"</strong>), to be my true and lawful Attorney, to act in my name and on my behalf to do all or any of the following acts and things in respect of the primary commercial transport asset detailed below, <strong>as well as any and all subsequent commercial transport assets registered to my Owner Profile on the Yusdaam platform</strong> (hereinafter collectively referred to as the <strong>"Assets"</strong>):
+          <strong>KNOW ALL MEN BY THESE PRESENTS</strong> that I, <strong>{props.ownerName}</strong>, of {props.ownerAddress || fallback}, holding Bank Verification Number (BVN) {props.bvn || fallback} and National Identification Number (NIN) {props.nin || fallback} (hereinafter referred to as the <strong>"Donor"</strong>), DO HEREBY APPOINT <strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company incorporated under the laws of the Federal Republic of Nigeria with RC: 9562528, having its registered address at 18, Alhaji Olakunle Close Selewu Teacher&apos;s Quater Igbogbo Ikorodu Lagos. (hereinafter referred to as the <strong>"Donee"</strong>), to be my true and lawful Attorney, to act in my name and on my behalf to do all or any of the following acts and things in respect of the commercial transport asset detailed below (hereinafter referred to as the <strong>"Asset"</strong>):
         </p>
 
-        <h3 className={headingStyle}>PRIMARY ASSET DESCRIPTION:</h3>
+        <h3 className={headingStyle}>ASSET DESCRIPTION:</h3>
         <ul className={`list-disc pl-5 mb-6 space-y-1 ${isPdf ? "font-mono text-[10px]" : "font-mono bg-void-navy/50 p-4 rounded-lg"}`}>
           <li><strong>Asset Type:</strong> {props.vehicleType || fallback}</li>
           <li><strong>Make/Model:</strong> {props.makeModel || fallback}</li>
@@ -403,22 +412,22 @@ export default function VirtualAgreement(props: AgreementProps) {
         </ul>
 
         <h3 className={headingStyle}>DELEGATED POWERS</h3>
-        <p className="mb-4">I hereby grant my said Attorney the absolute power and legal authority to execute the following actions regarding the Assets:</p>
+        <p className="mb-4">I hereby grant my said Attorney the absolute power and legal authority to execute the following actions regarding the Asset:</p>
         
         <ul className="space-y-4 mb-6 list-none pl-0">
-          <li><strong>1. General Management:</strong> To manage, control, and oversee the daily commercial operations of the Assets under a hire purchase arrangement.</li>
+          <li><strong>1. General Management:</strong> To manage, control, and oversee the daily commercial operations of the Asset under a hire purchase arrangement.</li>
           <li><strong>2. Execution of Contracts:</strong> To vet riders/drivers and to negotiate, execute, sign, and deliver hire purchase agreements, terms of use, and any other relevant operational documents with third-party riders/drivers on my behalf.</li>
-          <li><strong>3. Financial Collection:</strong> To demand, collect, receive, and issue receipts for all weekly remittances, fees, or charges payable by the rider/driver in connection with the use and hire purchase of the Assets.</li>
-          <li><strong>4. Asset Monitoring & GPS:</strong> To install, maintain, and monitor Global Positioning System (GPS) tracking devices on the Assets, and to use the data derived to ensure compliance.</li>
-          <li><strong>5. Enforcement & Repossession:</strong> To take all lawful and necessary steps to enforce the terms of the hire purchase agreement against the rider/driver. In the event of default, abandonment, or breach of contract by the rider/driver, to seize, recover, and repossess the Assets without further recourse to me.</li>
-          <li><strong>6. Liaison with Authorities:</strong> To represent me and the Assets before any governmental agency, law enforcement agency (including the Nigerian Police Force), road traffic management authority, or insurance provider in matters concerning the recovery of the Assets, reporting of theft, or resolution of traffic and operational infractions.</li>
+          <li><strong>3. Financial Collection:</strong> To demand, collect, receive, and issue receipts for all weekly remittances, fees, or charges payable by the rider/driver in connection with the use and hire purchase of the Asset.</li>
+          <li><strong>4. Asset Monitoring & GPS:</strong> To install, maintain, and monitor Global Positioning System (GPS) tracking devices on the Asset, and to use the data derived to ensure compliance.</li>
+          <li><strong>5. Enforcement & Repossession:</strong> To take all lawful and necessary steps to enforce the terms of the hire purchase agreement against the rider/driver. In the event of default, abandonment, or breach of contract by the rider/driver, to seize, recover, and repossess the Asset without further recourse to me.</li>
+          <li><strong>6. Liaison with Authorities:</strong> To represent me and the Asset before any governmental agency, law enforcement agency (including the Nigerian Police Force), road traffic management authority, or insurance provider in matters concerning the recovery of the Asset, reporting of theft, or resolution of traffic and operational infractions.</li>
           <li><strong>7. Custody of Documents:</strong> To hold necessary operational copies of the vehicle particulars and insurance documents for the purpose of carrying out the administrative duties described herein.</li>
         </ul>
 
         <h3 className={headingStyle}>LIMITATIONS</h3>
         <ul className="space-y-4 mb-6 list-none pl-0">
-          <li><strong>1. No Transfer of Ownership:</strong> This Power of Attorney <strong>DOES NOT</strong> grant the Donee the right or authority to sell, mortgage, pledge, or permanently transfer the legal ownership of the Assets to any third party, except as explicitly directed by me upon the rider&apos;s successful completion of the hire purchase tenure as stipulated in our Administration Agreement.</li>
-          <li><strong>2. Scope:</strong> The powers granted herein are strictly limited to the management and administration of the Assets registered to my portfolio.</li>
+          <li><strong>1. No Transfer of Ownership:</strong> This Power of Attorney <strong>DOES NOT</strong> grant the Donee the right or authority to sell, mortgage, pledge, or permanently transfer the legal ownership of the Asset to any third party, except as explicitly directed by me upon the rider&apos;s successful completion of the hire purchase tenure as stipulated in our Administration Agreement.</li>
+          <li><strong>2. Scope:</strong> The powers granted herein are strictly limited to the management and administration of the Asset listed above.</li>
         </ul>
 
         <h3 className={headingStyle}>DURATION AND REVOCABILITY</h3>
@@ -430,7 +439,6 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-10 font-bold italic uppercase">IN WITNESS WHEREOF, I have hereunto set my hand and seal this {currentDay} day of {currentMonth}, {currentYear}.</p>
 
         <div className={`grid grid-cols-2 gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
-          {/* Donor Side */}
           <div className="space-y-4">
             <p className="font-bold underline text-xs">SIGNED, SEALED, AND DELIVERED by the within-named DONOR:</p>
             
@@ -460,7 +468,6 @@ export default function VirtualAgreement(props: AgreementProps) {
             <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
           </div>
 
-          {/* Donee Side */}
           <div className="space-y-4">
             <p className="font-bold underline text-xs">ACCEPTED BY THE DONEE:</p>
             <p className="font-bold text-xs uppercase">YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
@@ -479,10 +486,9 @@ export default function VirtualAgreement(props: AgreementProps) {
     );
   };
 
-  // --- SUCCESS VIEW (STEP 3) ---
   if (step === 3) {
     return (
-      <div ref={topRef} className="max-w-3xl mx-auto mt-10 bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full overflow-x-hidden">
+      <div ref={topRef} className="max-w-3xl mx-auto bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full overflow-x-hidden">
         
         {isDispatching ? (
           <div className="flex flex-col items-center justify-center py-10">
@@ -497,7 +503,7 @@ export default function VirtualAgreement(props: AgreementProps) {
             </div>
             <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreements Executed</h2>
             <p className="text-slate-light leading-relaxed mb-10">
-              Your digital signatures have been permanently attached. Copies of the finalized agreements have been automatically dispatched to your registered email address.
+              Your digital signatures have been permanently attached to the specific contract for this asset. Copies of the finalized agreements have been dispatched to your email.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -510,13 +516,12 @@ export default function VirtualAgreement(props: AgreementProps) {
               </button>
 
               <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
-                Access Dashboard <ArrowRight size={16} />
+                Return to Fleet <ArrowRight size={16} />
               </button>
             </div>
           </>
         )}
 
-        {/* Hidden Render for PDF Generation */}
         <div className="hidden">
           <div ref={hpaContractRef} className="bg-white p-12 w-[800px]"><HpaDocument isPdf={true} /></div>
           <div ref={poaContractRef} className="bg-white p-12 w-[800px]"><PoaDocument isPdf={true} /></div>
@@ -525,7 +530,6 @@ export default function VirtualAgreement(props: AgreementProps) {
     );
   }
 
-  // --- STEP 2: POA VIEW ---
   if (step === 2) {
     return (
       <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-right-8 duration-500 w-full overflow-x-hidden">
@@ -570,7 +574,6 @@ export default function VirtualAgreement(props: AgreementProps) {
     );
   }
 
-  // --- STEP 1: HPA VIEW ---
   return (
     <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-x-hidden">
       <div className="p-8 sm:p-12 bg-void-navy/50">
@@ -582,7 +585,10 @@ export default function VirtualAgreement(props: AgreementProps) {
         
         {/* Witness Details Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-void-light/5 border border-cobalt/20 rounded-xl">
-          <div className="md:col-span-2"><h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Owner&apos;s Witness Details</h4></div>
+          <div className="md:col-span-2">
+            <h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Owner&apos;s Witness Details</h4>
+            {props.initialWitnessName && <p className="text-xs text-slate-light mt-1">Pre-filled with your previous witness. Edit if necessary.</p>}
+          </div>
           <div>
             <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Full Name</label>
             <input type="text" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-base md:text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="Jane Doe" />
@@ -631,7 +637,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         </label>
 
         <button onClick={handleNextToPoa} className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
-          Next: Review Power of Attorney <ArrowRight size={16} />
+          Next: Review Specific Power of Attorney <ArrowRight size={16} />
         </button>
       </div>
     </div>
