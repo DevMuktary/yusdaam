@@ -240,6 +240,7 @@ model Contract {
   downPayment            Float    @default(0) // What they paid upfront
   riderWeeklyRemittance  Float    // What the rider pays every week
   riderDurationWeeks     Int      // How many weeks the rider will pay
+  weeklyServiceFee       Float    @default(0) // <-- ADDED: Admin Service Fee
 
   // --- OWNER TERMS ---
   ownerWeeklyPayout      Float    // What the investor/owner receives weekly
