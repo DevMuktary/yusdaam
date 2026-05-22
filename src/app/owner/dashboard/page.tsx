@@ -35,6 +35,8 @@ export default async function DashboardHome() {
       streetAddress: true,
       bankName: true,
       accountNumber: true,
+      defaultWitnessName: true,           // <-- FETCHED NEW FIELD
+      defaultWitnessSignatureUrl: true,   // <-- FETCHED NEW FIELD
       ownedVehicles: {
         include: {
           contract: true
@@ -114,6 +116,9 @@ export default async function DashboardHome() {
     return (
       <div className="py-6 overflow-x-hidden">
         <VirtualAgreement 
+          contractId={assignedContract?.id || ""} // <-- PASSED REQUIRED PROP
+          initialWitnessName={user?.defaultWitnessName} // <-- PASSED REQUIRED PROP
+          initialWitnessSignature={user?.defaultWitnessSignatureUrl} // <-- PASSED REQUIRED PROP
           ownerName={fullName} 
           ownerId={user?.id}
           ownerEmail={user?.email || ""}
