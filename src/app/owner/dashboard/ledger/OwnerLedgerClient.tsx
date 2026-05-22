@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet, ArrowDownRight, Receipt, Calendar, ArrowRightLeft, ShieldCheck, Download, Car } from "lucide-react";
+import { Wallet, ArrowDownRight, Receipt, Calendar, ArrowRightLeft, ShieldCheck, Download, Car, ExternalLink } from "lucide-react";
 
 export default function OwnerLedgerClient({ ledgers, user }: { ledgers: any[], user: any }) {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("ALL");
@@ -81,11 +81,11 @@ export default function OwnerLedgerClient({ ledgers, user }: { ledgers: any[], u
             <select 
               value={selectedVehicleId} 
               onChange={(e) => setSelectedVehicleId(e.target.value)}
-              className="bg-void-dark border border-cobalt/30 text-crisp-white text-xs font-bold tracking-wider rounded-lg px-4 py-2 focus:outline-none focus:border-cobalt w-full sm:w-auto appearance-none"
+              className="bg-[#001232] border border-cobalt/30 text-white text-xs font-bold tracking-wider rounded-lg px-4 py-2 focus:outline-none focus:border-cobalt w-full sm:w-auto"
             >
-              <option value="ALL">ALL ASSETS ({ledgers.length} TXNS)</option>
+              <option value="ALL" className="bg-[#001232] text-white">ALL ASSETS ({ledgers.length} TXNS)</option>
               {uniqueVehicles.map(v => (
-                <option key={v.id} value={v.id}>
+                <option key={v.id} value={v.id} className="bg-[#001232] text-white">
                   {v.registrationNumber} - {v.makeModel}
                 </option>
               ))}
@@ -105,7 +105,7 @@ export default function OwnerLedgerClient({ ledgers, user }: { ledgers: any[], u
               <p className="text-xs text-slate-light/70 mt-2">Transactions will appear here automatically upon your first weekly payout.</p>
             </div>
           ) : (
-            <table className="w-full text-left border-collapse min-w-[900px]">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr className="bg-void-dark/50 text-[10px] uppercase tracking-widest text-slate-light border-b border-cobalt/30">
                   <th className="p-4 font-bold">Date / Ref</th>
@@ -113,6 +113,7 @@ export default function OwnerLedgerClient({ ledgers, user }: { ledgers: any[], u
                   <th className="p-4 font-bold">Description</th>
                   <th className="p-4 font-bold">Gross</th>
                   <th className="p-4 font-bold">Admin Fee</th>
+                  <th className="p-4 font-bold text-center">Receipt</th>
                   <th className="p-4 font-bold text-right">Net Payout</th>
                 </tr>
               </thead>
@@ -164,7 +165,23 @@ export default function OwnerLedgerClient({ ledgers, user }: { ledgers: any[], u
                         )}
                       </td>
 
-                      {/* 6. Net Payout */}
+                      {/* 6. NEW: Receipt Column */}
+                      <td className="p-4 text-center">
+                        {tx.receiptUrl ? (
+                          <a 
+                            href={tx.receiptUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-cobalt/10 hover:bg-cobalt/20 text-cobalt text-[10px] font-bold uppercase tracking-widest rounded transition border border-cobalt/20"
+                          >
+                            View <ExternalLink size={12} />
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-slate-light/50 italic uppercase tracking-widest">Pending</span>
+                        )}
+                      </td>
+
+                      {/* 7. Net Payout */}
                       <td className="p-4 text-right">
                         <span className="inline-flex items-center gap-1.5 bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 px-3 py-1.5 rounded-md">
                           <ArrowDownRight size={14} />
