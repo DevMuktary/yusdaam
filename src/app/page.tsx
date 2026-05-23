@@ -28,12 +28,10 @@ export default function Home() {
               <Image 
                 src="/images/logo2.PNG" 
                 alt="Yusdaam Autos Logo" 
-                width={180} 
-                height={50} 
-                /* RESTORED: h-8 and h-10 keeps the blue nav small. 
-                   ADDED: scale-[1.4] and sm:scale-[1.7] enlarges the logo visually.
-                   ADDED: origin-left ensures it scales to the right, not off the screen. */
-                className="object-contain h-8 sm:h-10 w-auto scale-[1.4] sm:scale-[1.7] origin-left" 
+                width={400} /* Increased base resolution so it stays sharp when scaled */
+                height={120} 
+                /* CHANGED: Massive scale applied. Now 2.5x on mobile and 3.2x on desktop */
+                className="object-contain h-8 sm:h-10 w-auto scale-[2.5] sm:scale-[3.2] origin-left" 
                 priority
               />
             </Link>
