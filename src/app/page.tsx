@@ -28,10 +28,10 @@ export default function Home() {
               <Image 
                 src="/images/logo2.PNG" 
                 alt="Yusdaam Autos Logo" 
-                width={220}  /* Increased base width */
-                height={60}  /* Increased base height */
-                /* CHANGED: h-8 -> h-10 for mobile, sm:h-10 -> sm:h-14 for desktop */
-                className="object-contain h-10 sm:h-14 w-auto" 
+                width={300}  /* Increased base width for sharper scaling */
+                height={80}  /* Increased base height */
+                /* CHANGED: Boosted the heights. h-14 (mobile) and h-20 (desktop) */
+                className="object-contain h-14 sm:h-20 w-auto" 
                 priority
               />
             </Link>
