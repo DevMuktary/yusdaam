@@ -28,9 +28,10 @@ export default function Home() {
               <Image 
                 src="/images/logo2.PNG" 
                 alt="Yusdaam Autos Logo" 
-                width={180} 
-                height={50} 
-                className="object-contain h-8 sm:h-10 w-auto" 
+                width={220}  /* Increased base width */
+                height={60}  /* Increased base height */
+                /* CHANGED: h-8 -> h-10 for mobile, sm:h-10 -> sm:h-14 for desktop */
+                className="object-contain h-10 sm:h-14 w-auto" 
                 priority
               />
             </Link>
@@ -104,7 +105,7 @@ export default function Home() {
         </div>
 
         {/* PAGE CONTENT */}
-        <div className="pt-16">
+        <div className="pt-16 sm:pt-20">
           <Hero />
           <VehicleShowcase />
           <TheEngine />
