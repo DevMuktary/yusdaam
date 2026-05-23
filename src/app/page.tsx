@@ -21,6 +21,7 @@ export default function Home() {
       <div className={`transition-opacity duration-1000 w-full ${isLoading ? 'opacity-0 h-screen overflow-hidden' : 'opacity-100'}`}>
         
         {/* DESKTOP & MOBILE NAVBAR */}
+        {/* The navbar padding (py-4) is restored to its original size */}
         <nav className="fixed top-0 w-full z-[60] px-4 sm:px-6 py-4 border-b border-cobalt/20 bg-void-navy/90 backdrop-blur-md">
           <div className="container mx-auto flex justify-between items-center">
             
@@ -28,10 +29,11 @@ export default function Home() {
               <Image 
                 src="/images/logo2.PNG" 
                 alt="Yusdaam Autos Logo" 
-                width={300}  /* Increased base width for sharper scaling */
-                height={80}  /* Increased base height */
-                /* CHANGED: Boosted the heights. h-14 (mobile) and h-20 (desktop) */
-                className="object-contain h-14 sm:h-20 w-auto" 
+                width={270} 
+                height={75} 
+                /* We keep the original h-8/h-10 so the blue background doesn't stretch, 
+                   but we use 'scale' to visually enlarge the logo by 60%! */
+                className="object-contain h-8 sm:h-10 w-auto scale-[1.3] sm:scale-[1.6] origin-left" 
                 priority
               />
             </Link>
