@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
-import { sendSms } from "@/lib/sms/termii"; // <-- NEW IMPORT
+import { sendSms } from "@/lib/sms/termii"; 
 
 const prisma = new PrismaClient();
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY as string;
@@ -46,9 +46,14 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Already processed" }, { status: 200 });
       }
 
+      // 1. Fetch Rider with their Vehicle AND Contract details
       const rider = await prisma.user.findFirst({
         where: { paystackCustomerCode: customerCode },
-        include: { assignedTrip: true } 
+        include: { 
+          assignedTrip: {
+            include: { contract: true }
+          } 
+        } 
       });
 
       if (!rider || !rider.assignedTrip || !rider.assignedTrip.ownerId) {
@@ -56,7 +61,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Orphaned payment, logged in Paystack only" }, { status: 200 });
       }
 
-      // Write the Payment to the Ledger
+      const contract = rider.assignedTrip.contract;
+
+      // 2. Write the Standard Payment to the Ledger
       await prisma.ledger.create({
         data: {
           amount: amountInNaira,
@@ -70,7 +77,53 @@ export async function POST(req: Request) {
 
       console.log(`💰 SUCCESS: Remittance of ₦${amountInNaira} recorded for Rider ${rider.firstName} ${rider.lastName}`);
 
-      // --- NEW: SEND PAYMENT CONFIRMATION SMS ---
+      // 3. --- NEW: WATERFALL DEBT CLEARANCE LOGIC ---
+      // Trigger ONLY if contract is in RECOVERY MODE (Tenure is over, nextDueDate is null, but still active)
+      if (contract && contract.isActive && contract.nextDueDate === null) {
+        let remainingBalanceToApply = amountInNaira;
+
+        // Fetch all unsettled debts, oldest weeks first
+        const unsettledCycles = await prisma.weeklyCycle.findMany({
+          where: { contractId: contract.id, isSettled: false },
+          orderBy: { weekNumber: 'asc' }
+        });
+
+        for (const cycle of unsettledCycles) {
+          if (remainingBalanceToApply <= 0) break; // Out of money to apply
+
+          const amountToApply = Math.min(remainingBalanceToApply, cycle.shortfallAmount);
+          const newShortfall = cycle.shortfallAmount - amountToApply;
+          const newAmountPaid = cycle.amountPaid + amountToApply;
+
+          // Update the specific week's cycle
+          await prisma.weeklyCycle.update({
+            where: { id: cycle.id },
+            data: {
+              shortfallAmount: newShortfall,
+              amountPaid: newAmountPaid,
+              isSettled: newShortfall <= 0.01 // Safety buffer for floating point decimals
+            }
+          });
+
+          console.log(`💧 Waterfall: Applied ₦${amountToApply} to clear debt for Week ${cycle.weekNumber}`);
+          remainingBalanceToApply -= amountToApply;
+        }
+
+        // After waterfall, check if ALL debts are now completely cleared
+        const remainingDebts = await prisma.weeklyCycle.count({
+          where: { contractId: contract.id, isSettled: false }
+        });
+
+        if (remainingDebts === 0) {
+          await prisma.contract.update({
+            where: { id: contract.id },
+            data: { isActive: false } // Mark contract as fully completed!
+          });
+          console.log(`🏆 Contract ${contract.id} FULLY SETTLED via Waterfall! Marked Inactive.`);
+        }
+      }
+
+      // 4. Send Payment Confirmation SMS
       if (rider.phoneNumber) {
         const smsMessage = `Dear ${rider.firstName}, Payment Confirmed! We have received your weekly remittance of N${amountInNaira.toLocaleString()} for Vehicle ${rider.assignedTrip.registrationNumber}. Your ledger is now updated. Thank you, YUSDAAM LIMITED.`;
         
