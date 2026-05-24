@@ -75,7 +75,7 @@ export default function Hero() {
               <SplitText text="We do the work." />
             </span> <br />
             <span className="text-signal-red">
-              <SplitText text="You get paid weekly." />
+              <SplitText text="Collect Weekly Remittances." />
             </span>
           </h1>
 
