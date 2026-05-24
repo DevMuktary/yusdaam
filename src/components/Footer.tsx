@@ -22,17 +22,18 @@ export default function Footer() {
           
           {/* Brand & Tagline */}
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left lg:w-1/3">
-            <Link href="/" className="mb-6 hover:opacity-80 transition block">
+            {/* Added extra margin bottom (mb-12) so the scaled logo doesn't overlap the text */}
+            <Link href="/" className="mt-4 sm:mt-6 mb-12 hover:opacity-80 transition block">
               <Image 
                 src="/images/logo2.PNG" 
                 alt="Yusdaam Autos Logo" 
-                width={180} 
-                height={50} 
-                className="object-contain h-10 w-auto" 
+                width={400} 
+                height={120} 
+                className="object-contain h-8 sm:h-10 w-auto scale-[2.5] sm:scale-[3.2] origin-center lg:origin-left" 
               />
             </Link>
             <p className="text-slate-light text-sm sm:text-base font-medium leading-relaxed max-w-sm">
-              Premium Vehicle Asset Management. Own the asset. We do the work. You get paid weekly.
+              Premium Vehicle Asset Management. Own the asset. We do the work. You get remittances weekly.
             </p>
           </div>
 
@@ -55,11 +56,11 @@ export default function Footer() {
             <div className="flex flex-col items-center sm:items-start">
               <h4 className="text-[11px] sm:text-xs font-bold text-slate-light/60 uppercase tracking-widest mb-5">Contact Us</h4>
               <div className="flex flex-col gap-4 text-xs sm:text-sm font-medium text-slate-light items-center sm:items-start w-full">
-                <a href="tel:09065000860" className="flex flex-col sm:flex-row items-center sm:items-start gap-2 hover:text-signal-red transition">
+                <a href="tel:09033358098" className="flex flex-col sm:flex-row items-center sm:items-start gap-2 hover:text-signal-red transition">
                   <span className="w-8 h-8 shrink-0 rounded-full bg-void-light border border-cobalt flex items-center justify-center text-signal-red mb-1 sm:mb-0">
                     <Phone size={14} />
                   </span>
-                  <span className="mt-1">09065000860</span>
+                  <span className="mt-1">09033358098</span>
                 </a>
                 <a href="mailto:info@yusdaamautos.com" className="flex flex-col sm:flex-row items-center sm:items-start gap-2 hover:text-signal-red transition">
                   <span className="w-8 h-8 shrink-0 rounded-full bg-void-light border border-cobalt flex items-center justify-center text-signal-red mb-1 sm:mb-0">
@@ -105,7 +106,7 @@ export default function Footer() {
         {/* 3. BOTTOM FOOTER */}
         <div className="flex flex-col md:flex-row items-center justify-between border-t border-cobalt/30 pt-6 gap-4">
           <div className="text-xs sm:text-sm font-medium text-slate-light/60 text-center md:text-left">
-            &copy; 2026 YUSDAAM AUTOS. All rights reserved.
+            &copy; {new Date().getFullYear()} YUSDAAM AUTOS. All rights reserved.
           </div>
           
           <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-4 text-xs sm:text-sm font-medium text-slate-light/60">
