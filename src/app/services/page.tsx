@@ -200,7 +200,7 @@ export default function ServicesPage() {
               <Link href="/quotes" className="px-8 py-4 bg-signal-red text-crisp-white font-bold rounded-xl hover:bg-signal-red/90 transition shadow-lg w-full sm:w-auto">
                 View Vehicle Quotes
               </Link>
-              <a href="tel:09033358098" className="px-8 py-4 bg-transparent border-2 border-slate-light/30 hover:border-slate-light text-crisp-white font-bold rounded-xl transition w-full sm:w-auto">
+              <a href="tel:09065000860" className="px-8 py-4 bg-transparent border-2 border-slate-light/30 hover:border-slate-light text-crisp-white font-bold rounded-xl transition w-full sm:w-auto">
                 Speak With Administration
               </a>
             </div>
