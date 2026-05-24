@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, X, ShieldAlert, Crosshair, FileSignature, Map, Wrench, Banknote } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -61,8 +62,15 @@ export default function ServicesPage() {
       {/* NAVBAR */}
       <nav className="fixed top-0 w-full z-[60] px-4 sm:px-6 py-4 border-b border-cobalt/20 bg-void-navy/90 backdrop-blur-md">
         <div className="container mx-auto flex justify-between items-center">
-          <Link href="/" className="text-xl sm:text-2xl font-black tracking-wider hover:opacity-80 transition z-[70]">
-            YUSDAAM<span className="text-signal-red">.</span>
+          <Link href="/" className="z-[70] block hover:opacity-80 transition">
+            <Image 
+              src="/images/logo2.PNG" 
+              alt="Yusdaam Autos Logo" 
+              width={400} 
+              height={120} 
+              className="object-contain h-8 sm:h-10 w-auto scale-[2.5] sm:scale-[3.2] origin-left" 
+              priority
+            />
           </Link>
           
           <div className="hidden md:flex gap-8 text-sm font-semibold text-slate-light tracking-wide uppercase items-center">
@@ -141,7 +149,7 @@ export default function ServicesPage() {
                 <ShieldAlert className="text-cobalt w-10 h-10 sm:w-12 sm:h-12 mb-6" />
                 <h3 className="text-xl font-bold text-crisp-white mb-3">Street-Level Liaison</h3>
                 <p className="text-slate-light text-sm sm:text-base leading-relaxed">
-                  Lagos streets are unpredictable. Our field team directly handles park union (Agbero) disputes, police checkpoints, LASTMA clearings, and municipal tax compliance.
+                  Streets are unpredictable. Our field team directly handles park union (Agbero) disputes, police checkpoints, LASTMA clearings, and municipal tax compliance.
                 </p>
               </div>
 
@@ -192,7 +200,7 @@ export default function ServicesPage() {
               <Link href="/quotes" className="px-8 py-4 bg-signal-red text-crisp-white font-bold rounded-xl hover:bg-signal-red/90 transition shadow-lg w-full sm:w-auto">
                 View Vehicle Quotes
               </Link>
-              <a href="tel:09065000860" className="px-8 py-4 bg-transparent border-2 border-slate-light/30 hover:border-slate-light text-crisp-white font-bold rounded-xl transition w-full sm:w-auto">
+              <a href="tel:09033358098" className="px-8 py-4 bg-transparent border-2 border-slate-light/30 hover:border-slate-light text-crisp-white font-bold rounded-xl transition w-full sm:w-auto">
                 Speak With Administration
               </a>
             </div>
