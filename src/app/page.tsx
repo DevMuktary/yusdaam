@@ -93,7 +93,7 @@ export default function Home() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="text-sm normal-case text-slate-light hover:text-cobalt mt-1"
               >
-                Want to invest? Register as Owner
+                Become an Asset Owner? Register here
               </Link>
             </div>
 
