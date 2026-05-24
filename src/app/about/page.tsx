@@ -66,9 +66,9 @@ export default function AboutPage() {
             <Image 
               src="/images/logo2.PNG" 
               alt="Yusdaam Autos Logo" 
-              width={180} 
-              height={50} 
-              className="object-contain h-8 sm:h-10 w-auto" 
+              width={400} 
+              height={120} 
+              className="object-contain h-8 sm:h-10 w-auto scale-[2.5] sm:scale-[3.2] origin-left" 
               priority
             />
           </Link>
