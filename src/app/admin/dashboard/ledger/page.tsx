@@ -1,44 +1,62 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
+import { redirect } from "next/navigation";
+import { BookOpen } from "lucide-react";
 import AdminLedgerClient from "./AdminLedgerClient";
 
 const prisma = new PrismaClient();
 
-export const metadata = {
-  title: "Master Financial Ledger | Yusdaam Admin",
-};
-
 export default async function AdminLedgerPage() {
-  // 1. Fetch all ledgers with the nested user details
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
+    redirect("/admin/login");
+  }
+
+  // Fetch Raw Transactions
   const ledgers = await prisma.ledger.findMany({
     orderBy: { date: 'desc' },
     include: {
-      owner: { select: { firstName: true, lastName: true } },
-      vehicle: {
+      vehicle: { include: { rider: true } },
+      owner: true,
+    }
+  });
+
+  // Fetch Users for Dropdown Filters
+  const users = await prisma.user.findMany({
+    where: { role: { in: ["RIDER", "ASSET_OWNER"] } },
+    select: { id: true, firstName: true, lastName: true, role: true, phoneNumber: true }
+  });
+
+  // NEW: Fetch all Weekly Billing Cycles to monitor Arrears
+  const cycles = await prisma.weeklyCycle.findMany({
+    orderBy: [{ contractId: 'asc' }, { weekNumber: 'desc' }],
+    include: {
+      contract: {
         include: {
-          rider: { select: { id: true, firstName: true, lastName: true } }
+          vehicle: { include: { rider: true } },
+          owner: true
         }
       }
     }
   });
 
-  // 2. Fetch all active users to populate the dropdown filter
-  const users = await prisma.user.findMany({
-    where: {
-      role: { in: ["RIDER", "ASSET_OWNER"] },
-      accountStatus: { in: ["ACTIVE", "AWAITING_SIGNATURE", "APPROVED", "SUSPENDED"] }
-    },
-    select: { id: true, firstName: true, lastName: true, role: true, phoneNumber: true },
-    orderBy: { firstName: 'asc' }
-  });
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-light">Master Financial Ledger</h1>
-        <p className="text-sm text-gray-400">View complete transaction histories, filter by user, and track weekly remittances.</p>
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden">
+      
+      {/* Header */}
+      <div className="border-b border-cobalt/20 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-wide mb-2 flex items-center gap-3">
+            <BookOpen className="text-cobalt" /> Master Ledger
+          </h1>
+          <p className="text-slate-light">Track platform-wide financial movements, remittances, and historical arrears.</p>
+        </div>
       </div>
 
-      <AdminLedgerClient ledgers={ledgers} users={users} />
+      <AdminLedgerClient ledgers={ledgers} users={users} cycles={cycles} />
+      
     </div>
   );
 }
