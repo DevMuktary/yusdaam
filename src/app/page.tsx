@@ -28,9 +28,8 @@ export default function Home() {
               <Image 
                 src="/images/logo2.PNG" 
                 alt="Yusdaam Autos Logo" 
-                width={400} /* Increased base resolution so it stays sharp when scaled */
+                width={400} 
                 height={120} 
-                /* CHANGED: Massive scale applied. Now 2.5x on mobile and 3.2x on desktop */
                 className="object-contain h-8 sm:h-10 w-auto scale-[2.5] sm:scale-[3.2] origin-left" 
                 priority
               />
@@ -44,13 +43,13 @@ export default function Home() {
               <Link href="/quotes" className="hover:text-crisp-white hover:text-signal-red transition">Vehicle Quotes</Link>
             </div>
             
-            {/* Desktop Portal Buttons */}
+            {/* Desktop Portal Buttons - Added Rider Login */}
             <div className="hidden md:flex items-center gap-4">
               <Link 
-                href="/owner/register"
-                className="px-5 py-2.5 text-sm font-bold bg-transparent border border-slate-light/30 hover:border-crisp-white text-crisp-white rounded-lg transition"
+                href="/rider/login"
+                className="px-5 py-2.5 text-sm font-bold bg-transparent border border-slate-light/30 hover:border-signal-red text-crisp-white rounded-lg transition"
               >
-                Register
+                Rider Login
               </Link>
               <Link 
                 href="/owner/login"
@@ -78,29 +77,45 @@ export default function Home() {
             <Link href="/services" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-signal-red">Services</Link>
             <Link href="/quotes" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-signal-red">Vehicle Quotes</Link>
             
-            <div className="w-full h-px bg-white/10 my-2"></div>
+            <div className="w-full h-px bg-white/10 my-4"></div>
             
-            <Link 
-              href="/owner/register"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="px-8 py-3 border border-slate-light/30 text-crisp-white rounded-xl"
-            >
-              Register as Owner
-            </Link>
-            <Link 
-              href="/owner/login"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="px-8 py-4 bg-signal-red text-crisp-white rounded-xl shadow-lg"
-            >
-              Owner Login
-            </Link>
-            <Link 
-              href="/rider/register"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="mt-2 text-sm text-slate-light hover:text-signal-red normal-case"
-            >
-              Looking to drive? Apply as a Driver
-            </Link>
+            {/* Owner Section */}
+            <div className="flex flex-col gap-3">
+              <Link 
+                href="/owner/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-8 py-4 bg-cobalt text-crisp-white rounded-xl shadow-lg"
+              >
+                Owner Login
+              </Link>
+              <Link 
+                href="/owner/register"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-sm normal-case text-slate-light hover:text-cobalt mt-1"
+              >
+                Want to invest? Register as Owner
+              </Link>
+            </div>
+
+            <div className="w-full h-px bg-white/5 my-2"></div>
+
+            {/* Rider Section */}
+            <div className="flex flex-col gap-3">
+              <Link 
+                href="/rider/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-8 py-4 bg-signal-red text-crisp-white rounded-xl shadow-lg"
+              >
+                Rider Login
+              </Link>
+              <Link 
+                href="/rider/register"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-sm normal-case text-slate-light hover:text-signal-red mt-1"
+              >
+                Looking to drive? Apply as a Driver
+              </Link>
+            </div>
           </div>
         </div>
 
