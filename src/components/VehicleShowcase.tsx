@@ -16,7 +16,7 @@ const vehicles = [
     id: 1,
     name: "Tricycle (Keke)",
     tag: "High Demand",
-    description: "The absolute backbone of Lagos short-distance transit. Incredible daily turnover with minimal downtime.",
+    description: "The absolute backbone of short-distance transit. Incredible daily turnover with minimal downtime.",
     image: "/images/showcase-tricycle.png",
   },
   {
@@ -109,7 +109,7 @@ export default function VehicleShowcase() {
           <h2 className="text-xs sm:text-sm font-bold tracking-widest text-signal-red uppercase mb-3">Asset Classes</h2>
           <h3 className="text-3xl md:text-5xl font-black text-crisp-white">Select Your Workhorse.</h3>
           <p className="mt-4 text-slate-light max-w-2xl mx-auto text-sm md:text-base">
-            Browse our managed asset categories. We match the perfect vehicle to the most profitable routes in Lagos.
+            Browse our managed asset categories. We match the perfect vehicle to the most profitable routes.
           </p>
         </div>
 
