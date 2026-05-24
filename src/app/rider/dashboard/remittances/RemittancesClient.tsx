@@ -7,7 +7,9 @@ import { Loader2, Copy, CheckCircle2, WalletCards, ShieldCheck, AlertTriangle, C
 export default function RemittancesClient({ rider, contract }: { rider: any, contract: any }) {
   const router = useRouter();
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  
   const [ledgerHistory, setLedgerHistory] = useState<any[]>([]);
+  const [weeklyCycles, setWeeklyCycles] = useState<any[]>([]); // NEW STATE
   const [isLoadingLedger, setIsLoadingLedger] = useState(true);
   
   // Paystack Virtual Account State
@@ -18,13 +20,13 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Fetch Raw Ledger Transactions
+  // Fetch Raw Ledger Transactions & Isolated Cycles
   useEffect(() => {
     fetch("/api/rider/ledger")
       .then(res => res.json())
       .then(data => {
-        // We look for raw transaction amounts or pre-formatted paid values
         if (data.ledger) setLedgerHistory(data.ledger);
+        if (data.cycles) setWeeklyCycles(data.cycles); // Load the cycles
         setIsLoadingLedger(false);
       })
       .catch(err => {
@@ -57,83 +59,93 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
     }
   };
 
-  // --- DYNAMIC SCHEDULE GENERATOR ---
-  // Calculates every single week of the contract from the start date to the end date
+  // --- DYNAMIC SCHEDULE GENERATOR (ISOLATED LOGIC) ---
   const schedule = useMemo(() => {
     if (!contract) return [];
     
-    // Fallback to rider creation date if contract start date is missing
-    const baseDate = contract.startDate ? new Date(contract.startDate) : new Date(rider.createdAt);
-    baseDate.setHours(0, 0, 0, 0); // Normalize to midnight
-
-    // Calculate total weeks (Fallback to 100 if undefined)
-    const totalWeeks = contract.riderDurationWeeks || (contract.agreedDurationMonths ? contract.agreedDurationMonths * 4 : 100);
-    const weeklyTarget = contract.riderWeeklyRemittance || contract.weeklyRemittance || 0;
-    
-    // Sum up all actual payments made (ignoring down payments which are upfront)
-    let availableBalance = ledgerHistory.reduce((sum, tx) => sum + (tx.amount || tx.paid || 0), 0);
+    const totalWeeks = contract.riderDurationWeeks || 100;
+    const weeklyTarget = contract.riderWeeklyRemittance || 0;
+    const currentWeekNum = contract.currentWeek || 1;
     
     const generatedWeeks = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    for (let i = 1; i <= totalWeeks; i++) {
-      // Calculate due date (Start Date + i weeks)
-      const dueDate = new Date(baseDate);
-      dueDate.setDate(dueDate.getDate() + (i * 7));
-      
-      let paidForWeek = 0;
-      let status = "PENDING";
-      
-      // Waterfall payment logic: Apply available balance to the earliest weeks first
-      if (availableBalance >= weeklyTarget) {
-        paidForWeek = weeklyTarget;
-        availableBalance -= weeklyTarget;
-        status = "CLEARED";
-      } else if (availableBalance > 0) {
-        paidForWeek = availableBalance;
-        availableBalance = 0;
-        // If it's partially paid and the due date has passed, it's in arrears
-        status = dueDate < today ? "ARREARS" : "PARTIAL";
-      } else {
-        // 0 paid. Is it past the due date?
-        status = dueDate < today ? "OVERDUE" : "PENDING";
-      }
-      
-      const arrears = (status === "CLEARED" || status === "PENDING" || status === "PARTIAL" && dueDate >= today) 
-        ? 0 
-        : (weeklyTarget - paidForWeek);
+    // 1. PROCESS PAST WEEKS (Directly from DB Cycles)
+    const sortedCycles = [...weeklyCycles].sort((a, b) => a.weekNumber - b.weekNumber);
+    
+    sortedCycles.forEach(cycle => {
+      generatedWeeks.push({
+        week: cycle.weekNumber,
+        dueDate: new Date(cycle.endDate),
+        target: cycle.expectedAmount,
+        paid: cycle.amountPaid,
+        arrears: cycle.shortfallAmount,
+        status: cycle.isSettled ? "CLEARED" : "ARREARS"
+      });
+    });
 
+    // 2. PROCESS CURRENT ACTIVE WEEK
+    // Sum payments made AFTER the last closed cycle to see what they've paid this current week
+    const lastCycle = sortedCycles[sortedCycles.length - 1];
+    const currentWeekStartDate = lastCycle ? new Date(lastCycle.endDate) : new Date(contract.createdAt);
+    
+    const currentWeekPayments = ledgerHistory
+      .filter(tx => new Date(tx.date) > currentWeekStartDate)
+      .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
+    if (currentWeekNum <= totalWeeks && contract.isActive && contract.nextDueDate) {
+      const nextDue = new Date(contract.nextDueDate);
+      generatedWeeks.push({
+        week: currentWeekNum,
+        dueDate: nextDue,
+        target: weeklyTarget,
+        paid: currentWeekPayments,
+        arrears: 0, // Not officially in arrears until the cron closes the week
+        status: currentWeekPayments >= weeklyTarget ? "CLEARED" : (nextDue < today ? "OVERDUE" : "PENDING")
+      });
+    }
+
+    // 3. PROCESS FUTURE WEEKS (Projections)
+    const baseDateForFuture = contract.nextDueDate ? new Date(contract.nextDueDate) : new Date();
+    for (let i = currentWeekNum + 1; i <= totalWeeks; i++) {
+      const futureDate = new Date(baseDateForFuture);
+      futureDate.setDate(futureDate.getDate() + ((i - currentWeekNum) * 7));
+      
       generatedWeeks.push({
         week: i,
-        dueDate: dueDate,
+        dueDate: futureDate,
         target: weeklyTarget,
-        paid: paidForWeek,
-        arrears: arrears,
-        status: status
+        paid: 0,
+        arrears: 0,
+        status: "PENDING"
       });
     }
     
     return generatedWeeks;
-  }, [contract, ledgerHistory, rider.createdAt]);
+  }, [contract, ledgerHistory, weeklyCycles]);
 
   // --- DERIVED METRICS ---
+  // The sum of all payments ever made
+  const totalPaidSum = ledgerHistory.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+  
+  // Arrears is now EXACTLY the sum of unsettled historical debt
+  const totalArrearsSum = weeklyCycles.reduce((sum, c) => sum + (c.isSettled ? 0 : c.shortfallAmount), 0);
+  
   const weeksCleared = schedule.filter(w => w.status === "CLEARED").length;
   const totalWeeks = schedule.length;
-  const totalPaidSum = schedule.reduce((sum, w) => sum + w.paid, 0);
-  const totalArrearsSum = schedule.reduce((sum, w) => sum + w.arrears, 0);
   
-  // Find the next upcoming week that isn't fully paid
-  const nextDueWeek = schedule.find(w => w.status !== "CLEARED");
+  const nextDueWeek = schedule.find(w => w.status !== "CLEARED" && w.status !== "ARREARS");
   const nextDueDateStr = nextDueWeek 
     ? nextDueWeek.dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) 
-    : "COMPLETED";
+    : (contract?.isActive ? "Recovery Mode" : "COMPLETED");
+  
   const paymentDayName = nextDueWeek 
     ? nextDueWeek.dueDate.toLocaleDateString('en-GB', { weekday: 'long' }) 
     : "N/A";
 
   // --- PAGINATION LOGIC ---
-  const totalPages = Math.ceil(totalWeeks / itemsPerPage);
+  const totalPages = Math.ceil(totalWeeks / itemsPerPage) || 1;
   const paginatedSchedule = schedule.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const getPageNumbers = () => {
@@ -194,6 +206,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
                 <p className="text-xs font-bold uppercase tracking-wider text-crisp-white">{rider.virtualAccountName}</p>
               </div>
             ) : (
+               // ... existing ungenerated account state
               <div className="text-center py-8 border border-dashed border-cobalt/30 rounded-xl bg-void-light/5">
                 <WalletCards size={40} className="text-slate-light/30 mx-auto mb-4" />
                 <p className="text-sm font-bold text-crisp-white mb-2">No Account Found</p>
@@ -230,7 +243,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
                 <p className="text-[10px] text-slate-light uppercase mt-1">Weeks Cleared</p>
               </div>
               <div className="w-12 h-12 rounded-full border-4 border-void-light/10 border-t-emerald-400 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-emerald-400">{Math.round((weeksCleared/totalWeeks) * 100)}%</span>
+                <span className="text-[10px] font-bold text-emerald-400">{totalWeeks > 0 ? Math.round((weeksCleared/totalWeeks) * 100) : 0}%</span>
               </div>
             </div>
 
@@ -239,10 +252,17 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
             {/* NEXT DUE CALCULATION */}
             <div>
               <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5"><Calendar size={12} className="text-cobalt" /> Next Remittance Target</p>
-              <p className="text-2xl font-black font-mono">₦{contract?.riderWeeklyRemittance?.toLocaleString() || contract?.weeklyRemittance?.toLocaleString() || "---"}</p>
-              <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider mt-1 bg-emerald-500/10 px-2 py-1 rounded w-fit">
-                Due: {paymentDayName}, {nextDueDateStr}
-              </p>
+              <p className="text-2xl font-black font-mono">₦{contract?.riderWeeklyRemittance?.toLocaleString() || "---"}</p>
+              
+              {contract?.isActive && contract?.nextDueDate === null ? (
+                <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider mt-1 bg-amber-500/10 px-2 py-1 rounded w-fit border border-amber-500/20">
+                  Recovery Mode Active
+                </p>
+              ) : (
+                <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider mt-1 bg-emerald-500/10 px-2 py-1 rounded w-fit border border-emerald-500/20">
+                  Due: {paymentDayName}, {nextDueDateStr}
+                </p>
+              )}
             </div>
             
             <div className="h-px w-full bg-cobalt/20"></div>
@@ -254,7 +274,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
                 <p className="text-lg font-black font-mono text-emerald-400">₦{totalPaidSum.toLocaleString()}</p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Current Arrears</p>
+                <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Historical Debt</p>
                 <p className={`text-lg font-black font-mono ${totalArrearsSum > 0 ? "text-signal-red" : "text-slate-light"}`}>
                   ₦{totalArrearsSum.toLocaleString()}
                 </p>
@@ -271,7 +291,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
               <Clock size={18} className="text-cobalt"/> Complete Contract Schedule
             </h3>
             <div className="text-[10px] font-mono text-slate-light bg-void-navy px-3 py-1.5 rounded-lg border border-cobalt/30">
-              Showing {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalWeeks)} of {totalWeeks} Weeks
+              Showing {totalWeeks > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0} - {Math.min(currentPage * itemsPerPage, totalWeeks)} of {totalWeeks} Weeks
             </div>
           </div>
 
