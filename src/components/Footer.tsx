@@ -60,7 +60,7 @@ export default function Footer() {
                   <span className="w-8 h-8 shrink-0 rounded-full bg-void-light border border-cobalt flex items-center justify-center text-signal-red mb-1 sm:mb-0">
                     <Phone size={14} />
                   </span>
-                  <span className="mt-1">09033358098</span>
+                  <span className="mt-1">09065000860</span>
                 </a>
                 <a href="mailto:info@yusdaamautos.com" className="flex flex-col sm:flex-row items-center sm:items-start gap-2 hover:text-signal-red transition">
                   <span className="w-8 h-8 shrink-0 rounded-full bg-void-light border border-cobalt flex items-center justify-center text-signal-red mb-1 sm:mb-0">
