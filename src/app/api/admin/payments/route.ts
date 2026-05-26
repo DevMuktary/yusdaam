@@ -36,6 +36,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Vehicle or Owner not found" }, { status: 400 });
     }
 
+    // Capture as non-null const so TypeScript narrows the type inside the transaction callback
+    const ownerId = vehicle.ownerId;
+
     // 2. Generate Unique Transaction Ref (e.g., YUS-PAY-1234567)
     const reference = `YUS-${type === "PAYMENT_COLLECTED" ? "IN" : "OUT"}-${Math.floor(1000000 + Math.random() * 9000000)}`;
 
@@ -51,7 +54,7 @@ export async function POST(req: Request) {
           description,
           receiptUrl: receiptBase64 || null,
           vehicleId,
-          ownerId: vehicle.ownerId, 
+          ownerId,
         }
       });
 
