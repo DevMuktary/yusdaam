@@ -66,6 +66,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
     const totalWeeks = contract.riderDurationWeeks || 100;
     const weeklyTarget = contract.riderWeeklyRemittance || 0;
     const currentWeekNum = contract.currentWeek || 1;
+    const sysGrandTotal = contract.systemGrandTotal || 999999999; // Fallback for old records
     
     const generatedWeeks = [];
     const today = new Date();
@@ -78,7 +79,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
       generatedWeeks.push({
         week: cycle.weekNumber,
         dueDate: new Date(cycle.endDate),
-        target: cycle.expectedAmount,
+        target: cycle.expectedAmount, // The Cron job already accurately capped past records
         paid: cycle.amountPaid,
         arrears: cycle.shortfallAmount,
         status: cycle.isSettled ? "CLEARED" : "ARREARS"
@@ -86,7 +87,6 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
     });
 
     // 2. PROCESS CURRENT ACTIVE WEEK
-    // Sum payments made AFTER the last closed cycle to see what they've paid this current week
     const lastCycle = sortedCycles[sortedCycles.length - 1];
     const currentWeekStartDate = lastCycle ? new Date(lastCycle.endDate) : new Date(contract.createdAt);
     
@@ -96,13 +96,35 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
 
     if (currentWeekNum <= totalWeeks && contract.isActive && contract.nextDueDate) {
       const nextDue = new Date(contract.nextDueDate);
+      
+      // Calculate what the backend will actually cap it at
+      const cumulativeBilled = sortedCycles.reduce((sum, c) => sum + c.expectedAmount, 0);
+      let actualTarget = weeklyTarget;
+      
+      if (cumulativeBilled + weeklyTarget > sysGrandTotal) {
+        actualTarget = Math.max(0, sysGrandTotal - cumulativeBilled);
+      }
+
+      // INTELLIGENT DISPLAY LOGIC:
+      // Show normal amount by default. If they pay enough to clear the actual target, 
+      // reveal the true capped target so the row looks perfectly balanced and completed.
+      let displayTarget = weeklyTarget;
+      let status = "PENDING";
+      
+      if (currentWeekPayments >= actualTarget) {
+         status = "CLEARED";
+         displayTarget = actualTarget; // Morph into the true amount once paid!
+      } else if (nextDue < today) {
+         status = "OVERDUE";
+      }
+
       generatedWeeks.push({
         week: currentWeekNum,
         dueDate: nextDue,
-        target: weeklyTarget,
+        target: displayTarget,
         paid: currentWeekPayments,
         arrears: 0, // Not officially in arrears until the cron closes the week
-        status: currentWeekPayments >= weeklyTarget ? "CLEARED" : (nextDue < today ? "OVERDUE" : "PENDING")
+        status: status
       });
     }
 
@@ -115,7 +137,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
       generatedWeeks.push({
         week: i,
         dueDate: futureDate,
-        target: weeklyTarget,
+        target: weeklyTarget, // Future weeks always show the normal target visually
         paid: 0,
         arrears: 0,
         status: "PENDING"
@@ -206,7 +228,6 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
                 <p className="text-xs font-bold uppercase tracking-wider text-crisp-white">{rider.virtualAccountName}</p>
               </div>
             ) : (
-               // ... existing ungenerated account state
               <div className="text-center py-8 border border-dashed border-cobalt/30 rounded-xl bg-void-light/5">
                 <WalletCards size={40} className="text-slate-light/30 mx-auto mb-4" />
                 <p className="text-sm font-bold text-crisp-white mb-2">No Account Found</p>
