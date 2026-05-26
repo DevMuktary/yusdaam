@@ -18,6 +18,20 @@ export default async function PaymentsPage() {
     }
   });
 
+  // Fetch pending weekly cycles for owners to populate the payout dropdown
+  const pendingCycles = await prisma.weeklyCycle.findMany({
+    where: {
+      isOwnerSettled: false,
+      ownerExpectedAmount: { gt: 0 }
+    },
+    include: {
+      contract: true // Client needs this to match c.contract.vehicleId === selectedVehicleId
+    },
+    orderBy: {
+      weekNumber: 'asc'
+    }
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -25,7 +39,8 @@ export default async function PaymentsPage() {
         <p className="text-sm text-gray-400">Log manual remittances, upload receipts, and notify users.</p>
       </div>
 
-      <PaymentsClient assignments={activeAssignments} />
+      {/* Pass both assignments and the fetched cycles to the client component */}
+      <PaymentsClient assignments={activeAssignments} cycles={pendingCycles} />
     </div>
   );
 }
