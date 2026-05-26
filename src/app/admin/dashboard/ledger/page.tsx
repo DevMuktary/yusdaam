@@ -1,46 +1,62 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import PaymentsClient from "./PaymentsClient";
+import { redirect } from "next/navigation";
+import { BookOpen } from "lucide-react";
+import AdminLedgerClient from "./AdminLedgerClient";
 
 const prisma = new PrismaClient();
 
-export const metadata = {
-  title: "Process Payments | Yusdaam Admin",
-};
+export default async function AdminLedgerPage() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
+    redirect("/admin/login");
+  }
 
-export default async function PaymentsPage() {
-  // Fetch only ACTIVE vehicles (because they have an active contract, rider, and owner)
-  const activeAssignments = await prisma.vehicle.findMany({
-    where: { status: "ACTIVE" },
+  // Fetch Raw Transactions
+  const ledgers = await prisma.ledger.findMany({
+    orderBy: { date: 'desc' },
     include: {
-      contract: true,
-      owner: { select: { id: true, firstName: true, lastName: true, email: true, bankName: true, accountNumber: true } },
-      rider: { select: { id: true, firstName: true, lastName: true, email: true } },
+      vehicle: { include: { rider: true } },
+      owner: true,
     }
   });
 
-  // Fetch pending weekly cycles for owners to populate the payout dropdown
-  const pendingCycles = await prisma.weeklyCycle.findMany({
-    where: {
-      isOwnerSettled: false,
-      ownerExpectedAmount: { gt: 0 }
-    },
+  // Fetch Users for Dropdown Filters
+  const users = await prisma.user.findMany({
+    where: { role: { in: ["RIDER", "ASSET_OWNER"] } },
+    select: { id: true, firstName: true, lastName: true, role: true, phoneNumber: true }
+  });
+
+  // NEW: Fetch all Weekly Billing Cycles to monitor Arrears
+  const cycles = await prisma.weeklyCycle.findMany({
+    orderBy: [{ contractId: 'asc' }, { weekNumber: 'desc' }],
     include: {
-      contract: true // Client needs this to match c.contract.vehicleId === selectedVehicleId
-    },
-    orderBy: {
-      weekNumber: 'asc'
+      contract: {
+        include: {
+          vehicle: { include: { rider: true } },
+          owner: true
+        }
+      }
     }
   });
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-light">Process Payments & Payouts</h1>
-        <p className="text-sm text-gray-400">Log manual remittances, upload receipts, and notify users.</p>
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden">
+      
+      {/* Header */}
+      <div className="border-b border-cobalt/20 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-wide mb-2 flex items-center gap-3">
+            <BookOpen className="text-cobalt" /> Master Ledger
+          </h1>
+          <p className="text-slate-light">Track platform-wide financial movements, remittances, and historical arrears.</p>
+        </div>
       </div>
 
-      {/* Pass both assignments and the fetched cycles to the client component */}
-      <PaymentsClient assignments={activeAssignments} cycles={pendingCycles} />
+      <AdminLedgerClient ledgers={ledgers} users={users} cycles={cycles} />
+      
     </div>
   );
 }
