@@ -77,7 +77,7 @@ export async function POST(req: Request) {
 
       console.log(`💰 SUCCESS: Remittance of ₦${amountInNaira} recorded for Rider ${rider.firstName} ${rider.lastName}`);
 
-      // 3. --- NEW: WATERFALL DEBT CLEARANCE LOGIC ---
+      // 3. --- WATERFALL DEBT CLEARANCE LOGIC ---
       // Trigger ONLY if contract is in RECOVERY MODE (Tenure is over, nextDueDate is null, but still active)
       if (contract && contract.isActive && contract.nextDueDate === null) {
         let remainingBalanceToApply = amountInNaira;
