@@ -53,13 +53,28 @@ export async function GET(req: Request) {
       });
 
       const totalPaid = cyclePayments._sum.amount || 0;
-      const expectedAmount = contract.riderWeeklyRemittance;
+
+      // --- 1. THE SYSTEM GRAND TOTAL CAP MATH ---
+      // Check how much has been billed historically across all previous cycles
+      const pastCycles = await prisma.weeklyCycle.aggregate({
+        where: { contractId: contract.id },
+        _sum: { expectedAmount: true }
+      });
+      const cumulativeBilled = pastCycles._sum.expectedAmount || 0;
+
+      // Start with the normal weekly target
+      let expectedAmount = contract.riderWeeklyRemittance;
+
+      // If charging the normal amount pushes them over the grand total, cap it to the exact remainder
+      if (cumulativeBilled + expectedAmount > contract.systemGrandTotal) {
+        expectedAmount = Math.max(0, contract.systemGrandTotal - cumulativeBilled);
+      }
       
-      // Calculate isolated week deficit
+      // Calculate isolated week deficit based on the CAPPED expected amount
       const shortfallAmount = Math.max(0, expectedAmount - totalPaid);
       const isSettled = shortfallAmount === 0;
 
-      // 1. ISOLATED BILLING: Create the Weekly Cycle Record
+      // --- 2. ISOLATED BILLING: Create the Weekly Cycle Record ---
       await prisma.weeklyCycle.create({
         data: {
           contractId: contract.id,
@@ -73,16 +88,34 @@ export async function GET(req: Request) {
         }
       });
 
-      // 2. Arrears Verification & Notification
+      // Fetch the true total historical debt (including the cycle we just created)
+      const debtCheck = await prisma.weeklyCycle.aggregate({
+        where: { contractId: contract.id, isSettled: false },
+        _sum: { shortfallAmount: true }
+      });
+      const totalHistoricalDebt = debtCheck._sum.shortfallAmount || 0;
+
+      // --- 3. ARREARS VERIFICATION & NOTIFICATION ---
       if (shortfallAmount > 0) {
-        console.log(`Arrears Flagged: ${contract.vehicle.rider?.firstName} is short by ₦${shortfallAmount} for Week ${contract.currentWeek}`);
+        
+        // INTELLIGENT MESSAGE AMOUNT: 
+        // If they owe massive debt, ask for the normal weekly amount to force them to catch up.
+        // If their total debt is somehow less than the normal amount, just ask for the exact total debt.
+        let displayAmount = shortfallAmount;
+        if (totalHistoricalDebt >= contract.riderWeeklyRemittance) {
+          displayAmount = contract.riderWeeklyRemittance;
+        } else if (totalHistoricalDebt > shortfallAmount) {
+          displayAmount = totalHistoricalDebt;
+        }
+
+        console.log(`Arrears Flagged: ${contract.vehicle.rider?.firstName} is short. Requesting ₦${displayAmount}`);
         
         const rider = contract.vehicle.rider;
         
         if (rider) {
           // Send Isolated Overdue SMS
           if (rider.phoneNumber) {
-            const smsMessage = `URGENT: Dear ${rider.firstName}, your remittance of N${shortfallAmount.toLocaleString()} for Week ${contract.currentWeek} (${contract.vehicle.registrationNumber}) is OVERDUE. Kindly make payment immediately. - YUSDAAM`;
+            const smsMessage = `URGENT: Dear ${rider.firstName}, your remittance of N${displayAmount.toLocaleString()} for Week ${contract.currentWeek} (${contract.vehicle.registrationNumber}) is OVERDUE. Kindly make payment immediately. - YUSDAAM`;
             
             await sendSms({ to: rider.phoneNumber, message: smsMessage })
               .catch(err => console.error("Overdue SMS failed:", err));
@@ -107,11 +140,11 @@ export async function GET(req: Request) {
                        <p style="margin: 0; font-size: 14px; color: #64748b;">Vehicle</p>
                        <p style="margin: 4px 0 16px 0; font-weight: bold; font-size: 16px;">${contract.vehicle.makeModel} (${contract.vehicle.registrationNumber})</p>
                        
-                       <p style="margin: 0; font-size: 14px; color: #64748b;">Week ${contract.currentWeek} Deficit</p>
-                       <p style="margin: 4px 0 0 0; font-weight: bold; font-size: 16px; color: #ef4444;">₦${shortfallAmount.toLocaleString()}</p>
+                       <p style="margin: 0; font-size: 14px; color: #64748b;">Requested Payment</p>
+                       <p style="margin: 4px 0 0 0; font-weight: bold; font-size: 16px; color: #ef4444;">₦${displayAmount.toLocaleString()}</p>
                      </div>
   
-                     <p>This debt has been securely isolated and logged to your account. Please transfer this exact balance to your virtual account immediately to maintain good standing.</p>
+                     <p>This debt has been securely isolated and logged to your account. Please transfer this balance to your virtual account immediately to maintain good standing.</p>
                    </div>
                  </div>
                `
@@ -120,8 +153,12 @@ export async function GET(req: Request) {
         }
       }
 
-      // 3. TENURE & ROLLOVERS
-      if (contract.currentWeek < contract.riderDurationWeeks) {
+      // --- 4. TENURE & ROLLOVERS ---
+      const newCumulativeBilled = cumulativeBilled + expectedAmount;
+
+      // We only roll forward if we haven't hit the week limit AND we haven't maxed out the Grand Total
+      if (contract.currentWeek < contract.riderDurationWeeks && newCumulativeBilled < contract.systemGrandTotal) {
+        
         // Normal Continuation: Move to the next week
         await prisma.contract.update({
           where: { id: contract.id },
@@ -130,13 +167,11 @@ export async function GET(req: Request) {
             nextDueDate: addDays(contract.nextDueDate, 7) 
           }
         });
-      } else {
-        // End of Tenure Reached: Check if they owe historical debt
-        const hasUnsettledDebt = await prisma.weeklyCycle.findFirst({
-          where: { contractId: contract.id, isSettled: false }
-        });
 
-        if (!hasUnsettledDebt) {
+      } else {
+        
+        // End of Tenure Reached! Check if they owe historical debt
+        if (totalHistoricalDebt <= 0) {
           // Success: No debt, mark as totally completed
           await prisma.contract.update({
             where: { id: contract.id },
@@ -144,12 +179,19 @@ export async function GET(req: Request) {
           });
           console.log(`Contract ${contract.id} FULLY COMPLETED.`);
         } else {
-          // Recovery Mode: Stop weekly billing, but keep contract active so payments still catch
+          // Recovery Mode: Stop weekly billing, but keep contract active so Paystack Waterfall still works
           await prisma.contract.update({
             where: { id: contract.id },
             data: { nextDueDate: null } 
           });
           console.log(`Contract ${contract.id} entered RECOVERY MODE.`);
+
+          // Send the specific Recovery Entrance message
+          const rider = contract.vehicle.rider;
+          if (rider?.phoneNumber) {
+            const recoverySms = `FINAL NOTICE: Dear ${rider.firstName}, your tenure for Vehicle ${contract.vehicle.registrationNumber} is complete, but you have an outstanding debt of N${totalHistoricalDebt.toLocaleString()}. Please pay immediately to finalize ownership. - YUSDAAM`;
+            await sendSms({ to: rider.phoneNumber, message: recoverySms }).catch(e => console.error(e));
+          }
         }
       }
 
