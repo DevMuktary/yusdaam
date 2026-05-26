@@ -14,7 +14,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { vehicleId, type, amount, description, receiptBase64 } = await req.json();
+    // NEW: We now accept `cycleId` from the frontend dropdown to know exactly which week is being paid
+    const { vehicleId, type, amount, description, receiptBase64, cycleId } = await req.json();
+
+    if (!vehicleId || !type || !amount) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const numAmount = Number(amount);
 
     // 1. Get Vehicle Data to extract Owner and Rider
     const vehicle = await prisma.vehicle.findUnique({
@@ -32,21 +39,49 @@ export async function POST(req: Request) {
     // 2. Generate Unique Transaction Ref (e.g., YUS-PAY-1234567)
     const reference = `YUS-${type === "PAYMENT_COLLECTED" ? "IN" : "OUT"}-${Math.floor(1000000 + Math.random() * 9000000)}`;
 
-    // 3. Create Ledger Entry
-    const ledger = await prisma.ledger.create({
-      data: {
-        amount,
-        type,
-        reference,
-        description,
-        receiptUrl: receiptBase64 || null,
-        vehicleId,
-        ownerId: vehicle.ownerId, 
+    // 3. SECURE DATABASE TRANSACTION: Create Ledger & Update Cycle simultaneously
+    const result = await prisma.$transaction(async (tx) => {
+      
+      // A. Create the Ledger Entry
+      const ledger = await tx.ledger.create({
+        data: {
+          amount: numAmount,
+          type,
+          reference,
+          description,
+          receiptUrl: receiptBase64 || null,
+          vehicleId,
+          ownerId: vehicle.ownerId, 
+        }
+      });
+
+      // B. If it's an Owner Payout tied to a specific pending week, update the Cycle Tracking
+      if (type === "OWNER_REMITTANCE" && cycleId) {
+        const cycle = await tx.weeklyCycle.findUnique({ where: { id: cycleId } });
+        
+        if (!cycle) {
+          throw new Error("The selected weekly cycle could not be found.");
+        }
+
+        const newRemittedAmount = (cycle.ownerRemittedAmount || 0) + numAmount;
+        
+        // Safety buffer of 0.01 to handle floating point decimal rounding
+        const isSettled = newRemittedAmount >= (cycle.ownerExpectedAmount - 0.01);
+
+        await tx.weeklyCycle.update({
+          where: { id: cycleId },
+          data: {
+            ownerRemittedAmount: newRemittedAmount,
+            isOwnerSettled: isSettled
+          }
+        });
       }
+
+      return ledger;
     });
 
-    // 4. Send Email Notification
-    const formattedAmount = Number(amount).toLocaleString();
+    // 4. Send Email Notifications
+    const formattedAmount = numAmount.toLocaleString();
     const dateStr = new Date().toLocaleDateString('en-GB');
 
     if (type === "PAYMENT_COLLECTED" && vehicle.rider?.email) {
@@ -63,7 +98,7 @@ export async function POST(req: Request) {
           reference,
           date: dateStr
         })
-      });
+      }).catch(err => console.error("Failed to email rider receipt:", err));
     }
 
     if (type === "OWNER_REMITTANCE" && vehicle.owner?.email) {
@@ -80,13 +115,13 @@ export async function POST(req: Request) {
           reference,
           date: dateStr
         })
-      });
+      }).catch(err => console.error("Failed to email owner remittance:", err));
     }
 
-    return NextResponse.json({ success: true, ledger });
+    return NextResponse.json({ success: true, ledger: result });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Payment Processing Error:", error);
-    return NextResponse.json({ error: "Failed to process payment." }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to process payment." }, { status: 500 });
   }
 }
