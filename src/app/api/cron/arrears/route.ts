@@ -62,12 +62,16 @@ export async function GET(req: Request) {
       });
       const cumulativeBilled = pastCycles._sum.expectedAmount || 0;
 
-      // Start with the normal weekly target
+      // Start with the normal weekly targets
       let expectedAmount = contract.riderWeeklyRemittance;
+      let ownerExpectedAmount = contract.ownerWeeklyPayout;
 
       // If charging the normal amount pushes them over the grand total, cap it to the exact remainder
       if (cumulativeBilled + expectedAmount > contract.systemGrandTotal) {
         expectedAmount = Math.max(0, contract.systemGrandTotal - cumulativeBilled);
+        
+        // For the fractional week, Owner gets the remainder MINUS Yusdaam's Service Fee
+        ownerExpectedAmount = Math.max(0, expectedAmount - contract.weeklyServiceFee);
       }
       
       // Calculate isolated week deficit based on the CAPPED expected amount
@@ -83,6 +87,12 @@ export async function GET(req: Request) {
           amountPaid: totalPaid,
           shortfallAmount: shortfallAmount,
           isSettled: isSettled,
+          
+          // --- NEW: OWNER PAYOUT TRACKING ---
+          ownerExpectedAmount: ownerExpectedAmount,
+          ownerRemittedAmount: 0, // Admin hasn't paid them yet
+          isOwnerSettled: false,  // Starts false
+
           startDate: cycleStartDate,
           endDate: contract.nextDueDate
         }
