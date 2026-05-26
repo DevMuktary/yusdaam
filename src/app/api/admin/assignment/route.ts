@@ -17,15 +17,16 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
       vehicleId, riderId, ownerId,
-      totalHirePurchasePrice, downPayment,
+      totalHirePurchasePrice, systemGrandTotal, downPayment, // <-- NEW FIELD INTEGRATED
       riderWeeklyRemittance, riderDurationWeeks,
       weeklyServiceFee,
       ownerWeeklyPayout, ownerDurationWeeks
     } = body;
 
     // Validate
-    if (!vehicleId || !riderId || !ownerId) {
-      return NextResponse.json({ error: "Missing identity IDs" }, { status: 400 });
+    // Rider is optional, but Vehicle and Owner are strictly required to establish the contract
+    if (!vehicleId || !ownerId) {
+      return NextResponse.json({ error: "Vehicle and Asset Owner are required to establish a contract." }, { status: 400 });
     }
 
     // Check if the owner is already active (has signed before)
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
         where: { id: vehicleId },
         data: {
           ownerId: ownerId,
-          riderId: riderId,
+          riderId: riderId || null, // Handle optional rider gracefully
           status: "ACTIVE"
         }
       });
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
           vehicleId: vehicleId,
           ownerId: ownerId,
           totalHirePurchasePrice: Number(totalHirePurchasePrice),
+          systemGrandTotal: Number(systemGrandTotal), // <-- NEW FIELD SAVED
           downPayment: Number(downPayment) || 0,
           riderWeeklyRemittance: Number(riderWeeklyRemittance),
           riderDurationWeeks: Number(riderDurationWeeks),
@@ -69,12 +71,15 @@ export async function POST(req: Request) {
         }
       });
 
-      // 3. Update Rider Status (Riders ALWAYS sign for a new vehicle)
-      const updatedRider = await tx.user.update({
-        where: { id: riderId },
-        data: { accountStatus: "AWAITING_SIGNATURE" },
-        select: { firstName: true, lastName: true, email: true }
-      });
+      // 3. Update Rider Status (ONLY if a rider was selected)
+      let updatedRider = null;
+      if (riderId) {
+        updatedRider = await tx.user.update({
+          where: { id: riderId },
+          data: { accountStatus: "AWAITING_SIGNATURE" },
+          select: { firstName: true, lastName: true, email: true }
+        });
+      }
 
       // 4. Update Owner Status (ONLY if they haven't signed before)
       let updatedOwner = existingOwner;
@@ -92,8 +97,8 @@ export async function POST(req: Request) {
     // 5. Fire off the automated emails (non-blocking)
     const vehicleString = `${result.updatedVehicle.makeModel} (${result.updatedVehicle.registrationNumber})`;
 
-    // Email to Rider
-    if (result.updatedRider.email) {
+    // Email to Rider (If assigned)
+    if (result.updatedRider?.email) {
       sendSystemEmail({
         toEmail: result.updatedRider.email,
         toName: `${result.updatedRider.firstName} ${result.updatedRider.lastName}`,
