@@ -15,7 +15,8 @@ import {
   X,
   FileCheck,
   MessageSquare,
-  ClipboardList
+  ClipboardList,
+  Settings // Added Settings icon for the new tab
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -32,6 +33,7 @@ export default function Sidebar() {
     { name: "MESSAGE", href: "/admin/dashboard/messages", icon: MessageSquare },
     { name: "USERS", href: "/admin/dashboard/users", icon: Users },
     { name: "ASSIGNMENT", href: "/admin/dashboard/assignment", icon: ClipboardList },
+    { name: "SETTINGS", href: "/admin/dashboard/settings", icon: Settings }, // Added Settings link for Password Change
   ];
 
   return (
@@ -72,7 +74,7 @@ export default function Sidebar() {
 
         <nav className="flex-1 px-4 space-y-2 mt-6 lg:mt-2 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.name}
