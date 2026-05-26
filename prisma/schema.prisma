@@ -273,17 +273,25 @@ model Contract {
 
 // --- NEW: ISOLATED WEEKLY BILLING TRACKER ---
 model WeeklyCycle {
-  id              String   @id @default(cuid())
-  contractId      String
-  weekNumber      Int      // e.g., Week 1, Week 2
-  expectedAmount  Float    // e.g., 50,000
-  amountPaid      Float    // e.g., 40,000
-  shortfallAmount Float    // e.g., 10,000 (The Debt specifically for this week)
-  isSettled       Boolean  @default(false) // Turns true when post-tenure payments clear it
-  startDate       DateTime
-  endDate         DateTime
+  id                  String   @id @default(cuid())
+  contractId          String
+  weekNumber          Int      // e.g., Week 1, Week 2
+  
+  // --- RIDER TRACKING ---
+  expectedAmount      Float    // e.g., 50,000 (Capped appropriately if final week)
+  amountPaid          Float    // e.g., 40,000
+  shortfallAmount     Float    // e.g., 10,000 (The Rider's Debt specifically for this week)
+  isSettled           Boolean  @default(false) // Turns true when rider fully pays
+  
+  // --- OWNER TRACKING (NEW) ---
+  ownerExpectedAmount Float    @default(0) // The payout owed to the owner for this specific week
+  ownerRemittedAmount Float    @default(0) // What admin has actually forwarded to them
+  isOwnerSettled      Boolean  @default(false) // Turns true when admin has completely remitted this week
 
-  contract        Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  startDate           DateTime
+  endDate             DateTime
+
+  contract            Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
 }
 
 model Ledger {
