@@ -240,11 +240,12 @@ model Contract {
   vehicleId              String   @unique
   
   // --- RIDER TERMS ---
-  totalHirePurchasePrice Float    // The total price the rider is buying it for
+  totalHirePurchasePrice Float    // The total price the rider is buying the vehicle for
+  systemGrandTotal       Float    @default(0) // NEW: The absolute maximum (Vehicle + Total Admin Fees) used to cap the billing
   downPayment            Float    @default(0) // What they paid upfront
   riderWeeklyRemittance  Float    // What the rider pays every week
   riderDurationWeeks     Int      // How many weeks the rider will pay
-  weeklyServiceFee       Float    @default(0) // Admin Service Fee
+  weeklyServiceFee       Float    @default(0) // Admin Service Fee (Management Fee)
 
   // --- OWNER TERMS ---
   ownerWeeklyPayout      Float    // What the investor/owner receives weekly
