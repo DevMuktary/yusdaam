@@ -16,9 +16,10 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
   // Financial Form State
   const [formData, setFormData] = useState({
     totalHirePurchasePrice: "",
+    systemGrandTotal: "", // <-- NEW: Master ceiling
     downPayment: "",
     riderWeeklyRemittance: "",
-    weeklyServiceFee: "", // <-- NEW STATE
+    weeklyServiceFee: "", 
     riderDurationWeeks: "",
     ownerWeeklyPayout: "",
     ownerDurationWeeks: ""
@@ -31,8 +32,13 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
 
   const handleAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedVehicle || !selectedRider || !selectedOwner) {
-      return alert("Please select a Vehicle, Rider, and Asset Owner.");
+    
+    // Allow assignment if at least a vehicle AND (a rider OR an owner) are selected
+    if (!selectedVehicle) {
+      return alert("Please select a Vehicle to assign.");
+    }
+    if (!selectedRider && !selectedOwner) {
+      return alert("Please select either a Rider or an Asset Owner to proceed.");
     }
 
     setIsSubmitting(true);
@@ -42,8 +48,8 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           vehicleId: selectedVehicle,
-          riderId: selectedRider,
-          ownerId: selectedOwner,
+          riderId: selectedRider || null, // Handle optional missing rider
+          ownerId: selectedOwner || null, // Handle optional missing owner
           ...formData
         }),
       });
@@ -53,10 +59,10 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
         throw new Error(data.error || "Assignment failed");
       }
 
-      alert("Success! Vehicle assigned, contract generated, and notifications dispatched.");
+      alert("Success! Assignment completed and contract parameters established.");
       router.refresh();
       setSelectedVehicle(""); setSelectedRider(""); setSelectedOwner("");
-      setFormData({ totalHirePurchasePrice: "", downPayment: "", riderWeeklyRemittance: "", weeklyServiceFee: "", riderDurationWeeks: "", ownerWeeklyPayout: "", ownerDurationWeeks: "" });
+      setFormData({ totalHirePurchasePrice: "", systemGrandTotal: "", downPayment: "", riderWeeklyRemittance: "", weeklyServiceFee: "", riderDurationWeeks: "", ownerWeeklyPayout: "", ownerDurationWeeks: "" });
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -82,7 +88,7 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
         
         <div className={`p-6 rounded-xl border transition-all ${selectedVehicle ? 'bg-cobalt/10 border-cobalt/40' : 'bg-void-navy border-white/10'}`}>
           <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-4 uppercase tracking-wider">
-            <Car size={18} className="text-cobalt" /> 1. Select Vehicle
+            <Car size={18} className="text-cobalt" /> 1. Select Vehicle *
           </h3>
           <select value={selectedVehicle} onChange={(e) => setSelectedVehicle(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cobalt appearance-none" required>
             <option value="" className="bg-void-navy text-white">-- Choose Asset --</option>
@@ -94,8 +100,8 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
           <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-4 uppercase tracking-wider">
             <User size={18} className="text-emerald-400" /> 2. Select Rider
           </h3>
-          <select value={selectedRider} onChange={(e) => setSelectedRider(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500 appearance-none" required>
-            <option value="" className="bg-void-navy text-white">-- Choose Approved Rider --</option>
+          <select value={selectedRider} onChange={(e) => setSelectedRider(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500 appearance-none">
+            <option value="" className="bg-void-navy text-white">-- Choose Approved Rider (Optional) --</option>
             {riders.map(r => <option key={r.id} value={r.id} className="bg-void-navy text-white">{r.firstName} {r.lastName} ({r.phoneNumber})</option>)}
           </select>
         </div>
@@ -104,8 +110,8 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
           <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-4 uppercase tracking-wider">
             <Briefcase size={18} className="text-purple-400" /> 3. Select Asset Owner
           </h3>
-          <select value={selectedOwner} onChange={(e) => setSelectedOwner(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 appearance-none" required>
-            <option value="" className="bg-void-navy text-white">-- Choose Asset Owner --</option>
+          <select value={selectedOwner} onChange={(e) => setSelectedOwner(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 appearance-none">
+            <option value="" className="bg-void-navy text-white">-- Choose Asset Owner (Optional) --</option>
             {owners.map(o => <option key={o.id} value={o.id} className="bg-void-navy text-white">{o.firstName} {o.lastName} - {o.preferredAssetClass}</option>)}
           </select>
         </div>
@@ -128,28 +134,35 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Total HP Price (₦) *</label>
-                <input type="text" name="totalHirePurchasePrice" value={formData.totalHirePurchasePrice} onChange={handleInputChange} placeholder="e.g. 3500000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required />
+                <input type="text" name="totalHirePurchasePrice" value={formData.totalHirePurchasePrice} onChange={handleInputChange} placeholder="e.g. 3500000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required={!!selectedRider} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Down Payment (₦)</label>
-                <input type="text" name="downPayment" value={formData.downPayment} onChange={handleInputChange} placeholder="Optional" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" />
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">System Grand Total (₦) *</label>
+                <input type="text" name="systemGrandTotal" value={formData.systemGrandTotal} onChange={handleInputChange} placeholder="e.g. 4000000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required={!!selectedRider} />
+                <p className="text-[9px] text-gray-500 mt-1 uppercase tracking-wider">Vehicle Cost + Total Admin Fees</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Weekly Payment (₦) *</label>
-                <input type="text" name="riderWeeklyRemittance" value={formData.riderWeeklyRemittance} onChange={handleInputChange} placeholder="e.g. 30000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required />
+                <input type="text" name="riderWeeklyRemittance" value={formData.riderWeeklyRemittance} onChange={handleInputChange} placeholder="e.g. 30000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required={!!selectedRider} />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Service Fee (₦) *</label>
-                <input type="text" name="weeklyServiceFee" value={formData.weeklyServiceFee} onChange={handleInputChange} placeholder="e.g. 5000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required />
+                <input type="text" name="weeklyServiceFee" value={formData.weeklyServiceFee} onChange={handleInputChange} placeholder="e.g. 5000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required={!!selectedRider} />
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Duration (Weeks) *</label>
-              <input type="text" name="riderDurationWeeks" value={formData.riderDurationWeeks} onChange={handleInputChange} placeholder="e.g. 104" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Duration (Weeks) *</label>
+                <input type="text" name="riderDurationWeeks" value={formData.riderDurationWeeks} onChange={handleInputChange} placeholder="e.g. 104" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required={!!selectedRider} />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Down Payment (₦)</label>
+                <input type="text" name="downPayment" value={formData.downPayment} onChange={handleInputChange} placeholder="Optional" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" />
+              </div>
             </div>
           </div>
 
@@ -160,11 +173,11 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Weekly Payout (₦) *</label>
-                <input type="text" name="ownerWeeklyPayout" value={formData.ownerWeeklyPayout} onChange={handleInputChange} placeholder="e.g. 20000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 font-mono" required />
+                <input type="text" name="ownerWeeklyPayout" value={formData.ownerWeeklyPayout} onChange={handleInputChange} placeholder="e.g. 20000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 font-mono" required={!!selectedOwner} />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Duration (Weeks) *</label>
-                <input type="text" name="ownerDurationWeeks" value={formData.ownerDurationWeeks} onChange={handleInputChange} placeholder="e.g. 104" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 font-mono" required />
+                <input type="text" name="ownerDurationWeeks" value={formData.ownerDurationWeeks} onChange={handleInputChange} placeholder="e.g. 104" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 font-mono" required={!!selectedOwner} />
               </div>
             </div>
 
