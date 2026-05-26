@@ -81,7 +81,7 @@ export const getAgreementSignedEmail = (data: AgreementSignedEmailData) => {
       
       <div style="font-size: 15px;">
         <p>Hi ${data.firstName},</p>
-        <p>Your digital signatures have been successfully applied to your <strong>Hire Purchase Administration Agreement</strong> and <strong>Specific Power of Attorney</strong>.</p>
+        <p>Your digital signatures have been successfully applied to your <strong>Asset Administration Agreement</strong> and <strong>Specific Power of Attorney</strong>.</p>
         
         <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
           <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Your Asset is Active</h3>
@@ -114,7 +114,7 @@ export const getRiderAgreementSignedEmail = (data: AgreementSignedEmailData) => 
       
       <div style="font-size: 15px;">
         <p>Hi ${data.firstName},</p>
-        <p>Your digital signature has been successfully applied to your <strong>Hire Purchase Agreement</strong> and <strong>Vehicle Handover Note</strong>.</p>
+        <p>Your digital signature has been successfully applied to your <strong>Vehicle Assignment Agreement</strong> and <strong>Vehicle Handover Note</strong>.</p>
         
         <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 25px 0;">
           <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Your Dashboard is Unlocked</h3>
@@ -276,7 +276,7 @@ export const getRiderAwaitingSignatureEmail = (data: AwaitingSignatureEmailData)
           <p style="margin: 0; font-size: 14px; color: #4a4a4a;">Congratulations! You have been officially assigned to a <strong>${data.vehicleDetails}</strong>.</p>
         </div>
 
-        <p>Before you can collect the keys and hit the road, you must log into your dashboard to review and digitally sign your <strong>Hire Purchase Agreement</strong> and <strong>Vehicle Handover Note</strong>.</p>
+        <p>Before you can collect the keys and hit the road, you must log into your dashboard to review and digitally sign your <strong>Vehicle Assignment Agreement</strong> and <strong>Vehicle Handover Note</strong>.</p>
         
         <div style="margin: 35px 0; text-align: center;">
           <a href="https://yusdaamautos.com/rider/login" style="background-color: #10B981; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 15px; display: inline-block;">Log in to Sign Agreement</a>
@@ -354,6 +354,45 @@ export const getOwnerPayoutEmail = (data: ReceiptEmailData) => {
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
           <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
         </div>
+      </div>
+    </div>
+  `;
+};
+
+// --- SECURITY MODULE TEMPLATES ---
+export interface OtpEmailData {
+  name: string;
+  otp: string;
+  expiryMinutes?: number;
+}
+
+export const getOtpEmail = (data: OtpEmailData) => {
+  const expiry = data.expiryMinutes || 10;
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
+      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+      </div>
+      
+      <div style="font-size: 15px;">
+        <p>Hi ${data.name},</p>
+        <p>You have requested to change your Admin password. Please use the One-Time Password (OTP) below to proceed:</p>
+        
+        <div style="background-color: #f6fcf8; border: 1px dashed #10B981; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; border-radius: 8px; margin: 25px 0; color: #001232;">
+          ${data.otp}
+        </div>
+
+        <p>This code is valid for <strong>${expiry} minutes</strong>. If you did not request this password change, please secure your account immediately.</p>
+        
+        <p style="margin-top: 35px; margin-bottom: 0;">
+          Securely,<br>
+          <strong>The YUSDAAM Security Team</strong>
+        </p>
+      </div>
+
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
+        <p style="margin: 0; line-height: 1.4;">This is an automated security email. Please do not share this OTP with anyone.</p>
       </div>
     </div>
   `;
