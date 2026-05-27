@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 import { CarFront, AlertCircle, CheckCircle2 } from "lucide-react";
 import VirtualAgreement from "../VirtualAgreement";
 
+// FORCE NEXT.JS TO NEVER CACHE THIS PAGE (Fixes the "not updating after signing" issue)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const prisma = new PrismaClient();
 
 export default async function OwnerAssetsPage() {
@@ -122,9 +126,10 @@ export default async function OwnerAssetsPage() {
                       plateNo={vehicle.registrationNumber || ""}
                       chassisNo={vehicle.chassisNumber || ""}
                       engineNo={vehicle.engineNumber || ""}
+                      
                       targetWeeklyRemittance={contract.ownerWeeklyPayout.toString()}
-                      grossRemittance={contract.riderWeeklyRemittance.toString()}
-                      adminCharge={(Number(contract.riderWeeklyRemittance) - Number(contract.ownerWeeklyPayout)).toString()}
+                      ownerDurationWeeks={contract.ownerDurationWeeks?.toString() || "0"} 
+                      
                       startDate={startDateStr}
                       endDate={endDateStr}
                       policyNo="To Be Provided By Admin"
