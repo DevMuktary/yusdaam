@@ -135,10 +135,6 @@ export default async function DashboardHome() {
           chassisNo={assignedVehicle?.chassisNumber || ""}
           engineNo={assignedVehicle?.engineNumber || ""}
           targetWeeklyRemittance={assignedContract?.ownerWeeklyPayout?.toString() || "0"}
-          grossRemittance={assignedContract?.riderWeeklyRemittance?.toString() || "0"}
-          adminCharge={
-            (Number(assignedContract?.riderWeeklyRemittance || 0) - Number(assignedContract?.ownerWeeklyPayout || 0)).toString()
-          }
           startDate={startDateStr}
           endDate={endDateStr}
           policyNo="To Be Provided By Admin"
