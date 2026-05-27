@@ -230,7 +230,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
                <img src="/images/stamp.png" alt="Company Seal" className="absolute left-0 -top-2 h-12 opacity-80 object-contain" />
                <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-gray-400" : "border-slate-light"}`}></div>
             </div>
-            <p className="font-bold text-[9px] mt-1">Yussuf Dare Orelaja (MD)</p>
+            <p className="font-bold text-[9px] mt-1">YUSSUF DARE ORELAJA (MD)</p>
             <p className={`mt-0.5 ${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"}`}>Date: {formattedDate}</p>
           </div>
 
