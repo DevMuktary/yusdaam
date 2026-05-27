@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { CarFront, AlertCircle, CheckCircle2 } from "lucide-react";
 import VirtualAgreement from "../VirtualAgreement";
 
-// FORCE NEXT.JS TO NEVER CACHE THIS PAGE (Fixes the "not updating after signing" issue)
+// FORCE NEXT.JS TO NEVER CACHE THIS PAGE
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -19,13 +19,13 @@ export default async function OwnerAssetsPage() {
   }
 
   // Fetch the user along with their default witness details and ALL their vehicles + contracts
+  // NOTE: We intentionally DO NOT fetch the rider data here to maintain owner/rider privacy separation.
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
       ownedVehicles: {
         include: {
-          contract: true,
-          rider: { select: { firstName: true, lastName: true, phoneNumber: true } }
+          contract: true
         },
         orderBy: { createdAt: 'desc' }
       }
@@ -91,7 +91,7 @@ export default async function OwnerAssetsPage() {
                       </span>
                     ) : (
                       <span className="flex items-center gap-2 px-3 py-1 bg-emerald-400/10 text-emerald-400 text-[10px] font-bold uppercase tracking-widest rounded-md border border-emerald-400/20">
-                        <CheckCircle2 size={14} /> Active & Signed
+                        <CheckCircle2 size={14} /> Active Deployment
                       </span>
                     )}
                   </div>
@@ -136,24 +136,18 @@ export default async function OwnerAssetsPage() {
                     />
                   </div>
                 ) : (
-                  <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Active Vehicle Stats */}
-                    <div className="bg-void-light/5 border border-cobalt/20 p-4 rounded-lg">
-                      <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1">Assigned Rider</p>
-                      <p className="text-sm text-crisp-white font-bold">{vehicle.rider ? `${vehicle.rider.firstName} ${vehicle.rider.lastName}` : "Pending Assignment"}</p>
-                      {vehicle.rider?.phoneNumber && <p className="text-xs text-slate-light">{vehicle.rider.phoneNumber}</p>}
+                    <div className="bg-void-light/5 border border-cobalt/20 p-5 rounded-lg">
+                      <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1">Target Weekly Remittance</p>
+                      <p className="text-xl text-emerald-400 font-bold">₦{contract?.ownerWeeklyPayout?.toLocaleString() || "0"}</p>
+                      <p className="text-xs text-slate-light mt-1">Target Duration: {contract?.ownerDurationWeeks || 0} Weeks</p>
                     </div>
 
-                    <div className="bg-void-light/5 border border-cobalt/20 p-4 rounded-lg">
-                      <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1">Expected Weekly Remittance</p>
-                      <p className="text-sm text-emerald-400 font-bold">₦{contract?.ownerWeeklyPayout?.toLocaleString() || "0"}</p>
-                      <p className="text-xs text-slate-light">Duration: {contract?.ownerDurationWeeks || 0} Weeks</p>
-                    </div>
-
-                    <div className="bg-void-light/5 border border-cobalt/20 p-4 rounded-lg">
-                      <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1">Contract Status</p>
-                      <p className="text-sm text-crisp-white font-bold">{contract?.isActive ? "Collecting Remittances" : "Completed"}</p>
-                      <p className="text-xs text-slate-light">Started: {startDateStr}</p>
+                    <div className="bg-void-light/5 border border-cobalt/20 p-5 rounded-lg">
+                      <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1">Asset Status</p>
+                      <p className="text-xl text-crisp-white font-bold">{contract?.isActive ? "Active Deployment" : "Completed"}</p>
+                      <p className="text-xs text-slate-light mt-1">Deployment Date: {startDateStr}</p>
                     </div>
                   </div>
                 )}
