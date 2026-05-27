@@ -12,12 +12,12 @@ export interface RegistrationEmailData {
 
 export const getRegistrationReceivedEmail = (data: RegistrationEmailData) => {
   return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
-      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
-        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #001232; padding: 40px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 90px; width: auto; max-width: 100%; object-fit: contain;" />
       </div>
       
-      <div style="font-size: 15px;">
+      <div style="padding: 30px; font-size: 15px;">
         <p>Hi ${data.firstName},</p>
         <p>Thank you for registering with YUSDAAM Autos. We have successfully received your profile.</p>
         <p>Your account is currently pending a standard review by our administration team. We typically complete this process within 24 hours. Once your profile is approved, we will send you a follow-up email with your portal access.</p>
@@ -57,7 +57,7 @@ export const getRegistrationReceivedEmail = (data: RegistrationEmailData) => {
         </p>
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
         <p style="margin: 0 0 15px 0;">18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos.</p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}. If you received this in error, please disregard it.</p>
@@ -74,12 +74,12 @@ export interface AgreementSignedEmailData {
 
 export const getAgreementSignedEmail = (data: AgreementSignedEmailData) => {
   return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
-      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
-        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #001232; padding: 40px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 90px; width: auto; max-width: 100%; object-fit: contain;" />
       </div>
       
-      <div style="font-size: 15px;">
+      <div style="padding: 30px; font-size: 15px;">
         <p>Hi ${data.firstName},</p>
         <p>Your digital signatures have been successfully applied to your <strong>Asset Administration Agreement</strong> and <strong>Specific Power of Attorney</strong>.</p>
         
@@ -96,7 +96,7 @@ export const getAgreementSignedEmail = (data: AgreementSignedEmailData) => {
         </p>
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
         <p style="margin: 0 0 15px 0;">18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos.</p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
@@ -107,12 +107,12 @@ export const getAgreementSignedEmail = (data: AgreementSignedEmailData) => {
 
 export const getRiderAgreementSignedEmail = (data: AgreementSignedEmailData) => {
   return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
-      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
-        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #001232; padding: 40px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 90px; width: auto; max-width: 100%; object-fit: contain;" />
       </div>
       
-      <div style="font-size: 15px;">
+      <div style="padding: 30px; font-size: 15px;">
         <p>Hi ${data.firstName},</p>
         <p>Your digital signature has been successfully applied to your <strong>Vehicle Assignment Agreement</strong> and <strong>Vehicle Handover Note</strong>.</p>
         
@@ -129,7 +129,7 @@ export const getRiderAgreementSignedEmail = (data: AgreementSignedEmailData) => 
         </p>
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
         <p style="margin: 0 0 15px 0;">18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos.</p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
@@ -153,12 +153,12 @@ export const getAccountApprovedEmail = (data: AccountStatusEmailData) => {
   const roleName = data.role === "RIDER" ? "Rider" : "Asset Owner";
 
   return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
-      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
-        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #001232; padding: 40px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 90px; width: auto; max-width: 100%; object-fit: contain;" />
       </div>
       
-      <div style="font-size: 15px;">
+      <div style="padding: 30px; font-size: 15px;">
         <p>Hi ${data.firstName},</p>
         
         <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
@@ -169,7 +169,7 @@ export const getAccountApprovedEmail = (data: AccountStatusEmailData) => {
         <p>Your profile is now fully active as a verified <strong>${roleName}</strong>. You can now log into your portal to view your dashboard and proceed with the next steps of your deployment.</p>
         
         <div style="margin: 35px 0; text-align: center;">
-          <a href="${loginUrl}" style="background-color: #001232; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 15px; display: inline-block;">Access Your Portal</a>
+          <a href="${loginUrl}" style="background-color: #001232; color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 6px; font-weight: bold; font-size: 15px; display: inline-block;">Access Your Portal</a>
         </div>
         
         <p style="margin-top: 35px; margin-bottom: 0;">
@@ -178,7 +178,7 @@ export const getAccountApprovedEmail = (data: AccountStatusEmailData) => {
         </p>
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
       </div>
@@ -188,12 +188,12 @@ export const getAccountApprovedEmail = (data: AccountStatusEmailData) => {
 
 export const getAccountRejectedEmail = (data: AccountStatusEmailData) => {
   return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
-      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
-        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #001232; padding: 40px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 90px; width: auto; max-width: 100%; object-fit: contain;" />
       </div>
       
-      <div style="font-size: 15px;">
+      <div style="padding: 30px; font-size: 15px;">
         <p>Hi ${data.firstName},</p>
         
         <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 25px 0;">
@@ -211,7 +211,7 @@ export const getAccountRejectedEmail = (data: AccountStatusEmailData) => {
         </p>
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
       </div>
@@ -228,12 +228,12 @@ export interface AwaitingSignatureEmailData {
 
 export const getOwnerAwaitingSignatureEmail = (data: AwaitingSignatureEmailData) => {
   return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
-      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
-        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #001232; padding: 40px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 90px; width: auto; max-width: 100%; object-fit: contain;" />
       </div>
       
-      <div style="font-size: 15px;">
+      <div style="padding: 30px; font-size: 15px;">
         <p>Hi ${data.firstName},</p>
         
         <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
@@ -244,7 +244,7 @@ export const getOwnerAwaitingSignatureEmail = (data: AwaitingSignatureEmailData)
         <p>To finalize this deployment and activate your weekly remittance payouts, your digital signature is required on the <strong>Specific Power of Attorney</strong> document.</p>
         
         <div style="margin: 35px 0; text-align: center;">
-          <a href="https://yusdaamautos.com/owner/login" style="background-color: #001232; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 15px; display: inline-block;">Log in to Sign Document</a>
+          <a href="https://yusdaamautos.com/owner/login" style="background-color: #001232; color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 6px; font-weight: bold; font-size: 15px; display: inline-block;">Log in to Sign Document</a>
         </div>
         
         <p style="margin-top: 35px; margin-bottom: 0;">
@@ -253,7 +253,7 @@ export const getOwnerAwaitingSignatureEmail = (data: AwaitingSignatureEmailData)
         </p>
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
       </div>
@@ -263,12 +263,12 @@ export const getOwnerAwaitingSignatureEmail = (data: AwaitingSignatureEmailData)
 
 export const getRiderAwaitingSignatureEmail = (data: AwaitingSignatureEmailData) => {
   return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
-      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
-        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #001232; padding: 40px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 90px; width: auto; max-width: 100%; object-fit: contain;" />
       </div>
       
-      <div style="font-size: 15px;">
+      <div style="padding: 30px; font-size: 15px;">
         <p>Hi ${data.firstName},</p>
         
         <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
@@ -279,7 +279,7 @@ export const getRiderAwaitingSignatureEmail = (data: AwaitingSignatureEmailData)
         <p>Before you can collect the keys and hit the road, you must log into your dashboard to review and digitally sign your <strong>Vehicle Assignment Agreement</strong> and <strong>Vehicle Handover Note</strong>.</p>
         
         <div style="margin: 35px 0; text-align: center;">
-          <a href="https://yusdaamautos.com/rider/login" style="background-color: #10B981; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 15px; display: inline-block;">Log in to Sign Agreement</a>
+          <a href="https://yusdaamautos.com/rider/login" style="background-color: #10B981; color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 6px; font-weight: bold; font-size: 15px; display: inline-block;">Log in to Sign Agreement</a>
         </div>
         
         <p style="margin-top: 35px; margin-bottom: 0;">
@@ -288,8 +288,9 @@ export const getRiderAwaitingSignatureEmail = (data: AwaitingSignatureEmailData)
         </p>
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
+        <p style="margin: 0 0 15px 0;">18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos.</p>
         <p style="margin: 0; line-height: 1.4;">This email was sent to ${data.email}.</p>
       </div>
     </div>
@@ -309,25 +310,25 @@ export interface ReceiptEmailData {
 
 export const getPaymentCollectedEmail = (data: ReceiptEmailData) => {
   return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
-      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
-        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #001232; padding: 40px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 90px; width: auto; max-width: 100%; object-fit: contain;" />
       </div>
-      <div style="font-size: 15px;">
+      <div style="padding: 30px; font-size: 15px;">
         <p>Hi ${data.firstName},</p>
         <div style="background-color: #f6fcf8; border-left: 4px solid #10B981; padding: 15px; margin: 25px 0;">
           <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Payment Received</h3>
           <p style="margin: 0; font-size: 14px; color: #4a4a4a;">We have successfully received your payment of <strong>₦${data.amount}</strong> for <strong>${data.weekDescription}</strong>.</p>
         </div>
         <table style="width: 100%; font-size: 14px; border-collapse: collapse; margin-bottom: 20px;">
-          <tr><td style="padding: 8px 0; color: #888;">Vehicle:</td><td style="padding: 8px 0; font-weight: bold; text-align: right;">${data.vehiclePlate}</td></tr>
-          <tr><td style="padding: 8px 0; color: #888;">Reference:</td><td style="padding: 8px 0; font-family: monospace; text-align: right;">${data.reference}</td></tr>
-          <tr><td style="padding: 8px 0; color: #888;">Date:</td><td style="padding: 8px 0; text-align: right;">${data.date}</td></tr>
+          <tr><td style="padding: 10px 0; color: #888; border-bottom: 1px solid #f0f0f0;">Vehicle:</td><td style="padding: 10px 0; font-weight: bold; text-align: right; border-bottom: 1px solid #f0f0f0;">${data.vehiclePlate}</td></tr>
+          <tr><td style="padding: 10px 0; color: #888; border-bottom: 1px solid #f0f0f0;">Reference:</td><td style="padding: 10px 0; font-family: monospace; text-align: right; border-bottom: 1px solid #f0f0f0;">${data.reference}</td></tr>
+          <tr><td style="padding: 10px 0; color: #888;">Date:</td><td style="padding: 10px 0; text-align: right;">${data.date}</td></tr>
         </table>
         <p>Your dashboard ledger has been updated. You can log in anytime to view your cleared weeks and download your official receipt.</p>
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
-          <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
-        </div>
+      </div>
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
       </div>
     </div>
   `;
@@ -335,25 +336,25 @@ export const getPaymentCollectedEmail = (data: ReceiptEmailData) => {
 
 export const getOwnerPayoutEmail = (data: ReceiptEmailData) => {
   return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
-      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
-        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #001232; padding: 40px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 90px; width: auto; max-width: 100%; object-fit: contain;" />
       </div>
-      <div style="font-size: 15px;">
+      <div style="padding: 30px; font-size: 15px;">
         <p>Hi ${data.firstName},</p>
         <div style="background-color: #f3f0ff; border-left: 4px solid #8b5cf6; padding: 15px; margin: 25px 0;">
           <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #001232;">Weekly Remittance Sent</h3>
           <p style="margin: 0; font-size: 14px; color: #4a4a4a;">We have successfully dispatched your payout of <strong>₦${data.amount}</strong> for <strong>${data.weekDescription}</strong>.</p>
         </div>
         <table style="width: 100%; font-size: 14px; border-collapse: collapse; margin-bottom: 20px;">
-          <tr><td style="padding: 8px 0; color: #888;">Asset:</td><td style="padding: 8px 0; font-weight: bold; text-align: right;">${data.vehiclePlate}</td></tr>
-          <tr><td style="padding: 8px 0; color: #888;">Reference:</td><td style="padding: 8px 0; font-family: monospace; text-align: right;">${data.reference}</td></tr>
-          <tr><td style="padding: 8px 0; color: #888;">Date:</td><td style="padding: 8px 0; text-align: right;">${data.date}</td></tr>
+          <tr><td style="padding: 10px 0; color: #888; border-bottom: 1px solid #f0f0f0;">Asset:</td><td style="padding: 10px 0; font-weight: bold; text-align: right; border-bottom: 1px solid #f0f0f0;">${data.vehiclePlate}</td></tr>
+          <tr><td style="padding: 10px 0; color: #888; border-bottom: 1px solid #f0f0f0;">Reference:</td><td style="padding: 10px 0; font-family: monospace; text-align: right; border-bottom: 1px solid #f0f0f0;">${data.reference}</td></tr>
+          <tr><td style="padding: 10px 0; color: #888;">Date:</td><td style="padding: 10px 0; text-align: right;">${data.date}</td></tr>
         </table>
         <p>Please check your registered bank account. A copy of the payment receipt is available for download in your dashboard ledger.</p>
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
-          <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
-        </div>
+      </div>
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+        <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
       </div>
     </div>
   `;
@@ -369,12 +370,12 @@ export interface OtpEmailData {
 export const getOtpEmail = (data: OtpEmailData) => {
   const expiry = data.expiryMinutes || 10;
   return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6;">
-      <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0; margin-bottom: 30px; text-align: center;">
-        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 50px; width: auto; object-fit: contain;" />
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #001232; padding: 40px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 90px; width: auto; max-width: 100%; object-fit: contain;" />
       </div>
       
-      <div style="font-size: 15px;">
+      <div style="padding: 30px; font-size: 15px;">
         <p>Hi ${data.name},</p>
         <p>You have requested to change your Admin password. Please use the One-Time Password (OTP) below to proceed:</p>
         
@@ -390,7 +391,7 @@ export const getOtpEmail = (data: OtpEmailData) => {
         </p>
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #f0f0f0; font-size: 11px; color: #888888; text-align: center;">
         <p style="margin: 0 0 5px 0;"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED (RC-9562528)</strong></p>
         <p style="margin: 0; line-height: 1.4;">This is an automated security email. Please do not share this OTP with anyone.</p>
       </div>
