@@ -42,16 +42,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   const currentMonth = today.toLocaleString('default', { month: 'long' });
   const currentYear = today.getFullYear();
   const formattedDate = today.toLocaleDateString('en-GB');
-
-  // Calculate the exact date for the NEXT Friday
-  const calculateNextFriday = () => {
-    const date = new Date(today);
-    const dayOfWeek = date.getDay();
-    const distanceToFriday = (5 + 7 - dayOfWeek) % 7 || 7; 
-    date.setDate(date.getDate() + distanceToFriday);
-    return date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  };
-  const exactNextFriday = calculateNextFriday();
+  const currentDayOfWeek = today.toLocaleString('default', { weekday: 'long' }); // Dynamic exact day (e.g. "Thursday")
 
   const g1 = guarantors[0] || {};
   const g2 = guarantors[1] || {};
@@ -109,13 +100,14 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     return (
       <div className={textStyle}>
         
-        <div className={`text-center ${isPdf ? "pb-4 mb-3 break-after-avoid" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
-          <div className={isPdf ? "bg-[#001232] p-4 mb-2 mx-auto inline-block rounded-md" : "mb-4 mx-auto"}>
+        <div className={`text-center ${isPdf ? "pb-3 mb-4 break-after-avoid border border-gray-300 rounded overflow-hidden" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
+          <div className={isPdf ? "bg-[#001232] py-4 w-full" : "bg-void-navy"}>
             <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: isPdf ? "60px" : "45px", width: "auto", margin: "0 auto", display: "block", objectFit: "contain" }} />
           </div>
-          <p className={`${isPdf ? "text-[12px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
-          <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-0.5`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
-          {isPdf && <div className="border-b-2 border-[#001232] mt-3"></div>}
+          <div className={isPdf ? "pt-3 px-2" : "mt-6"}>
+            <p className={`${isPdf ? "text-[11px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
+            <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-0.5`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
+          </div>
         </div>
 
         <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-3 break-after-avoid" : "text-lg text-signal-red mb-8"}`}>DRIVER/RIDER HIRE PURCHASE AGREEMENT</h2>
@@ -163,7 +155,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         
         <p className={paraSpacing}>2.4 <strong>Fee Breakdown:</strong> Out of the ₦{contract?.riderWeeklyRemittance?.toLocaleString() || "---"} weekly remittance, the sum of <strong>₦{contract?.weeklyServiceFee?.toLocaleString() || "---"}</strong> is explicitly allocated and applied as the Hire Purchase Administration Service Fee. Mind you, the Total Hire Purchase Price stated in Clause 2.1 does not contain this service fee at all.</p>
         
-        <p className={paraSpacing}>2.5 <strong>Payment Schedule:</strong> The first weekly remittance must be made no later than <strong>{exactNextFriday} at 11:59 PM</strong>. Thereafter, subsequent payments are unconditionally due every Friday by 11:59 PM. Payments made to unauthorized staff or third parties will not be recognized.</p>
+        <p className={paraSpacing}>2.5 <strong>Payment Schedule:</strong> Payments must be made no later than <strong>{currentDayOfWeek} 11:59 PM</strong> of every week. Payments made to unauthorized staff or third parties will not be recognized.</p>
         
         <p className={isPdf ? "mb-2" : "mb-6"}>2.6 <strong>Tenure:</strong> The expected duration is <strong>{contract?.riderDurationWeeks || "---"}</strong> weeks, concluding when the Total Hire Purchase Price is fully paid.</p>
 
@@ -194,7 +186,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         <h3 className={headingStyle}>6. GENERAL PROVISIONS</h3>
         <p className={paraSpacing}>6.1 <strong>Transfer of Ownership:</strong> Upon the complete and timely payment of the Total Hire Purchase Price, the Administrator shall issue a Letter of Completion and facilitate the Change of Ownership Form transferring full legal ownership to the Driver/Rider.</p>
         <p className={paraSpacing}>6.2 <strong>Severability:</strong> If any provision of this Agreement is found to be unenforceable by a court, the remaining provisions shall remain in full force and effect.</p>
-        <p className={isPdf ? "mb-3" : "mb-6"}>6.3 <strong>Jurisdiction:</strong> This Agreement shall be governed by the laws of the Federal Republic of Nigeria. Any dispute shall be subject to the exclusive jurisdiction of the Courts of the Federal Republic of Nigeria.</p>
+        <p className={isPdf ? "mb-3" : "mb-6"}>6.3 <strong>Jurisdiction:</strong> This Agreement shall be governed by the laws of the Federal Republic of Nigeria. Any dispute shall be subject to the exclusive jurisdiction of the competent Courts of Nigeria.</p>
 
         <h3 className={headingStyle}>7. GUARANTORS' EXECUTION</h3>
         <div className={`${isPdf ? "mb-3 p-3 border border-gray-400 bg-gray-50 break-inside-avoid" : "mb-8 p-4 border border-cobalt/30 bg-void-navy/50"}`}>
@@ -333,7 +325,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Address</label>
-              <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street" />
+              <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street, Lagos" />
             </div>
             <div className="md:col-span-2">
               <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
