@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import { ChevronRight, ArrowLeft, Loader2, Scale, XCircle, UploadCloud, HelpCircle } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 
@@ -209,9 +210,17 @@ export default function GuarantorExecutionPage() {
       <div ref={topRef} className="absolute top-0 left-0 w-full h-1" />
       
       <div className="max-w-3xl w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-black tracking-wider block mb-2">YUSDAAM<span className="text-signal-red">.</span></h1>
-          <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest">Guarantor Administration Portal</p>
+        {/* LOGO HEADER */}
+        <div className="text-center mb-12 sm:mb-16">
+          <Image 
+            src="/images/logo2.PNG" 
+            alt="Yusdaam Autos Logo" 
+            width={400} 
+            height={120} 
+            className="object-contain h-8 sm:h-10 w-auto scale-[2.5] sm:scale-[3.2] origin-center mx-auto mb-6" 
+            priority
+          />
+          <p className="text-[10px] font-bold text-slate-light uppercase tracking-widest mt-6">Guarantor Administration Portal</p>
         </div>
 
         <div className="bg-void-navy border border-cobalt/30 rounded-2xl shadow-2xl overflow-hidden">
@@ -234,7 +243,7 @@ export default function GuarantorExecutionPage() {
                 <Scale size={48} className="text-signal-red mx-auto mb-6" />
                 <h3 className="text-xl font-bold uppercase tracking-wider text-signal-red">Legal Liability Warning</h3>
                 <p className="text-sm text-slate-light leading-relaxed max-w-lg mx-auto">
-                  You have been nominated by <strong>{riderData.firstName} {riderData.lastName}</strong> to act as a Primary Guarantor for the commercial deployment of a <strong>{riderData.preferredAssetClass.replace("_", " ")}</strong>. 
+                  You have been nominated by <strong>{riderData.firstName} {riderData.lastName}</strong> to act as a Primary Guarantor for the commercial deployment of a <strong>{riderData.preferredAssetClass?.replace("_", " ")}</strong>. 
                 </p>
                 <div className="bg-signal-red/10 border border-signal-red/30 p-5 rounded-xl max-w-lg mx-auto text-left">
                   <p className="text-xs text-slate-light leading-relaxed font-bold">
@@ -278,6 +287,7 @@ export default function GuarantorExecutionPage() {
                         <option value="Landlord/Owner" className="bg-void-navy">Landlord / Owner</option>
                         <option value="Renting (Alone)" className="bg-void-navy">Renting (Alone)</option>
                         <option value="Living with Family" className="bg-void-navy">Living with Family</option>
+                        <option value="Living with Friends" className="bg-void-navy">Living with Friends</option>
                       </select>
                     </div>
                   </div>
