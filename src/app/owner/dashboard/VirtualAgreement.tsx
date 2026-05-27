@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export interface AgreementProps {
-  contractId: string; // <-- NEW
-  initialWitnessName?: string | null; // <-- NEW
-  initialWitnessSignature?: string | null; // <-- NEW
+  contractId: string;
+  initialWitnessName?: string | null;
+  initialWitnessSignature?: string | null;
   ownerName: string;
   bvn?: string;
   nin?: string;
@@ -24,11 +24,10 @@ export interface AgreementProps {
   plateNo?: string;
   startDate?: string;
   endDate?: string;
+  ownerDurationWeeks?: string | number; // <-- ADDED
   targetWeeklyRemittance?: string;
   ownerBank?: string;
   ownerAcctNo?: string;
-  grossRemittance?: string;
-  adminCharge?: string;
   policyNo?: string;
 }
 
@@ -82,7 +81,7 @@ export default function VirtualAgreement(props: AgreementProps) {
   const currentDay = today.getDate();
   const currentMonth = today.toLocaleString('default', { month: 'long' });
   const currentYear = today.getFullYear();
-  const formattedDate = today.toLocaleDateString();
+  const formattedDate = today.toLocaleDateString('en-GB');
 
   const fallback = "[Pending Admin Input]";
 
@@ -206,10 +205,15 @@ export default function VirtualAgreement(props: AgreementProps) {
 
     return (
       <div className={textStyle}>
-        <div className={`text-center ${isPdf ? "border-b-2 border-[#001232] pb-4 mb-6" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
-          <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: "45px", width: "auto", margin: "0 auto 10px auto", display: "block", objectFit: "contain" }} />
-          <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
-          <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher&apos;s Quarter Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
+        
+        <div className={`text-center ${isPdf ? "pb-3 mb-4 break-after-avoid border border-gray-300 rounded overflow-hidden" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
+          <div className={isPdf ? "bg-[#001232] py-4 w-full" : "bg-void-navy"}>
+            <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: isPdf ? "60px" : "45px", width: "auto", margin: "0 auto", display: "block", objectFit: "contain" }} />
+          </div>
+          <div className={isPdf ? "pt-3 px-2" : "mt-6"}>
+            <p className={`${isPdf ? "text-[11px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
+            <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher's Quarter Igbogbo Ikorodu | admin@yusdaamautos.com</p>
+          </div>
         </div>
 
         <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-6" : "text-lg text-signal-red mb-8"}`}>HIRE PURCHASE ADMINISTRATION AGREEMENT</h2>
@@ -217,7 +221,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-4"><strong>THIS AGREEMENT</strong> is made this <strong>{currentDay}</strong> day of <strong>{currentMonth}</strong>, <strong>{currentYear}</strong>.</p>
 
         <p className="mb-2 font-bold">BETWEEN</p>
-        <p className="mb-6"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company duly incorporated under the Companies and Allied Matters Act (CAMA) with RC: 9562528, having its registered office at 18, Alhaji Olakunle Close Selewu Teacher&apos;s Quater Igbogbo Ikorodu Lagos., Nigeria, Email: admin@yusdaamautos.com (hereinafter referred to as the <strong>“Administrator”</strong>, which expression shall, where the context so admits, include its successors-in-title and assigns) of the first part;</p>
+        <p className="mb-6"><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company duly incorporated under the Companies and Allied Matters Act (CAMA) with RC: 9562528, having its registered office at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu, Nigeria, Email: admin@yusdaamautos.com (hereinafter referred to as the <strong>“Administrator”</strong>, which expression shall, where the context so admits, include its successors-in-title and assigns) of the first part;</p>
 
         <p className="mb-2 font-bold">AND</p>
         <p className="mb-6"><strong>{props.ownerName || fallback}</strong>, BVN: {props.bvn || fallback}, NIN: {props.nin || fallback}, residing at {props.ownerAddress || fallback}, Email: {props.ownerEmail || fallback}, Phone: {props.ownerPhone || fallback} (hereinafter referred to as the <strong>“Owner”</strong>, which expression shall, where the context so admits, include their heirs, personal representatives, and assigns) of the second part.</p>
@@ -228,7 +232,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         <ul className="list-[upper-alpha] pl-5 mb-8 space-y-2">
           <li>The Owner is the absolute legal owner, or intends to become the legal purchaser, of a commercial transport asset (including but not limited to a tricycle, mini-bus, car, truck, tipper, or bus) and desires to engage professional administrative services to manage the asset under a hire purchase arrangement.</li>
           <li>The Administrator specializes in the management of hire purchase vehicles on behalf of asset owners via a Power of Attorney, providing services that include rider/driver vetting, remittance collection, GPS monitoring, compliance enforcement, and asset repossession.</li>
-          <li>The Parties have agreed that the Administrator shall provide these services to the Owner at zero direct cost (₦0), deriving its revenue exclusively from administrative charges levied directly upon the designated rider/driver.</li>
+          <li>The Parties have agreed that the Administrator shall provide these services to the Owner at zero direct cost (₦0), deriving its revenue exclusively from an administrative service fee levied directly upon the designated rider/driver.</li>
           <li>The Parties now wish to enter into this Agreement to formalize the terms, conditions, and obligations governing this arrangement.</li>
         </ul>
 
@@ -238,10 +242,9 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-2">1.1 In this Agreement, unless the context otherwise requires:</p>
         <ul className="list-disc pl-5 mb-6 space-y-2">
           <li><strong>"Asset"</strong> means the commercial transport vehicle described in Clause 2.1 of this Agreement.</li>
-          <li><strong>"Gross Weekly Remittance"</strong> means the total monetary sum collected from the Rider weekly.</li>
-          <li><strong>"Net Weekly Remittance"</strong> means the balance of the Gross Weekly Remittance after the deduction of the Administrator&apos;s weekly charge.</li>
+          <li><strong>"Net Weekly Remittance"</strong> means the agreed target payout routed to the Owner weekly.</li>
           <li><strong>"Rider"</strong> or <strong>"Driver"</strong> means the third-party individual selected and managed by the Administrator to operate the Asset under a separate hire purchase agreement.</li>
-          <li><strong>"Tenure"</strong> means the agreed duration of the hire purchase arrangement necessary for the Rider to pay the Total Hire Purchase Price.</li>
+          <li><strong>"Tenure"</strong> means the agreed duration of the hire purchase arrangement necessary for the Rider to complete their obligations.</li>
         </ul>
 
         <h3 className={headingStyle}>2. APPOINTMENT AND ASSET DESCRIPTION</h3>
@@ -259,47 +262,46 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p className="mb-6">2.3 Legal and beneficial ownership of the Asset shall remain wholly vested in the Owner until successfully transferred to the Rider upon the completion of the Tenure, as outlined in Clause 9. The Administrator claims no ownership interest in the Asset.</p>
 
         <h3 className={headingStyle}>3. VEHICLE PURCHASE AND PAYMENT FACILITATION</h3>
-        <p className="mb-2">3.1 The Owner shall make all payments for the acquisition of the Asset directly to the vehicle dealer or supplier. Under no circumstances shall the Administrator receive, hold, or disburse the Owner&apos;s capital funds for the purchase of the Asset.</p>
-        <p className="mb-2">3.2 The Administrator&apos;s role is strictly limited to facilitation. The Administrator shall provide the Owner with a Purchase Facilitation Quote and a supplier invoice for approval.</p>
-        <p className="mb-6">3.3 Proof of the Owner&apos;s direct payment to the dealer shall be annexed to this Agreement as <strong>Schedule A</strong>.</p>
+        <p className="mb-2">3.1 The Owner shall make all payments for the acquisition of the Asset directly to the vehicle dealer or supplier. Under no circumstances shall the Administrator receive, hold, or disburse the Owner's capital funds for the purchase of the Asset.</p>
+        <p className="mb-2">3.2 The Administrator's role is strictly limited to facilitation. The Administrator shall provide the Owner with a Purchase Facilitation Quote and a supplier invoice for approval.</p>
+        <p className="mb-6">3.3 Proof of the Owner's direct payment to the dealer shall be annexed to this Agreement as <strong>Schedule A</strong>.</p>
 
         <h3 className={headingStyle}>4. TENURE AND FINANCIAL PROVISIONS</h3>
-        <p className="mb-2">4.1 <strong>Tenure:</strong> This Agreement shall remain valid for an estimated period of {fallback} weeks, commencing on {props.startDate || fallback} and terminating on {props.endDate || fallback}, subject to earlier termination as provided in Clause 10.</p>
-        <p className="mb-2">4.2 <strong>Target Remittance:</strong> The Owner&apos;s Target Weekly Remittance is defined as <strong>₦{Number(props.targetWeeklyRemittance).toLocaleString() || fallback}</strong>. The Parties acknowledge that this figure is a target based on current market data for the Asset type and is expressly not guaranteed by the Administrator.</p>
-        <p className="mb-6">4.3 <strong>Payment Collection:</strong> All payments made by the Rider shall be deposited directly into the Administrator&apos;s designated Client Remittance Account. The Administrator shall transfer the Net Weekly Remittance to the Owner&apos;s nominated bank account (<strong>Bank:</strong> {props.ownerBank || fallback}, <strong>Account No:</strong> {props.ownerAcctNo || fallback}) within forty-eight (48) hours of cleared receipt.</p>
+        <p className="mb-2">4.1 <strong>Tenure:</strong> This Agreement shall remain valid for an estimated period of <strong>{props.ownerDurationWeeks || fallback}</strong> weeks, commencing on {props.startDate || fallback} and terminating on {props.endDate || fallback}, subject to earlier termination as provided in Clause 10.</p>
+        <p className="mb-2">4.2 <strong>Target Remittance:</strong> The Owner's Target Weekly Remittance is defined as <strong>₦{Number(props.targetWeeklyRemittance).toLocaleString() || fallback}</strong>. The Parties acknowledge that this figure is a target based on current market data for the Asset type and is expressly not guaranteed by the Administrator in the event of rider default.</p>
+        <p className="mb-6">4.3 <strong>Payment Collection:</strong> All payments made by the Rider shall be deposited directly into the Administrator's designated Client Remittance Account. The Administrator shall transfer the Net Weekly Remittance to the Owner's nominated bank account (<strong>Bank:</strong> {props.ownerBank || fallback}, <strong>Account No:</strong> {props.ownerAcctNo || fallback}) within forty-eight (48) hours of cleared receipt.</p>
 
-        <h3 className={headingStyle}>5. ADMINISTRATOR&apos;S OBLIGATIONS AND REMUNERATION</h3>
-        <p className="mb-2">5.1 The Administrator shall provide the following services at no cost to the Owner: vetting and recruiting Riders, executing hire purchase contracts with Riders, installing GPS tracking devices, monitoring the Asset, collecting remittances, enforcing payment compliance, executing repossessions in the event of a default, and providing Monthly Operation Reports.</p>
-        <p className="mb-2">5.2 The Administrator shall automatically forward Weekly Remittance Advice and GPS location logs to the Owner&apos;s designated email address.</p>
-        <p className="mb-6">5.3 The Administrator shall not charge the Owner any administration fees. The Administrator&apos;s sole income for its services is derived from the administrative charges paid by the Rider.</p>
+        <h3 className={headingStyle}>5. ADMINISTRATOR'S OBLIGATIONS AND REMUNERATION</h3>
+        <p className="mb-2">5.1 The Administrator shall provide the following services at no cost to the Owner: vetting and recruiting Riders, executing hire purchase contracts with Riders, monitoring the Asset, collecting remittances, enforcing payment compliance, executing repossessions in the event of a default, and providing Monthly Operation Reports.</p>
+        <p className="mb-2">5.2 The Administrator shall automatically forward Weekly Remittance Advice and GPS location logs to the Owner's designated email address.</p>
+        <p className="mb-6">5.3 The Administrator shall not charge the Owner any administration fees. The Administrator's sole income for its services is derived from the administrative charges paid directly by the Rider.</p>
 
-        <h3 className={headingStyle}>6. REMITTANCE STRUCTURE AND DEDUCTIONS</h3>
-        <p className="mb-2">6.1 <strong>Gross Collection:</strong> The current target Gross Weekly Remittance expected from the Rider is <strong>₦{Number(props.grossRemittance).toLocaleString() || fallback}</strong>.</p>
-        <p className="mb-2">6.2 <strong>Administrator&apos;s Fee:</strong> The Administrator shall deduct <strong>₦{Number(props.adminCharge).toLocaleString() || fallback}</strong> weekly from the Gross Weekly Remittance as a Rider Administration Fee. This fee covers GPS monitoring, enforcement, reporting, insurance facilitation, and repossession efforts. This fee is the exclusive property of the Administrator.</p>
-        <p className="mb-2">6.3 <strong>Net Remittance:</strong> The Net Weekly Remittance transferred to the Owner shall be the Gross Weekly Remittance less the Administrator&apos;s Fee.</p>
-        <p className="mb-6">6.4 <strong>Shortfall Non-Liability:</strong> If the Rider defaults on payment due to accidents, illness, or other unforeseen circumstances, resulting in a reduced or zero Gross Weekly Remittance, the Administrator does not guarantee the Owner&apos;s Net Weekly Remittance. The Administrator shall not be held financially liable for such shortfalls but remains obligated to enforce recovery or repossession using the Power of Attorney.</p>
+        <h3 className={headingStyle}>6. REMITTANCE STRUCTURE</h3>
+        <p className="mb-2">6.1 <strong>Administrator's Fee:</strong> The Administrator shall charge an administrative service fee directly to the Rider. This fee covers GPS monitoring, enforcement, reporting, insurance facilitation, and repossession efforts. This fee is independent of the Owner's target remittance and remains the exclusive property of the Administrator.</p>
+        <p className="mb-2">6.2 <strong>Net Remittance:</strong> The Net Weekly Remittance transferred to the Owner shall be the agreed Target Weekly Remittance stated in Clause 4.2.</p>
+        <p className="mb-6">6.3 <strong>Shortfall Non-Liability:</strong> If the Rider defaults on payment due to accidents, illness, or other unforeseen circumstances, resulting in reduced collections, the Administrator does not guarantee the Owner's Net Weekly Remittance. The Administrator shall not be held financially liable for such shortfalls but remains obligated to enforce recovery or repossession using the Power of Attorney.</p>
 
         <h3 className={headingStyle}>7. RISK ALLOCATION, INSURANCE, AND LIABILITY</h3>
-        <p className="mb-2">7.1 <strong>Owner&apos;s Risk:</strong> The Owner bears the absolute risk of total loss of the Asset arising from events including, but not limited to, natural disasters, government confiscation, theft, and acts of war.</p>
-        <p className="mb-2">7.2 <strong>Rider&apos;s Risk:</strong> The Rider bears one hundred percent (100%) of the risk and financial cost associated with mechanical failures, accident damage, routine maintenance, and breakdowns occurring during the Tenure. The Administrator makes no warranties regarding the Rider&apos;s performance or the Asset&apos;s mechanical longevity.</p>
-        <p className="mb-2">7.3 <strong>Insurance:</strong> The Asset must carry, at a minimum, Third-Party Insurance as required by the National Insurance Commission (NAICOM), bearing Policy No: {props.policyNo || fallback}. The Owner shall pay the insurer directly. Comprehensive insurance is highly recommended and shall be at the Owner&apos;s sole discretion and expense. A copy of the insurance policy shall be annexed as <strong>Schedule B</strong>.</p>
-        <p className="mb-6">7.4 <strong>Enforcement Liability:</strong> While the Administrator is strictly obligated to execute repossessions if the Rider defaults on payments or repairs, the Administrator shall bear no financial liability for the loss of the Asset, lost anticipated income, or any repair costs.</p>
+        <p className="mb-2">7.1 <strong>Rider's Risk:</strong> The Rider bears one hundred percent (100%) of the risk and financial cost associated with mechanical failures, accident damage, routine maintenance, and breakdowns occurring during the Tenure. The Administrator makes no warranties regarding the Rider's performance or the Asset's mechanical longevity.</p>
+        <p className="mb-2">7.2 <strong>Insurance:</strong> The Asset must carry, at a minimum, Third-Party Insurance as required by the National Insurance Commission (NAICOM), bearing Policy No: {props.policyNo || fallback}. The Owner shall pay the insurer directly. Comprehensive insurance is highly recommended and shall be at the Owner's sole discretion and expense. A copy of the insurance policy shall be annexed as <strong>Schedule B</strong>.</p>
+        <p className="mb-6">7.3 <strong>Enforcement Liability:</strong> While the Administrator is strictly obligated to execute repossessions if the Rider defaults on payments or repairs, the Administrator shall bear no financial liability for the loss of the Asset, lost anticipated income, or any repair costs.</p>
 
-        <h3 className={headingStyle}>8. OWNER&apos;S OBLIGATIONS</h3>
-        <p className="mb-2">8.1 The Owner covenants not to interfere with the Administrator&apos;s day-to-day management, Rider selection, route optimization, or enforcement actions carried out under the Power of Attorney.</p>
+        <h3 className={headingStyle}>8. OWNER'S OBLIGATIONS</h3>
+        <p className="mb-2">8.1 The Owner covenants not to interfere with the Administrator's day-to-day management, Rider selection, route optimization, or enforcement actions carried out under the Power of Attorney.</p>
         <p className="mb-2">8.2 The Owner shall notify the Administrator in writing within forty-eight (48) hours of any changes to their bank details, residential address, or next of kin.</p>
-        <p className="mb-6">8.3 The Owner warrants and represents that all funds utilized for the acquisition of the Asset originate from legitimate sources and do not constitute the proceeds of unlawful activity.</p>
+        <p className="mb-2">8.3 The Owner warrants and represents that all funds utilized for the acquisition of the Asset originate from legitimate sources and do not constitute the proceeds of unlawful activity.</p>
+        <p className="mb-6">8.4 <strong>GPS Tracking:</strong> The Owner shall be solely responsible for the cost and provision of the Global Positioning System (GPS) tracking device to be installed on the Asset prior to deployment.</p>
 
         <h3 className={headingStyle}>9. TRANSFER OF OWNERSHIP</h3>
-        <p className="mb-2">9.1 Upon the Rider&apos;s successful completion of the Tenure and the full remittance of the Total Hire Purchase Price, the Administrator shall promptly issue a Letter of Completion to both the Owner and the Rider.</p>
+        <p className="mb-2">9.1 Upon the Rider's successful completion of the Tenure, the Administrator shall promptly issue a Letter of Completion to both the Owner and the Rider.</p>
         <p className="mb-2">9.2 Upon receipt of the Letter of Completion, the Owner shall, within fourteen (14) days, execute a Change of Ownership Form and surrender the original purchase receipt to the Rider.</p>
         <p className="mb-6">9.3 The Administrator shall facilitate this transfer but shall not be held legally liable if the Owner fails or delays in executing the required transfer documentation. The Power of Attorney shall automatically expire upon the successful transfer of ownership.</p>
 
         <h3 className={headingStyle}>10. TERMINATION AND REPOSSESSION</h3>
         <p className="mb-2">10.1 <strong>Lock-in Period:</strong> The Owner shall not terminate this Agreement within the first twenty-six (26) weeks of the Tenure, except in the event of a proven material breach of contract by the Administrator.</p>
-        <p className="mb-2">10.2 <strong>Standard Termination:</strong> Subsequent to Week 26, the Owner may terminate this Agreement by providing thirty (30) days&apos; written notice. Upon such termination, the Administrator shall hand over all Rider agreements, GPS access credentials, and repossession rights to the Owner.</p>
-        <p className="mb-2">10.3 <strong>Termination for Administrator Default:</strong> If the Administrator fails to enforce or remit collected payments for four (4) consecutive weeks (excluding Force Majeure events), the Owner may revoke the Power of Attorney with seven (7) days&apos; written notice and assume direct management of the Asset.</p>
-        <p className="mb-6">10.4 <strong>Rider Default:</strong> In the event the Rider permanently defaults or fails to complete the Tenure, full control of the Asset shall revert to the Owner. The Administrator shall deliver the Asset, keys, relevant documents, and a formal repossession report to the Owner within seven (7) days of the Rider&apos;s termination.</p>
+        <p className="mb-2">10.2 <strong>Standard Termination:</strong> Subsequent to Week 26, the Owner may terminate this Agreement by providing thirty (30) days' written notice. Upon such termination, the Administrator shall hand over all Rider agreements, GPS access credentials, and repossession rights to the Owner.</p>
+        <p className="mb-2">10.3 <strong>Termination for Administrator Default:</strong> If the Administrator fails to enforce or remit collected payments for four (4) consecutive weeks (excluding Force Majeure events), the Owner may revoke the Power of Attorney with seven (7) days' written notice and assume direct management of the Asset.</p>
+        <p className="mb-6">10.4 <strong>Rider Default:</strong> In the event the Rider permanently defaults or fails to complete the Tenure, full control of the Asset shall revert to the Owner. The Administrator shall deliver the Asset, keys, relevant documents, and a formal repossession report to the Owner within seven (7) days of the Rider's termination.</p>
 
         <h3 className={headingStyle}>11. FORCE MAJEURE</h3>
         <p className="mb-2">11.1 Neither Party shall be deemed in breach of this Agreement or otherwise liable for any delay or failure in performance arising from circumstances beyond their reasonable control (a "Force Majeure Event"). Such events include, but are not limited to, acts of God, war, nationwide strikes, government bans on specific vehicle types, pandemic lockdowns, or natural disasters.</p>
@@ -307,14 +309,14 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         <h3 className={headingStyle}>12. COMPLIANCE, ANTI-MONEY LAUNDERING, AND DATA PRIVACY</h3>
         <p className="mb-2">12.1 <strong>Confidentiality:</strong> The Parties agree to maintain strict confidentiality regarding the terms of this Agreement, disclosing information only as strictly required for tax, regulatory, or judicial purposes.</p>
-        <p className="mb-2">12.2 <strong>Statutory Compliance:</strong> The Administrator shall comply with the Money Laundering (Prevention and Prohibition) Act 2022 and the Nigeria Data Protection Act (NDPA) 2023. The Owner&apos;s KYC documents are annexed as <strong>Schedule C</strong>. Sensitive data (including BVN and NIN) shall be stored in an encrypted drive accessible only by authorized compliance personnel.</p>
+        <p className="mb-2">12.2 <strong>Statutory Compliance:</strong> The Administrator shall comply with the Money Laundering (Prevention and Prohibition) Act 2022 and the Nigeria Data Protection Act (NDPA) 2023. The Owner's KYC documents are annexed as <strong>Schedule C</strong>. Sensitive data (including BVN and NIN) shall be stored in an encrypted drive accessible only by authorized compliance personnel.</p>
         <p className="mb-6">12.3 <strong>Reporting:</strong> The Administrator reserves the right to report any suspicious financial transactions to the Nigerian Financial Intelligence Unit (NFIU) in accordance with statutory obligations.</p>
 
         <h3 className={headingStyle}>13. DISPUTE RESOLUTION AND GOVERNING LAW</h3>
         <p className="mb-2">13.1 This Agreement shall be governed by and construed in accordance with the Laws of the Federal Republic of Nigeria.</p>
         <p className="mb-2">13.2 Any dispute, controversy, or claim arising out of or relating to this Agreement shall first be referred to mediation at the Lagos Multi-Door Courthouse.</p>
-        <p className="mb-2">13.3 Should mediation fail to yield a settlement within thirty (30) days, the dispute shall be resolved by binding arbitration in Lagos, Nigeria, conducted by a single arbitrator in accordance with the Arbitration and Mediation Act 2023.</p>
-        <p className="mb-6">13.4 The Courts of Lagos State shall retain exclusive jurisdiction for the enforcement of any arbitral award or equitable relief.</p>
+        <p className="mb-2">13.3 Should mediation fail to yield a settlement within thirty (30) days, the dispute shall be resolved by binding arbitration in Nigeria, conducted by a single arbitrator in accordance with the Arbitration and Mediation Act 2023.</p>
+        <p className="mb-6">13.4 The Courts of Nigeria shall retain exclusive jurisdiction for the enforcement of any arbitral award or equitable relief.</p>
 
         <h3 className={headingStyle}>14. GENERAL PROVISIONS</h3>
         <p className="mb-2">14.1 <strong>Entire Agreement:</strong> This Agreement, alongside Schedules A, B, C, and D, constitutes the entire understanding between the Parties and supersedes all prior agreements or representations. Any amendments must be made in writing and duly signed by both Parties.</p>
@@ -330,31 +332,31 @@ export default function VirtualAgreement(props: AgreementProps) {
             <p className="font-bold mb-6">SIGNED by the within-named ADMINISTRATOR</p>
             <p className="font-bold text-xs uppercase">YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
             
-            <div className="relative h-20 w-48 mt-4 mb-2">
+            <div className="relative h-20 w-40 mt-4 mb-2">
                <img src="/images/stamp.png" alt="Company Seal" className="absolute left-0 -top-4 h-24 opacity-80 object-contain" />
                <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
             
-            <p className="font-bold text-xs">Name: Yussuf Dare Orelaja</p>
+            <p className="font-bold text-xs">YUSSUF DARE ORELAJA</p>
             <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Designation: Managing Director</p>
             <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
             <p className="italic text-[10px] text-gray-500 mt-1">(COMPANY SEAL)</p>
             
             <p className="mt-8 font-bold underline text-xs">In the presence of WITNESS 1 (For the Administrator):</p>
-            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Name: ASHIA ADEKUNBI OLABINTAN</p>
-            <p className={isPdf ? "text-[10px] mt-2 leading-tight" : "text-xs text-slate-light mt-2 leading-tight"}>Address: 18, Alhaji Olakunle Close Selewu Teacher&apos;s Quater Igbogbo Ikorodu Lagos.</p>
+            <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Name: AISHA ADEKUNBI OLABINTAN</p>
+            <p className={isPdf ? "text-[10px] mt-2 leading-tight" : "text-xs text-slate-light mt-2 leading-tight"}>Address: 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu</p>
             
             <div className="relative h-12 mt-2 w-48">
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
                <img src="/images/aisha_signature.png" alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
-               <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+               <div className={`absolute bottom-0 left-14 w-[130px] border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
             <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {formattedDate}</p>
           </div>
 
           <div>
             <p className="font-bold mb-6">SIGNED by the within-named OWNER</p>
-            <div className="relative h-20 w-48 mt-4 mb-2">
+            <div className="relative h-20 w-40 mt-4 mb-2">
               {hpaOwnerSig ? (
                 <img src={hpaOwnerSig} alt="Owner Signature" className={`absolute left-0 bottom-0 h-20 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
               ) : (
@@ -373,7 +375,7 @@ export default function VirtualAgreement(props: AgreementProps) {
                {hpaWitnessSig ? (
                  <img src={hpaWitnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
                ) : (
-                 <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+                 <div className={`absolute bottom-0 left-14 w-[130px] border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
                )}
             </div>
             <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {formattedDate}</p>
@@ -389,16 +391,21 @@ export default function VirtualAgreement(props: AgreementProps) {
 
     return (
       <div className={textStyle}>
-        <div className={`text-center ${isPdf ? "border-b-2 border-[#001232] pb-4 mb-6" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
-          <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: "45px", width: "auto", margin: "0 auto 10px auto", display: "block", objectFit: "contain" }} />
-          <p className={`${isPdf ? "text-[10px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
-          <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher&apos;s Quater Igbogbo Ikorodu Lagos. | admin@yusdaamautos.com</p>
+        
+        <div className={`text-center ${isPdf ? "pb-3 mb-4 break-after-avoid border border-gray-300 rounded overflow-hidden" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
+          <div className={isPdf ? "bg-[#001232] py-4 w-full" : "bg-void-navy"}>
+            <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: isPdf ? "60px" : "45px", width: "auto", margin: "0 auto", display: "block", objectFit: "contain" }} />
+          </div>
+          <div className={isPdf ? "pt-3 px-2" : "mt-6"}>
+            <p className={`${isPdf ? "text-[11px]" : "text-xs"} font-bold uppercase tracking-widest`}>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
+            <p className={`${isPdf ? "text-[9px]" : "text-[10px] text-slate-light"} mt-1`}>RC: 9562528 | 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu | admin@yusdaamautos.com</p>
+          </div>
         </div>
 
         <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-8" : "text-lg text-signal-red mb-8"}`}>SPECIFIC POWER OF ATTORNEY</h2>
 
         <p className="mb-6 leading-relaxed">
-          <strong>KNOW ALL MEN BY THESE PRESENTS</strong> that I, <strong>{props.ownerName}</strong>, of {props.ownerAddress || fallback}, holding Bank Verification Number (BVN) {props.bvn || fallback} and National Identification Number (NIN) {props.nin || fallback} (hereinafter referred to as the <strong>"Donor"</strong>), DO HEREBY APPOINT <strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company incorporated under the laws of the Federal Republic of Nigeria with RC: 9562528, having its registered address at 18, Alhaji Olakunle Close Selewu Teacher&apos;s Quater Igbogbo Ikorodu Lagos. (hereinafter referred to as the <strong>"Donee"</strong>), to be my true and lawful Attorney, to act in my name and on my behalf to do all or any of the following acts and things in respect of the commercial transport asset detailed below (hereinafter referred to as the <strong>"Asset"</strong>):
+          <strong>KNOW ALL MEN BY THESE PRESENTS</strong> that I, <strong>{props.ownerName}</strong>, of {props.ownerAddress || fallback}, holding Bank Verification Number (BVN) {props.bvn || fallback} and National Identification Number (NIN) {props.nin || fallback} (hereinafter referred to as the <strong>"Donor"</strong>), DO HEREBY APPOINT <strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company incorporated under the laws of the Federal Republic of Nigeria with RC: 9562528, having its registered address at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu (hereinafter referred to as the <strong>"Donee"</strong>), to be my true and lawful Attorney, to act in my name and on my behalf to do all or any of the following acts and things in respect of the commercial transport asset detailed below (hereinafter referred to as the <strong>"Asset"</strong>):
         </p>
 
         <h3 className={headingStyle}>ASSET DESCRIPTION:</h3>
@@ -426,7 +433,7 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         <h3 className={headingStyle}>LIMITATIONS</h3>
         <ul className="space-y-4 mb-6 list-none pl-0">
-          <li><strong>1. No Transfer of Ownership:</strong> This Power of Attorney <strong>DOES NOT</strong> grant the Donee the right or authority to sell, mortgage, pledge, or permanently transfer the legal ownership of the Asset to any third party, except as explicitly directed by me upon the rider&apos;s successful completion of the hire purchase tenure as stipulated in our Administration Agreement.</li>
+          <li><strong>1. No Transfer of Ownership:</strong> This Power of Attorney <strong>DOES NOT</strong> grant the Donee the right or authority to sell, mortgage, pledge, or permanently transfer the legal ownership of the Asset to any third party, except as explicitly directed by me upon the rider's successful completion of the hire purchase tenure as stipulated in our Administration Agreement.</li>
           <li><strong>2. Scope:</strong> The powers granted herein are strictly limited to the management and administration of the Asset listed above.</li>
         </ul>
 
@@ -442,7 +449,7 @@ export default function VirtualAgreement(props: AgreementProps) {
           <div className="space-y-4">
             <p className="font-bold underline text-xs">SIGNED, SEALED, AND DELIVERED by the within-named DONOR:</p>
             
-            <div className="relative h-20 w-48 mt-4 mb-2">
+            <div className="relative h-20 w-40 mt-4 mb-2">
               {poaOwnerSig ? (
                 <img src={poaOwnerSig} alt="Donor Signature" className={`absolute left-0 bottom-0 h-20 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
               ) : (
@@ -462,7 +469,7 @@ export default function VirtualAgreement(props: AgreementProps) {
                {hpaWitnessSig ? (
                  <img src={hpaWitnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
                ) : (
-                 <div className={`absolute bottom-0 left-14 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+                 <div className={`absolute bottom-0 left-14 w-[130px] border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
                )}
             </div>
             <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
@@ -472,12 +479,12 @@ export default function VirtualAgreement(props: AgreementProps) {
             <p className="font-bold underline text-xs">ACCEPTED BY THE DONEE:</p>
             <p className="font-bold text-xs uppercase">YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
             
-            <div className="relative h-20 w-48 mt-4 mb-2">
+            <div className="relative h-20 w-40 mt-4 mb-2">
                <img src="/images/stamp.png" alt="Company Seal" className="absolute left-0 -top-4 h-24 opacity-80 object-contain" />
                <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
             
-            <p className="font-bold text-xs">Name: Yussuf Dare Orelaja</p>
+            <p className="font-bold text-xs">YUSSUF DARE ORELAJA</p>
             <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Designation: Managing Director</p>
             <p className={isPdf ? "text-xs" : "text-xs text-slate-light"}>Date: {formattedDate}</p>
           </div>
@@ -586,7 +593,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         {/* Witness Details Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-void-light/5 border border-cobalt/20 rounded-xl">
           <div className="md:col-span-2">
-            <h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Owner&apos;s Witness Details</h4>
+            <h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Owner's Witness Details</h4>
             {props.initialWitnessName && <p className="text-xs text-slate-light mt-1">Pre-filled with your previous witness. Edit if necessary.</p>}
           </div>
           <div>
@@ -595,7 +602,7 @@ export default function VirtualAgreement(props: AgreementProps) {
           </div>
           <div>
             <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Address</label>
-            <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-base md:text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street, Lagos" />
+            <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-base md:text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street" />
           </div>
           <div className="md:col-span-2">
             <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
