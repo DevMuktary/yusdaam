@@ -77,6 +77,31 @@ export async function POST(req: Request) {
 
       console.log(`💰 SUCCESS: Remittance of ₦${amountInNaira} recorded for Rider ${rider.firstName} ${rider.lastName}`);
 
+      // --- 2.5 FIX: INSTANT DASHBOARD UPDATE FOR ACTIVE CONTRACTS ---
+      // This ensures the Rider's frontend updates immediately when they pay mid-week
+      if (contract && contract.isActive && contract.nextDueDate !== null) {
+        const activeCycle = await prisma.weeklyCycle.findFirst({
+          where: { contractId: contract.id, weekNumber: contract.currentWeek }
+        });
+
+        if (activeCycle) {
+          const newAmountPaid = (activeCycle.amountPaid || 0) + amountInNaira;
+          const newShortfall = Math.max(0, activeCycle.expectedAmount - newAmountPaid);
+          const isSettled = newAmountPaid >= (activeCycle.expectedAmount - 0.01);
+
+          await prisma.weeklyCycle.update({
+            where: { id: activeCycle.id },
+            data: {
+              amountPaid: newAmountPaid,
+              shortfallAmount: newShortfall,
+              isSettled: isSettled
+            }
+          });
+          
+          console.log(`⚡ Instant Update: Week ${contract.currentWeek} cycle updated with ₦${amountInNaira}`);
+        }
+      }
+
       // 3. --- WATERFALL DEBT CLEARANCE LOGIC ---
       // Trigger ONLY if contract is in RECOVERY MODE (Tenure is over, nextDueDate is null, but still active)
       if (contract && contract.isActive && contract.nextDueDate === null) {
