@@ -78,27 +78,22 @@ export async function GET(req: Request) {
       const shortfallAmount = Math.max(0, expectedAmount - totalPaid);
       const isSettled = shortfallAmount === 0;
 
-      // --- 2. ISOLATED BILLING: Create the Weekly Cycle Record ---
-      await prisma.weeklyCycle.create({
-        data: {
+      // --- 2. ISOLATED BILLING: UPDATE the pre-existing Weekly Cycle Record ---
+      // FIX: Using updateMany to prevent duplicate week records
+      await prisma.weeklyCycle.updateMany({
+        where: {
           contractId: contract.id,
-          weekNumber: contract.currentWeek,
-          expectedAmount: expectedAmount,
+          weekNumber: contract.currentWeek
+        },
+        data: {
           amountPaid: totalPaid,
           shortfallAmount: shortfallAmount,
           isSettled: isSettled,
-          
-          // --- NEW: OWNER PAYOUT TRACKING ---
-          ownerExpectedAmount: ownerExpectedAmount,
-          ownerRemittedAmount: 0, // Admin hasn't paid them yet
-          isOwnerSettled: false,  // Starts false
-
-          startDate: cycleStartDate,
-          endDate: contract.nextDueDate
+          ownerExpectedAmount: ownerExpectedAmount 
         }
       });
 
-      // Fetch the true total historical debt (including the cycle we just created)
+      // Fetch the true total historical debt (including the cycle we just updated)
       const debtCheck = await prisma.weeklyCycle.aggregate({
         where: { contractId: contract.id, isSettled: false },
         _sum: { shortfallAmount: true }
