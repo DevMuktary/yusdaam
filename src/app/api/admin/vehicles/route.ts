@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   }
 }
 
-// NEW: Update Status and Handle Unassignment
+// Update Status and Handle Unassignment
 export async function PUT(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -71,21 +71,36 @@ export async function PUT(req: Request) {
       });
     } 
     else if (action === "UNASSIGN") {
-      // Disconnect the Rider and Owner, Set Status to UNASSIGNED
-      await prisma.vehicle.update({
+      // 1. Fetch the vehicle first to know who the rider is
+      const vehicle = await prisma.vehicle.findUnique({
         where: { id: vehicleId },
-        data: { 
-          status: "UNASSIGNED",
-          rider: { disconnect: true },
-          owner: { disconnect: true }
-        }
+        select: { riderId: true }
       });
 
-      // Clear existing contract attached to this vehicle.
-      // This is crucial, because vehicleId is @unique in the Contract model.
-      // Without deleting it, you will get a Prisma constraint error when trying to re-assign.
-      await prisma.contract.deleteMany({
-        where: { vehicleId: vehicleId }
+      // 2. Perform a secure transaction to clean up everything
+      await prisma.$transaction(async (tx) => {
+        // A. Reset the Rider's account status so they go back to the "APPROVED" pool
+        if (vehicle?.riderId) {
+          await tx.user.update({
+            where: { id: vehicle.riderId },
+            data: { accountStatus: "APPROVED" }
+          });
+        }
+
+        // B. Destroy the current contract attached to this vehicle to free it up
+        await tx.contract.deleteMany({
+          where: { vehicleId: vehicleId }
+        });
+
+        // C. Disconnect the Rider and set to UNASSIGNED (WE LEAVE THE OWNER ATTACHED)
+        await tx.vehicle.update({
+          where: { id: vehicleId },
+          data: { 
+            status: "UNASSIGNED",
+            rider: { disconnect: true }
+            // Notice: We intentionally do NOT disconnect the owner here!
+          }
+        });
       });
     }
 
