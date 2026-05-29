@@ -42,7 +42,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   const currentMonth = today.toLocaleString('default', { month: 'long' });
   const currentYear = today.getFullYear();
   const formattedDate = today.toLocaleDateString('en-GB');
-  const currentDayOfWeek = today.toLocaleString('default', { weekday: 'long' }); // Dynamic exact day (e.g. "Thursday")
+  const currentDayOfWeek = today.toLocaleString('default', { weekday: 'long' });
 
   const g1 = guarantors[0] || {};
   const g2 = guarantors[1] || {};
@@ -60,12 +60,15 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
       setLoadingText("Compiling Legal PDF...");
       // @ts-ignore
       const html2pdf = (await import("html2pdf.js")).default;
+      
+      // FIX 1: Removed 'avoid-all' to prevent bad calculations, relying solely on CSS classes.
+      // Added letterRendering for sharper text.
       const opt = {
         margin: [0.5, 0.5, 0.5, 0.5],
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 800 },
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 800, letterRendering: true },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: ['css', 'legacy'] } 
       };
 
       const dataUri = await html2pdf().set({ ...opt, filename: 'HPA.pdf' }).from(pdfContractRef.current).output('datauristring');
@@ -93,14 +96,16 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
 
   const HpaDocument = ({ isPdf = false }: { isPdf?: boolean }) => {
     const textStyle = isPdf ? "text-[11px] leading-snug text-black font-serif text-justify" : "text-sm text-slate-light leading-relaxed font-sans text-justify";
-    const headingStyle = isPdf ? "font-bold text-[12px] border-b border-gray-400 pb-0.5 mt-3 mb-1.5 text-black uppercase break-after-avoid" : "font-bold text-crisp-white text-base mt-8 border-b border-cobalt/20 pb-2 uppercase";
-    const paraSpacing = isPdf ? "mb-1.5" : "mb-4";
-    const listSpacing = isPdf ? "mb-1.5 space-y-0.5" : "mb-6 space-y-2";
+    
+    // FIX 2: Added `break-inside-avoid` to all standard text blocks so they jump to the next page instead of slicing
+    const headingStyle = isPdf ? "font-bold text-[12px] border-b border-gray-400 pb-0.5 mt-3 mb-1.5 text-black uppercase break-after-avoid break-inside-avoid" : "font-bold text-crisp-white text-base mt-8 border-b border-cobalt/20 pb-2 uppercase";
+    const paraSpacing = isPdf ? "mb-1.5 break-inside-avoid" : "mb-4";
+    const listSpacing = isPdf ? "mb-1.5 space-y-0.5 break-inside-avoid" : "mb-6 space-y-2";
 
     return (
       <div className={textStyle}>
         
-        <div className={`text-center ${isPdf ? "pb-3 mb-4 break-after-avoid border border-gray-300 rounded overflow-hidden" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
+        <div className={`text-center ${isPdf ? "pb-3 mb-4 break-inside-avoid break-after-avoid border border-gray-300 rounded overflow-hidden" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
           <div className={isPdf ? "bg-[#001232] py-4 w-full" : "bg-void-navy"}>
             <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: isPdf ? "60px" : "45px", width: "auto", margin: "0 auto", display: "block", objectFit: "contain" }} />
           </div>
@@ -110,21 +115,21 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           </div>
         </div>
 
-        <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-3 break-after-avoid" : "text-lg text-signal-red mb-8"}`}>DRIVER/RIDER HIRE PURCHASE AGREEMENT</h2>
+        <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-3 break-after-avoid break-inside-avoid" : "text-lg text-signal-red mb-8"}`}>DRIVER/RIDER HIRE PURCHASE AGREEMENT</h2>
 
         <p className={paraSpacing}><strong>THIS AGREEMENT</strong> is made this <strong>{currentDay}</strong> day of <strong>{currentMonth}</strong>, <strong>{currentYear}</strong>.</p>
 
-        <p className={`font-bold ${isPdf ? "mb-0.5" : "mb-1"}`}>BETWEEN</p>
+        <p className={`font-bold ${isPdf ? "mb-0.5 break-inside-avoid" : "mb-1"}`}>BETWEEN</p>
         <p className={paraSpacing}><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company duly incorporated under the Companies and Allied Matters Act (CAMA) with RC: 9562528, having its registered office at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu Lagos., Nigeria (hereinafter referred to as the <strong>“Administrator”</strong>, acting as the lawful Attorney for the Asset Owner), of the first part;</p>
 
-        <p className={`font-bold ${isPdf ? "mb-0.5" : "mb-1"}`}>AND</p>
+        <p className={`font-bold ${isPdf ? "mb-0.5 break-inside-avoid" : "mb-1"}`}>AND</p>
         <p className={paraSpacing}><strong>{rider?.firstName} {rider?.lastName}</strong>, NIN: {rider?.nin}, residing at {rider?.streetAddress}, Email: {rider?.email || "N/A"}, Phone: {rider?.phoneNumber} (hereinafter referred to as the <strong>“Driver/Rider”</strong>), of the second part;</p>
         
-        <p className={`font-bold ${isPdf ? "mb-0.5" : "mb-1"}`}>AND</p>
-        <p className={isPdf ? "mb-2" : "mb-8"}><strong>THE GUARANTORS</strong>, whose names, addresses, and details are expressly set out in Clause 7 of this Agreement (hereinafter referred to as the <strong>"Guarantors"</strong>), of the third part.</p>
+        <p className={`font-bold ${isPdf ? "mb-0.5 break-inside-avoid" : "mb-1"}`}>AND</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-8"}><strong>THE GUARANTORS</strong>, whose names, addresses, and details are expressly set out in Clause 7 of this Agreement (hereinafter referred to as the <strong>"Guarantors"</strong>), of the third part.</p>
 
         <h3 className={headingStyle}>RECITALS</h3>
-        <p className={`font-bold ${isPdf ? "mb-1" : "mb-2"}`}>WHEREAS:</p>
+        <p className={`font-bold ${isPdf ? "mb-1 break-inside-avoid" : "mb-2"}`}>WHEREAS:</p>
         <ul className={`list-[upper-alpha] pl-5 ${listSpacing}`}>
           <li>The Administrator manages commercial transport vehicles on behalf of legitimate asset owners via a legally executed Power of Attorney.</li>
           <li>The Driver/Rider desires to hire, and ultimately purchase, the commercial transport asset described herein under a weekly remittance structure.</li>
@@ -157,36 +162,36 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         
         <p className={paraSpacing}>2.5 <strong>Payment Schedule:</strong> Payments must be made no later than <strong>{currentDayOfWeek} 11:59 PM</strong> of every week. Payments made to unauthorized staff or third parties will not be recognized.</p>
         
-        <p className={isPdf ? "mb-2" : "mb-6"}>2.6 <strong>Tenure:</strong> The expected duration is <strong>{contract?.riderDurationWeeks || "---"}</strong> weeks, concluding when the Total Hire Purchase Price is fully paid.</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>2.6 <strong>Tenure:</strong> The expected duration is <strong>{contract?.riderDurationWeeks || "---"}</strong> weeks, concluding when the Total Hire Purchase Price is fully paid.</p>
 
         <h3 className={headingStyle}>3. DRIVER/RIDER’S OBLIGATIONS AND RISK</h3>
         <p className={paraSpacing}>3.1 <strong>Absolute Risk:</strong> The Driver/Rider assumes 100% financial and operational risk for the Asset from the moment of handover. The Administrator makes no warranties regarding the mechanical longevity of the Asset.</p>
         <p className={paraSpacing}>3.2 <strong>Maintenance & Repairs:</strong> The Driver/Rider shall be solely responsible for the cost of all mechanical repairs, routine maintenance, servicing, and breakdowns.</p>
         <p className={paraSpacing}>3.3 <strong>Uninterrupted Remittance:</strong> Mechanical failure, illness, traffic delays, or vehicle impoundment shall not exempt the Driver/Rider from their obligation to pay the Weekly Remittance as and when due.</p>
         <p className={paraSpacing}>3.4 <strong>Illegal Usage & Contraband:</strong> The Driver/Rider shall not use the Asset for any unlawful activity, including but not limited to smuggling, kidnapping, robbery, or transporting contraband. Any such use immediately nullifies this Agreement and invites law enforcement action.</p>
-        <p className={isPdf ? "mb-2" : "mb-6"}>3.5 <strong>GPS & Telematics:</strong> A GPS tracking device is actively installed on the Asset. Tampering with, disconnecting, obscuring, or damaging the GPS tracker is considered an act of theft, resulting in immediate repossession and criminal prosecution.</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>3.5 <strong>GPS & Telematics:</strong> A GPS tracking device is actively installed on the Asset. Tampering with, disconnecting, obscuring, or damaging the GPS tracker is considered an act of theft, resulting in immediate repossession and criminal prosecution.</p>
 
         <h3 className={headingStyle}>4. ADMINISTRATOR’S RIGHTS AND REPOSSESSION</h3>
         <p className={paraSpacing}>4.1 <strong>Ownership Retention:</strong> The Asset remains the absolute property of the Asset Owner (managed by the Administrator) until the Total Hire Purchase Price is remitted. The Driver/Rider is merely a "Hirer" and cannot sell, lease, pawn, or use the Asset as collateral.</p>
-        <p className={`font-bold ${isPdf ? "mb-0.5" : "mb-1"}`}>4.2 <strong>Right of Repossession:</strong> The Administrator reserves the right to forcefully recover and repossess the Asset without prior court order, legal notice, or liability for trespass if:</p>
+        <p className={`font-bold ${isPdf ? "mb-0.5 break-inside-avoid" : "mb-1"}`}>4.2 <strong>Right of Repossession:</strong> The Administrator reserves the right to forcefully recover and repossess the Asset without prior court order, legal notice, or liability for trespass if:</p>
         <ul className={`list-disc pl-6 ${listSpacing}`}>
           <li>The Driver/Rider defaults on the Weekly Remittance for seven (7) consecutive days.</li>
           <li>The Driver/Rider tampers with the GPS tracker.</li>
           <li>The Asset is found to be abandoned, grossly abused, or mechanically neglected.</li>
         </ul>
-        <p className={isPdf ? "mb-2" : "mb-6"}>4.3 <strong>Absolute Forfeiture:</strong> In the event of repossession due to any default or breach of contract, all previous payments made by the Driver/Rider shall be legally classified as standard rental fees for the prior use of the Asset and shall not be refunded under any circumstances.</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>4.3 <strong>Absolute Forfeiture:</strong> In the event of repossession due to any default or breach of contract, all previous payments made by the Driver/Rider shall be legally classified as standard rental fees for the prior use of the Asset and shall not be refunded under any circumstances.</p>
 
         <h3 className={headingStyle}>5. GUARANTORS’ STRICT LIABILITY AND UNDERTAKING</h3>
         <p className={paraSpacing}>The Guarantors, having previously executed their Sworn Attestations, are legally bound to this Agreement as Primary Obligors. By acting as sureties, the Guarantors acknowledge and explicitly agree to the following strict liabilities:</p>
         <p className={paraSpacing}>5.1 <strong>Joint and Several Liability:</strong> The Guarantors are equally and fully liable alongside the Driver/Rider for the Total Hire Purchase Price and any outstanding debt.</p>
         <p className={paraSpacing}>5.2 <strong>Asset Theft and Damage:</strong> In the event the Asset is stolen, severely damaged, crashed, or vandalized, and the Driver/Rider is unable or unwilling to cover the costs, the Guarantors shall bear the absolute financial burden of repair or full replacement of the Asset.</p>
         <p className={paraSpacing}>5.3 <strong>Duty to Produce the Rider:</strong> Should the Driver/Rider abscond with the Asset or evade weekly remittances, the Guarantors are legally obligated to physically produce the Driver/Rider to the Administrator or disclose the exact location of the Asset.</p>
-        <p className={isPdf ? "mb-2" : "mb-6"}>5.4 <strong>Recovery Costs:</strong> If the Administrator is forced to employ asset recovery agents, legal counsel, or law enforcement to trace an absconded Driver/Rider, all tracking, legal, and recovery expenses shall be billed directly to the Guarantors.</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>5.4 <strong>Recovery Costs:</strong> If the Administrator is forced to employ asset recovery agents, legal counsel, or law enforcement to trace an absconded Driver/Rider, all tracking, legal, and recovery expenses shall be billed directly to the Guarantors.</p>
 
         <h3 className={headingStyle}>6. GENERAL PROVISIONS</h3>
         <p className={paraSpacing}>6.1 <strong>Transfer of Ownership:</strong> Upon the complete and timely payment of the Total Hire Purchase Price, the Administrator shall issue a Letter of Completion and facilitate the Change of Ownership Form transferring full legal ownership to the Driver/Rider.</p>
         <p className={paraSpacing}>6.2 <strong>Severability:</strong> If any provision of this Agreement is found to be unenforceable by a court, the remaining provisions shall remain in full force and effect.</p>
-        <p className={isPdf ? "mb-3" : "mb-6"}>6.3 <strong>Jurisdiction:</strong> This Agreement shall be governed by the laws of the Federal Republic of Nigeria. Any dispute shall be subject to the exclusive jurisdiction of the competent Courts of Nigeria.</p>
+        <p className={isPdf ? "mb-3 break-inside-avoid" : "mb-6"}>6.3 <strong>Jurisdiction:</strong> This Agreement shall be governed by the laws of the Federal Republic of Nigeria. Any dispute shall be subject to the exclusive jurisdiction of the competent Courts of Nigeria.</p>
 
         <h3 className={headingStyle}>7. GUARANTORS' EXECUTION</h3>
         <div className={`${isPdf ? "mb-3 p-3 border border-gray-400 bg-gray-50 break-inside-avoid" : "mb-8 p-4 border border-cobalt/30 bg-void-navy/50"}`}>
