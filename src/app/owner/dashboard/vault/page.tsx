@@ -73,8 +73,9 @@ export default async function LegalVaultPage() {
               ? `${contract.signedDocumentUrl}?fl_attachment=YUSDAAM_HPA_${vehicle.registrationNumber}.pdf` 
               : null;
               
+            // THE SHORTCUT: Swap "_HPA_Agreement" for "_Power_Of_Attorney" in the URL dynamically
             const poaDownloadLink = contract.signedDocumentUrl 
-              ? `${contract.signedDocumentUrl}?fl_attachment=YUSDAAM_POA_${vehicle.registrationNumber}.pdf` 
+              ? `${contract.signedDocumentUrl.replace("_HPA_Agreement", "_Power_Of_Attorney")}?fl_attachment=YUSDAAM_POA_${vehicle.registrationNumber}.pdf` 
               : null;
 
             return (
