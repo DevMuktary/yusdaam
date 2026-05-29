@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
 import { redirect } from "next/navigation";
-import { Scale, FileText, Download, ShieldCheck, Calendar, CarFront } from "lucide-react";
+import { Scale, FileText, Download, ShieldCheck, Calendar, CarFront, Clock } from "lucide-react";
 
 const prisma = new PrismaClient();
 
@@ -34,7 +34,7 @@ export default async function LegalVaultPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden">
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden pb-20">
       
       {/* Header Section */}
       <div className="border-b border-cobalt/20 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -44,7 +44,7 @@ export default async function LegalVaultPage() {
           </h1>
           <p className="text-slate-light">Secure repository for all your executed Hire Purchase Agreements and Powers of Attorney.</p>
         </div>
-        <div className="flex items-center gap-2 bg-emerald-400/10 text-emerald-400 px-4 py-2 rounded-lg border border-emerald-400/20">
+        <div className="flex items-center gap-2 bg-emerald-400/10 text-emerald-400 px-4 py-2 rounded-lg border border-emerald-400/20 shrink-0 w-fit">
           <ShieldCheck size={18} />
           <span className="text-xs font-bold uppercase tracking-widest">End-to-End Encrypted</span>
         </div>
@@ -60,7 +60,7 @@ export default async function LegalVaultPage() {
           </p>
         </div>
       ) : (
-        // Document List
+        // Document List (Loops per Vehicle)
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {signedAssets.map((vehicle) => {
             const contract = vehicle.contract!;
@@ -68,14 +68,17 @@ export default async function LegalVaultPage() {
               day: 'numeric', month: 'long', year: 'numeric'
             });
 
-            // Note: If you are saving PDF URLs to cloud storage (like AWS S3 or Cloudinary) 
-            // inside your dispatch API, you would use contract.signedDocumentUrl here.
-            // If they are not saved as URLs yet, you can link them back to a generator route.
-            const hpaDownloadLink = contract.signedDocumentUrl || "#"; 
-            const poaDownloadLink = contract.signedDocumentUrl || "#"; 
+            // Cloudinary trick: force download and name the file using the vehicle's plate number
+            const hpaDownloadLink = contract.signedDocumentUrl 
+              ? `${contract.signedDocumentUrl}?fl_attachment=YUSDAAM_HPA_${vehicle.registrationNumber}.pdf` 
+              : null;
+              
+            const poaDownloadLink = contract.signedDocumentUrl 
+              ? `${contract.signedDocumentUrl}?fl_attachment=YUSDAAM_POA_${vehicle.registrationNumber}.pdf` 
+              : null;
 
             return (
-              <div key={vehicle.id} className="bg-void-navy/50 border border-cobalt/20 rounded-xl p-6 shadow-lg hover:border-cobalt/50 transition duration-300">
+              <div key={vehicle.id} className="bg-void-navy/50 border border-cobalt/20 rounded-xl p-6 shadow-lg hover:border-cobalt/50 transition duration-300 flex flex-col h-full">
                 
                 {/* Vehicle Identification */}
                 <div className="flex items-start justify-between border-b border-cobalt/20 pb-4 mb-4">
@@ -108,32 +111,45 @@ export default async function LegalVaultPage() {
                   </div>
                 </div>
 
-                {/* Download Actions */}
-                <div className="grid grid-cols-2 gap-3 mt-auto">
-                  <a 
-                    href={hpaDownloadLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 py-3 bg-void-light/10 text-crisp-white text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-void-light/20 transition border border-cobalt/30"
-                  >
-                    <Download size={14} /> HPA Agreement
-                  </a>
-                  
-                  <a 
-                    href={poaDownloadLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 py-3 bg-void-light/10 text-crisp-white text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-void-light/20 transition border border-cobalt/30"
-                  >
-                    <Download size={14} /> Power of Attorney
-                  </a>
-                </div>
+                {/* Download Actions (Pushed to bottom of card) */}
+                <div className="mt-auto">
+                  <div className="grid grid-cols-2 gap-3">
+                    {hpaDownloadLink ? (
+                      <a 
+                        href={hpaDownloadLink}
+                        download
+                        className="flex items-center justify-center gap-2 py-3 bg-cobalt/10 text-cobalt hover:bg-cobalt/20 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg transition border border-cobalt/30"
+                      >
+                        <Download size={14} /> Download HPA
+                      </a>
+                    ) : (
+                      <button disabled className="flex items-center justify-center gap-2 py-3 bg-void-light/5 text-slate-light/40 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg border border-white/5 cursor-not-allowed">
+                        <Clock size={14} /> Awaiting PDF
+                      </button>
+                    )}
+                    
+                    {poaDownloadLink ? (
+                      <a 
+                        href={poaDownloadLink}
+                        download
+                        className="flex items-center justify-center gap-2 py-3 bg-cobalt/10 text-cobalt hover:bg-cobalt/20 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg transition border border-cobalt/30"
+                      >
+                        <Download size={14} /> Download POA
+                      </a>
+                    ) : (
+                      <button disabled className="flex items-center justify-center gap-2 py-3 bg-void-light/5 text-slate-light/40 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg border border-white/5 cursor-not-allowed">
+                        <Clock size={14} /> Awaiting PDF
+                      </button>
+                    )}
+                  </div>
 
-                {(!contract.signedDocumentUrl) && (
-                  <p className="text-[10px] text-amber-400/70 mt-4 text-center italic">
-                    * PDFs were dispatched to your registered email. 
-                  </p>
-                )}
+                  {!contract.signedDocumentUrl && (
+                    <p className="text-[10px] text-amber-400/70 mt-4 text-center italic">
+                      * Final combined PDFs are currently being generated by the Administrator.
+                    </p>
+                  )}
+                </div>
+                
               </div>
             );
           })}
