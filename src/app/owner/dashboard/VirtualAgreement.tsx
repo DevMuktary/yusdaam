@@ -24,7 +24,7 @@ export interface AgreementProps {
   plateNo?: string;
   startDate?: string;
   endDate?: string;
-  ownerDurationWeeks?: string | number; // <-- ADDED
+  ownerDurationWeeks?: string | number;
   targetWeeklyRemittance?: string;
   ownerBank?: string;
   ownerAcctNo?: string;
@@ -55,7 +55,7 @@ export default function VirtualAgreement(props: AgreementProps) {
   
   // PRE-FILL STATE FROM PROPS
   const [witnessName, setWitnessName] = useState(props.initialWitnessName || "");
-  const [witnessAddress, setWitnessAddress] = useState(""); // Can add to DB later if needed
+  const [witnessAddress, setWitnessAddress] = useState(""); 
   const [hpaOwnerSig, setHpaOwnerSig] = useState<string | null>(null);
   const [hpaWitnessSig, setHpaWitnessSig] = useState<string | null>(props.initialWitnessSignature || null);
 
@@ -90,7 +90,6 @@ export default function VirtualAgreement(props: AgreementProps) {
     if (!witnessName || !witnessAddress) return setErrorMsg("Please provide your witness's name and address.");
     if (hpaOwnerSigCanvas.current?.isEmpty()) return setErrorMsg("Please provide your owner signature.");
     
-    // Ensure we have a witness signature (either pre-loaded or newly drawn)
     const currentWitnessSig = hpaWitnessSigCanvas.current?.isEmpty() ? null : hpaWitnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png");
     if (!currentWitnessSig && !hpaWitnessSig) return setErrorMsg("Please provide your witness signature.");
     
@@ -114,7 +113,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         body: JSON.stringify({ 
           signature: hpaOwnerSig,
           witnessName: witnessName,
-          witnessSignature: hpaWitnessSig, // Collected from step 1
+          witnessSignature: hpaWitnessSig,
           contractId: props.contractId
         }), 
       });
@@ -284,7 +283,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         <h3 className={headingStyle}>7. RISK ALLOCATION, INSURANCE, AND LIABILITY</h3>
         <p className="mb-2">7.1 <strong>Rider's Risk:</strong> The Rider bears one hundred percent (100%) of the risk and financial cost associated with mechanical failures, accident damage, routine maintenance, and breakdowns occurring during the Tenure. The Administrator makes no warranties regarding the Rider's performance or the Asset's mechanical longevity.</p>
         <p className="mb-2">7.2 <strong>Insurance:</strong> The Asset must carry, at a minimum, Third-Party Insurance as required by the National Insurance Commission (NAICOM), bearing Policy No: {props.policyNo || fallback}. The Owner shall pay the insurer directly. Comprehensive insurance is highly recommended and shall be at the Owner's sole discretion and expense. A copy of the insurance policy shall be annexed as <strong>Schedule B</strong>.</p>
-        <p className="mb-6">7.3 <strong>Enforcement Liability:</strong> While the Administrator is strictly obligated to execute repossessions if the Rider defaults on payments or repairs, the Administrator shall bear no financial liability for the loss of the Asset, lost anticipated income, or any repair costs.</p>
+        <p className="mb-6">7.3 <strong>Enforcement Liability:</strong> While the Administrator is strictly obligated to execute repossessions if the Rider defaults on payments or repairs, the Administrator shall bear no financial liability for the loss of the Asset, lost anticipated income, or any repair costs. <strong>The Rider and their provided Guarantors bear the ultimate legal and financial responsibility for any such liabilities, damages, or outstanding shortfalls.</strong></p>
 
         <h3 className={headingStyle}>8. OWNER'S OBLIGATIONS</h3>
         <p className="mb-2">8.1 The Owner covenants not to interfere with the Administrator's day-to-day management, Rider selection, route optimization, or enforcement actions carried out under the Power of Attorney.</p>
@@ -295,7 +294,7 @@ export default function VirtualAgreement(props: AgreementProps) {
         <h3 className={headingStyle}>9. TRANSFER OF OWNERSHIP</h3>
         <p className="mb-2">9.1 Upon the Rider's successful completion of the Tenure, the Administrator shall promptly issue a Letter of Completion to both the Owner and the Rider.</p>
         <p className="mb-2">9.2 Upon receipt of the Letter of Completion, the Owner shall, within fourteen (14) days, execute a Change of Ownership Form and surrender the original purchase receipt to the Rider.</p>
-        <p className="mb-6">9.3 The Administrator shall facilitate this transfer but shall not be held legally liable if the Owner fails or delays in executing the required transfer documentation. The Power of Attorney shall automatically expire upon the successful transfer of ownership.</p>
+        <p className="mb-6">9.3 The Administrator shall facilitate this transfer. <strong>Failure or deliberate delay by the Owner in executing the required transfer documentation upon the Rider's successful completion of the Tenure constitutes a material breach of contract, which may lead to immediate civil prosecution and legal action against the Owner.</strong> The Power of Attorney shall automatically expire upon the successful transfer of ownership.</p>
 
         <h3 className={headingStyle}>10. TERMINATION AND REPOSSESSION</h3>
         <p className="mb-2">10.1 <strong>Lock-in Period:</strong> The Owner shall not terminate this Agreement within the first twenty-six (26) weeks of the Tenure, except in the event of a proven material breach of contract by the Administrator.</p>
@@ -314,9 +313,9 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         <h3 className={headingStyle}>13. DISPUTE RESOLUTION AND GOVERNING LAW</h3>
         <p className="mb-2">13.1 This Agreement shall be governed by and construed in accordance with the Laws of the Federal Republic of Nigeria.</p>
-        <p className="mb-2">13.2 Any dispute, controversy, or claim arising out of or relating to this Agreement shall first be referred to mediation at the Lagos Multi-Door Courthouse.</p>
+        <p className="mb-2">13.2 Any dispute, controversy, or claim arising out of or relating to this Agreement shall first be referred to <strong>mediation at a recognized Multi-Door Courthouse or dispute resolution center of competent jurisdiction within Nigeria.</strong></p>
         <p className="mb-2">13.3 Should mediation fail to yield a settlement within thirty (30) days, the dispute shall be resolved by binding arbitration in Nigeria, conducted by a single arbitrator in accordance with the Arbitration and Mediation Act 2023.</p>
-        <p className="mb-6">13.4 The Courts of Nigeria shall retain exclusive jurisdiction for the enforcement of any arbitral award or equitable relief.</p>
+        <p className="mb-6">13.4 The Courts of the Federal Republic of Nigeria shall retain exclusive jurisdiction for the enforcement of any arbitral award or equitable relief.</p>
 
         <h3 className={headingStyle}>14. GENERAL PROVISIONS</h3>
         <p className="mb-2">14.1 <strong>Entire Agreement:</strong> This Agreement, alongside Schedules A, B, C, and D, constitutes the entire understanding between the Parties and supersedes all prior agreements or representations. Any amendments must be made in writing and duly signed by both Parties.</p>
@@ -326,13 +325,13 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         <p className="mb-8 font-bold italic uppercase">IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
 
-        {/* SIGNATURE BLOCKS */}
-        <div className={`grid grid-cols-2 gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
-          <div>
-            <p className="font-bold mb-6">SIGNED by the within-named ADMINISTRATOR</p>
+        {/* SIGNATURE BLOCKS - FIXED FOR MOBILE RESPONSIVENESS */}
+        <div className={`grid ${isPdf ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
+          <div className="space-y-4">
+            <p className="font-bold mb-4">SIGNED by the within-named ADMINISTRATOR</p>
             <p className="font-bold text-xs uppercase">YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
             
-            <div className="relative h-20 w-40 mt-4 mb-2">
+            <div className="relative h-20 w-full max-w-[160px] mt-4 mb-2">
                <img src="/images/stamp.png" alt="Company Seal" className="absolute left-0 -top-4 h-24 opacity-80 object-contain" />
                <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
@@ -346,17 +345,17 @@ export default function VirtualAgreement(props: AgreementProps) {
             <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Name: AISHA ADEKUNBI OLABINTAN</p>
             <p className={isPdf ? "text-[10px] mt-2 leading-tight" : "text-xs text-slate-light mt-2 leading-tight"}>Address: 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu</p>
             
-            <div className="relative h-12 mt-2 w-48">
+            <div className="relative h-12 mt-2 w-full max-w-[200px]">
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
                <img src="/images/aisha_signature.png" alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : ""}`} />
-               <div className={`absolute bottom-0 left-14 w-[130px] border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+               <div className={`absolute bottom-0 right-0 left-14 border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
             <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {formattedDate}</p>
           </div>
 
-          <div>
-            <p className="font-bold mb-6">SIGNED by the within-named OWNER</p>
-            <div className="relative h-20 w-40 mt-4 mb-2">
+          <div className="space-y-4">
+            <p className="font-bold mb-4">SIGNED by the within-named OWNER</p>
+            <div className="relative h-20 w-full max-w-[160px] mt-4 mb-2">
               {hpaOwnerSig ? (
                 <img src={hpaOwnerSig} alt="Owner Signature" className={`absolute left-0 bottom-0 h-20 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
               ) : (
@@ -370,12 +369,12 @@ export default function VirtualAgreement(props: AgreementProps) {
             <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Name: {witnessName || "______________________"}</p>
             <p className={isPdf ? "text-[10px] mt-2 leading-tight" : "text-xs text-slate-light mt-2 leading-tight"}>Address: {witnessAddress || "______________________"}</p>
             
-            <div className="relative h-12 mt-2 w-48">
+            <div className="relative h-12 mt-2 w-full max-w-[200px]">
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
                {hpaWitnessSig ? (
                  <img src={hpaWitnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
                ) : (
-                 <div className={`absolute bottom-0 left-14 w-[130px] border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+                 <div className={`absolute bottom-0 right-0 left-14 border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
                )}
             </div>
             <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Date: {formattedDate}</p>
@@ -445,11 +444,12 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         <p className="mb-10 font-bold italic uppercase">IN WITNESS WHEREOF, I have hereunto set my hand and seal this {currentDay} day of {currentMonth}, {currentYear}.</p>
 
-        <div className={`grid grid-cols-2 gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
+        {/* SIGNATURE BLOCKS - FIXED FOR MOBILE RESPONSIVENESS */}
+        <div className={`grid ${isPdf ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
           <div className="space-y-4">
             <p className="font-bold underline text-xs">SIGNED, SEALED, AND DELIVERED by the within-named DONOR:</p>
             
-            <div className="relative h-20 w-40 mt-4 mb-2">
+            <div className="relative h-20 w-full max-w-[160px] mt-4 mb-2">
               {poaOwnerSig ? (
                 <img src={poaOwnerSig} alt="Donor Signature" className={`absolute left-0 bottom-0 h-20 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
               ) : (
@@ -464,22 +464,22 @@ export default function VirtualAgreement(props: AgreementProps) {
             <p className={isPdf ? "text-xs mt-2" : "text-xs text-slate-light mt-2"}>Name: {witnessName || "______________________"}</p>
             <p className={isPdf ? "text-[10px] mt-2 leading-tight" : "text-xs text-slate-light mt-2 leading-tight"}>Address: {witnessAddress || "______________________"}</p>
             
-            <div className="relative h-12 mt-2 w-48">
+            <div className="relative h-12 mt-2 w-full max-w-[200px]">
                <span className={isPdf ? "text-xs absolute bottom-0 left-0" : "text-xs text-slate-light absolute bottom-0 left-0"}>Signature:</span>
                {hpaWitnessSig ? (
                  <img src={hpaWitnessSig} alt="Witness Signature" className={`absolute left-16 bottom-0 h-12 object-contain ${!isPdf ? "bg-white rounded-md p-1" : "mix-blend-multiply"}`} />
                ) : (
-                 <div className={`absolute bottom-0 left-14 w-[130px] border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
+                 <div className={`absolute bottom-0 right-0 left-14 border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
                )}
             </div>
             <p className={`mt-2 ${isPdf ? "text-xs" : "text-xs text-slate-light"}`}>Date: {formattedDate}</p>
           </div>
 
           <div className="space-y-4">
-            <p className="font-bold underline text-xs">ACCEPTED BY THE DONEE:</p>
+            <p className="font-bold underline text-xs mb-4">ACCEPTED BY THE DONEE:</p>
             <p className="font-bold text-xs uppercase">YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
             
-            <div className="relative h-20 w-40 mt-4 mb-2">
+            <div className="relative h-20 w-full max-w-[160px] mt-4 mb-2">
                <img src="/images/stamp.png" alt="Company Seal" className="absolute left-0 -top-4 h-24 opacity-80 object-contain" />
                <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-black" : "border-slate-light"}`}></div>
             </div>
