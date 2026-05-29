@@ -81,26 +81,33 @@ export async function POST(req: Request) {
       const rDuration = Number(riderDurationWeeks);
       const oDuration = Number(ownerDurationWeeks);
       const sysTotal = Number(systemGrandTotal);
+      const hpTotal = Number(totalHirePurchasePrice); // Owner's max cap
       const rWeekly = Number(riderWeeklyRemittance);
       const oWeekly = Number(ownerWeeklyPayout);
-      const adminFee = Number(weeklyServiceFee) || 0;
       
-      let cumulativeBilled = 0;
+      let cumulativeRiderBilled = 0;
+      let cumulativeOwnerBilled = 0;
       const cyclesData = [];
 
+      // The loop runs for the length of the Rider's tenure
       for (let week = 1; week <= rDuration; week++) {
+        
+        // --- 1. RIDER CAPPING (Against Grand Total) ---
         let expAmt = rWeekly;
-        let ownExpAmt = week <= oDuration ? oWeekly : 0;
-
-        // Ensure we cap the final fractional week perfectly so we don't overbill or overpay
-        if (cumulativeBilled + expAmt > sysTotal) {
-          expAmt = Math.max(0, sysTotal - cumulativeBilled);
-          if (week <= oDuration) {
-              ownExpAmt = Math.max(0, expAmt - adminFee);
-          }
+        if (cumulativeRiderBilled + expAmt > sysTotal) {
+          expAmt = Math.max(0, sysTotal - cumulativeRiderBilled);
         }
+        cumulativeRiderBilled += expAmt;
 
-        cumulativeBilled += expAmt;
+        // --- 2. OWNER CAPPING (Against pure HP Price) ---
+        let ownExpAmt = 0;
+        if (week <= oDuration) {
+          ownExpAmt = oWeekly;
+          if (cumulativeOwnerBilled + ownExpAmt > hpTotal) {
+             ownExpAmt = Math.max(0, hpTotal - cumulativeOwnerBilled);
+          }
+          cumulativeOwnerBilled += ownExpAmt;
+        }
 
         const wStartDate = new Date(baseDate);
         wStartDate.setDate(wStartDate.getDate() + ((week - 1) * 7));
@@ -113,17 +120,17 @@ export async function POST(req: Request) {
           weekNumber: week,
           expectedAmount: expAmt,
           amountPaid: 0,
-          shortfallAmount: expAmt, // Rider owes this full amount until paid
+          shortfallAmount: expAmt, 
           isSettled: expAmt <= 0,
-          ownerExpectedAmount: ownExpAmt, // Owner expects this payout
+          ownerExpectedAmount: ownExpAmt, 
           ownerRemittedAmount: 0,
-          isOwnerSettled: ownExpAmt <= 0, // Mark as settled if Owner expects 0 for this specific week
+          isOwnerSettled: ownExpAmt <= 0, 
           startDate: wStartDate,
           endDate: wEndDate
         });
       }
 
-      // Bulk insert all 100+ weeks into the database in one single query
+      // Bulk insert all weeks into the database in one single query
       await tx.weeklyCycle.createMany({ data: cyclesData });
 
       // 4. Update Rider Status
