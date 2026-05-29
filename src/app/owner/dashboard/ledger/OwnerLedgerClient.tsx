@@ -7,6 +7,10 @@ export default function OwnerLedgerClient({ ledgers, cycles = [], user }: { ledg
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("ALL");
   const [activeTab, setActiveTab] = useState<"SCHEDULE" | "RECEIPTS">("SCHEDULE");
 
+  // Pagination State for the Schedule Tab
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // 1. Extract unique vehicles from the cycles/ledgers for the dropdown filter
   const uniqueVehiclesMap = new Map();
   cycles.forEach(c => {
@@ -34,10 +38,16 @@ export default function OwnerLedgerClient({ ledgers, cycles = [], user }: { ledg
   const totalLifetimeEarnings = filteredLedgers.reduce((sum, tx) => sum + tx.amount, 0);
   const lastRemittance = filteredLedgers.length > 0 ? filteredLedgers[0].amount : 0;
   
-  // Pending Remittance: Total owner expected minus what admin has actually remitted
+  // INTELLIGENT PENDING MATH: Only sum weeks that are current or in the past!
   const totalPendingRemittance = filteredCycles.reduce((sum, c) => {
+    // If the week hasn't arrived yet according to the contract's clock, don't count it as pending debt
+    if (c.weekNumber > (c.contract?.currentWeek || 1)) return sum;
     return sum + Math.max(0, (c.ownerExpectedAmount || 0) - (c.ownerRemittedAmount || 0));
   }, 0);
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredCycles.length / itemsPerPage) || 1;
+  const paginatedCycles = filteredCycles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
@@ -66,11 +76,11 @@ export default function OwnerLedgerClient({ ledgers, cycles = [], user }: { ledg
 
         <div className="bg-amber-500/5 border border-amber-500/20 p-6 rounded-xl shadow-lg transition-all relative overflow-hidden">
           <div className="absolute -right-6 -top-6 text-amber-500/10"><CalendarDays size={120} /></div>
-          <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-2">Pending Rider Remittance</p>
+          <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-2">Active Pending Remittance</p>
           <div className="flex items-center gap-2">
             <h3 className="text-3xl font-black text-amber-400">₦{totalPendingRemittance.toLocaleString()}</h3>
           </div>
-          <p className="text-xs text-slate-light mt-2">Payouts pending successful rider collection.</p>
+          <p className="text-xs text-slate-light mt-2">Current due payouts awaiting rider collection.</p>
         </div>
 
         <div className="bg-void-navy/50 border border-cobalt/20 p-6 rounded-xl shadow-lg">
@@ -88,7 +98,7 @@ export default function OwnerLedgerClient({ ledgers, cycles = [], user }: { ledg
         
         <div className="flex gap-2">
           <button 
-            onClick={() => setActiveTab("SCHEDULE")}
+            onClick={() => { setActiveTab("SCHEDULE"); setCurrentPage(1); }}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === "SCHEDULE" ? "bg-cobalt text-white shadow-lg" : "bg-white/5 text-gray-400 hover:bg-white/10"}`}
           >
             <CalendarDays size={16} /> Payout Schedule
@@ -104,7 +114,7 @@ export default function OwnerLedgerClient({ ledgers, cycles = [], user }: { ledg
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <select 
             value={selectedVehicleId} 
-            onChange={(e) => setSelectedVehicleId(e.target.value)}
+            onChange={(e) => { setSelectedVehicleId(e.target.value); setCurrentPage(1); }}
             className="bg-[#001232] border border-cobalt/30 text-white text-xs font-bold tracking-wider rounded-lg px-4 py-2.5 focus:outline-none focus:border-cobalt w-full sm:w-auto"
           >
             <option value="ALL" className="bg-[#001232] text-white">ALL ASSETS (PORTFOLIO)</option>
@@ -136,67 +146,105 @@ export default function OwnerLedgerClient({ ledgers, cycles = [], user }: { ledg
                 <div className="p-12 text-center flex flex-col items-center justify-center">
                   <CalendarDays size={48} className="text-cobalt/30 mb-4" />
                   <p className="text-slate-light font-medium">No weekly cycles found.</p>
-                  <p className="text-xs text-slate-light/70 mt-2">Schedules will generate automatically once the vehicle is active.</p>
+                  <p className="text-xs text-slate-light/70 mt-2">Schedules will generate automatically once the vehicle is assigned.</p>
                 </div>
               ) : (
-                <table className="w-full text-left border-collapse min-w-[900px]">
-                  <thead>
-                    <tr className="bg-void-light/5 text-[10px] uppercase tracking-widest text-slate-light border-b border-cobalt/30">
-                      <th className="p-4 font-bold">Billing Week</th>
-                      <th className="p-4 font-bold">Asset ID</th>
-                      <th className="p-4 font-bold">Expected Payout</th>
-                      <th className="p-4 font-bold">Amount Remitted</th>
-                      <th className="p-4 font-bold">Pending Remittance</th>
-                      <th className="p-4 font-bold text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-cobalt/10">
-                    {filteredCycles.map((cycle) => {
-                      const pending = Math.max(0, (cycle.ownerExpectedAmount || 0) - (cycle.ownerRemittedAmount || 0));
-                      
-                      return (
-                        <tr key={cycle.id} className="hover:bg-void-light/5 transition duration-150">
-                          <td className="p-4">
-                            <p className="font-bold text-sm text-crisp-white">Week {cycle.weekNumber}</p>
-                            <p className="text-[10px] text-slate-light">{new Date(cycle.endDate).toLocaleDateString('en-GB')}</p>
-                          </td>
-                          <td className="p-4">
-                            <span className="text-[10px] font-bold text-crisp-white tracking-widest uppercase bg-cobalt/20 border border-cobalt/30 px-2 py-1 rounded">
-                              {cycle.contract?.vehicle?.registrationNumber || "N/A"}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <p className="text-sm font-mono text-slate-light">₦{(cycle.ownerExpectedAmount || 0).toLocaleString()}</p>
-                          </td>
-                          <td className="p-4">
-                            <p className={`text-sm font-mono font-bold ${cycle.ownerRemittedAmount > 0 ? 'text-emerald-400' : 'text-slate-light/40'}`}>
-                              ₦{(cycle.ownerRemittedAmount || 0).toLocaleString()}
-                            </p>
-                          </td>
-                          <td className="p-4">
-                            <p className={`text-sm font-mono font-bold ${pending > 0 ? 'text-amber-400' : 'text-slate-light'}`}>
-                              {pending > 0 ? `₦${pending.toLocaleString()}` : "---"}
-                            </p>
-                          </td>
-                          <td className="p-4 text-right">
-                            <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest
-                              ${cycle.isOwnerSettled ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-                                pending > 0 && cycle.ownerRemittedAmount > 0 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 
-                                'bg-void-light/10 text-slate-light/60 border border-void-light/20'}`}
-                            >
-                              {cycle.isOwnerSettled ? 'SETTLED' : pending > 0 && cycle.ownerRemittedAmount > 0 ? 'PARTIAL' : 'PENDING'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <>
+                  <table className="w-full text-left border-collapse min-w-[900px]">
+                    <thead>
+                      <tr className="bg-void-light/5 text-[10px] uppercase tracking-widest text-slate-light border-b border-cobalt/30">
+                        <th className="p-4 font-bold">Billing Week</th>
+                        <th className="p-4 font-bold">Asset ID</th>
+                        <th className="p-4 font-bold">Expected Payout</th>
+                        <th className="p-4 font-bold">Amount Remitted</th>
+                        <th className="p-4 font-bold">Pending Remittance</th>
+                        <th className="p-4 font-bold text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-cobalt/10">
+                      {paginatedCycles.map((cycle) => {
+                        const pending = Math.max(0, (cycle.ownerExpectedAmount || 0) - (cycle.ownerRemittedAmount || 0));
+                        
+                        // INTELLIGENT STATUS DISPLAY
+                        let statusText = "PENDING";
+                        let statusClass = "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                        
+                        if (cycle.isOwnerSettled) {
+                          statusText = "SETTLED";
+                          statusClass = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                        } else if (cycle.weekNumber > (cycle.contract?.currentWeek || 1)) {
+                          statusText = "UPCOMING";
+                          statusClass = "bg-void-light/10 text-slate-light/60 border border-void-light/20";
+                        } else if (cycle.ownerRemittedAmount > 0 && pending > 0) {
+                          statusText = "PARTIAL";
+                          statusClass = "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                        }
+
+                        // If it is a future week, hide the "Pending" amount visually to avoid confusion
+                        const displayPending = cycle.weekNumber > (cycle.contract?.currentWeek || 1) && !cycle.isOwnerSettled ? "---" : (pending > 0 ? `₦${pending.toLocaleString()}` : "---");
+
+                        return (
+                          <tr key={cycle.id} className={`hover:bg-void-light/5 transition duration-150 ${statusText === "UPCOMING" ? "opacity-60" : ""}`}>
+                            <td className="p-4">
+                              <p className="font-bold text-sm text-crisp-white">Week {cycle.weekNumber}</p>
+                              <p className="text-[10px] text-slate-light">{new Date(cycle.endDate).toLocaleDateString('en-GB')}</p>
+                            </td>
+                            <td className="p-4">
+                              <span className="text-[10px] font-bold text-crisp-white tracking-widest uppercase bg-cobalt/20 border border-cobalt/30 px-2 py-1 rounded">
+                                {cycle.contract?.vehicle?.registrationNumber || "N/A"}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <p className="text-sm font-mono text-slate-light">₦{(cycle.ownerExpectedAmount || 0).toLocaleString()}</p>
+                            </td>
+                            <td className="p-4">
+                              <p className={`text-sm font-mono font-bold ${cycle.ownerRemittedAmount > 0 ? 'text-emerald-400' : 'text-slate-light/40'}`}>
+                                ₦{(cycle.ownerRemittedAmount || 0).toLocaleString()}
+                              </p>
+                            </td>
+                            <td className="p-4">
+                              <p className={`text-sm font-mono font-bold ${pending > 0 && statusText !== "UPCOMING" ? 'text-amber-400' : 'text-slate-light'}`}>
+                                {displayPending}
+                              </p>
+                            </td>
+                            <td className="p-4 text-right">
+                              <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest ${statusClass}`}>
+                                {statusText}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="p-4 border-t border-cobalt/20 flex items-center justify-between bg-void-dark">
+                      <button 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 text-xs font-bold text-slate-light uppercase tracking-wider hover:text-white disabled:opacity-30 transition"
+                      >
+                        Prev
+                      </button>
+                      <span className="text-xs text-slate-light font-mono">Page {currentPage} of {totalPages}</span>
+                      <button 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 text-xs font-bold text-slate-light uppercase tracking-wider hover:text-white disabled:opacity-30 transition"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
         )}
 
+        {/* ... (Receipts Tab remains unchanged) */}
         {activeTab === "RECEIPTS" && (
           <div className="animate-in fade-in duration-300">
             <div className="overflow-x-auto">
