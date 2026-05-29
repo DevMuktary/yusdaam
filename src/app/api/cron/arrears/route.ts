@@ -54,32 +54,36 @@ export async function GET(req: Request) {
 
       const totalPaid = cyclePayments._sum.amount || 0;
 
-      // --- 1. THE SYSTEM GRAND TOTAL CAP MATH ---
-      // Check how much has been billed historically across all previous cycles
+      // --- 1. INDEPENDENT CAPPING MATH ---
+      // Check historical billing for BOTH Rider and Owner
       const pastCycles = await prisma.weeklyCycle.aggregate({
         where: { contractId: contract.id },
-        _sum: { expectedAmount: true }
+        _sum: { expectedAmount: true, ownerExpectedAmount: true }
       });
-      const cumulativeBilled = pastCycles._sum.expectedAmount || 0;
+      const cumulativeRiderBilled = pastCycles._sum.expectedAmount || 0;
+      const cumulativeOwnerBilled = pastCycles._sum.ownerExpectedAmount || 0;
 
-      // Start with the normal weekly targets
       let expectedAmount = contract.riderWeeklyRemittance;
-      let ownerExpectedAmount = contract.ownerWeeklyPayout;
+      let ownerExpectedAmount = 0;
 
-      // If charging the normal amount pushes them over the grand total, cap it to the exact remainder
-      if (cumulativeBilled + expectedAmount > contract.systemGrandTotal) {
-        expectedAmount = Math.max(0, contract.systemGrandTotal - cumulativeBilled);
-        
-        // For the fractional week, Owner gets the remainder MINUS Yusdaam's Service Fee
-        ownerExpectedAmount = Math.max(0, expectedAmount - contract.weeklyServiceFee);
+      // A. Cap Rider against System Grand Total
+      if (cumulativeRiderBilled + expectedAmount > contract.systemGrandTotal) {
+        expectedAmount = Math.max(0, contract.systemGrandTotal - cumulativeRiderBilled);
       }
       
-      // Calculate isolated week deficit based on the CAPPED expected amount
+      // B. Cap Owner against Total Hire Purchase Price (if they are still owed money)
+      if (contract.currentWeek <= contract.ownerDurationWeeks) {
+         ownerExpectedAmount = contract.ownerWeeklyPayout;
+         if (cumulativeOwnerBilled + ownerExpectedAmount > contract.totalHirePurchasePrice) {
+            ownerExpectedAmount = Math.max(0, contract.totalHirePurchasePrice - cumulativeOwnerBilled);
+         }
+      }
+      
+      // Calculate isolated week deficit based on the capped rider expected amount
       const shortfallAmount = Math.max(0, expectedAmount - totalPaid);
       const isSettled = shortfallAmount === 0;
 
       // --- 2. ISOLATED BILLING: UPDATE the pre-existing Weekly Cycle Record ---
-      // FIX: Using updateMany to prevent duplicate week records
       await prisma.weeklyCycle.updateMany({
         where: {
           contractId: contract.id,
@@ -102,10 +106,6 @@ export async function GET(req: Request) {
 
       // --- 3. ARREARS VERIFICATION & NOTIFICATION ---
       if (shortfallAmount > 0) {
-        
-        // INTELLIGENT MESSAGE AMOUNT: 
-        // If they owe massive debt, ask for the normal weekly amount to force them to catch up.
-        // If their total debt is somehow less than the normal amount, just ask for the exact total debt.
         let displayAmount = shortfallAmount;
         if (totalHistoricalDebt >= contract.riderWeeklyRemittance) {
           displayAmount = contract.riderWeeklyRemittance;
@@ -121,7 +121,6 @@ export async function GET(req: Request) {
           // Send Isolated Overdue SMS
           if (rider.phoneNumber) {
             const smsMessage = `URGENT: Dear ${rider.firstName}, your remittance of N${displayAmount.toLocaleString()} for Week ${contract.currentWeek} (${contract.vehicle.registrationNumber}) is OVERDUE. Kindly make payment immediately. - YUSDAAM`;
-            
             await sendSms({ to: rider.phoneNumber, message: smsMessage })
               .catch(err => console.error("Overdue SMS failed:", err));
           }
@@ -159,12 +158,9 @@ export async function GET(req: Request) {
       }
 
       // --- 4. TENURE & ROLLOVERS ---
-      const newCumulativeBilled = cumulativeBilled + expectedAmount;
+      const newCumulativeBilled = cumulativeRiderBilled + expectedAmount;
 
-      // We only roll forward if we haven't hit the week limit AND we haven't maxed out the Grand Total
       if (contract.currentWeek < contract.riderDurationWeeks && newCumulativeBilled < contract.systemGrandTotal) {
-        
-        // Normal Continuation: Move to the next week
         await prisma.contract.update({
           where: { id: contract.id },
           data: { 
@@ -172,26 +168,20 @@ export async function GET(req: Request) {
             nextDueDate: addDays(contract.nextDueDate, 7) 
           }
         });
-
       } else {
-        
-        // End of Tenure Reached! Check if they owe historical debt
         if (totalHistoricalDebt <= 0) {
-          // Success: No debt, mark as totally completed
           await prisma.contract.update({
             where: { id: contract.id },
             data: { isActive: false, nextDueDate: null } 
           });
           console.log(`Contract ${contract.id} FULLY COMPLETED.`);
         } else {
-          // Recovery Mode: Stop weekly billing, but keep contract active so Paystack Waterfall still works
           await prisma.contract.update({
             where: { id: contract.id },
             data: { nextDueDate: null } 
           });
           console.log(`Contract ${contract.id} entered RECOVERY MODE.`);
 
-          // Send the specific Recovery Entrance message
           const rider = contract.vehicle.rider;
           if (rider?.phoneNumber) {
             const recoverySms = `FINAL NOTICE: Dear ${rider.firstName}, your tenure for Vehicle ${contract.vehicle.registrationNumber} is complete, but you have an outstanding debt of N${totalHistoricalDebt.toLocaleString()}. Please pay immediately to finalize ownership. - YUSDAAM`;
