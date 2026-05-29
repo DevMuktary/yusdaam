@@ -10,7 +10,7 @@ export default async function FinancialLedgerPage() {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.id) {
-    redirect("/login");
+    redirect("/owner/login");
   }
 
   // 1. Fetch the user to get their designated bank details
