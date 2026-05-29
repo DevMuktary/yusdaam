@@ -6,7 +6,6 @@ import { sendSystemEmail } from "@/lib/email/sender";
 import { getAgreementSignedEmail } from "@/lib/email/templates";
 import { v2 as cloudinary } from "cloudinary";
 
-// Configure Cloudinary using your existing env variables
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -21,34 +20,36 @@ export async function POST(req: Request) {
     if (!session || !session.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { hpaBase64, poaBase64 } = body;
+    // MAKE SURE YOUR FRONTEND SENDS contractId
+    const { hpaBase64, poaBase64, contractId } = body; 
+
+    if (!contractId) return NextResponse.json({ error: "Contract ID missing" }, { status: 400 });
 
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });
     if (!user || !user.email) return NextResponse.json({ error: "User or email not found" }, { status: 404 });
 
-    // 1. Upload the exact executed PDFs to Cloudinary
+    // 1. Upload to Cloudinary using the unique Contract ID
     const hpaUpload = await cloudinary.uploader.upload(`data:application/pdf;base64,${hpaBase64}`, {
       resource_type: "auto",
       folder: "yusdaam_legal_agreements",
-      public_id: `${user.id}_HPA_Agreement`,
+      public_id: `${contractId}_HPA_Agreement`, 
     });
 
     const poaUpload = await cloudinary.uploader.upload(`data:application/pdf;base64,${poaBase64}`, {
       resource_type: "auto",
       folder: "yusdaam_legal_agreements",
-      public_id: `${user.id}_Power_Of_Attorney`,
+      public_id: `${contractId}_Power_Of_Attorney`,
     });
 
-    // 2. Save the permanent URLs to the database
-    await prisma.user.update({
-      where: { id: user.id },
+    // 2. Save ONLY the HPA URL to your existing database field
+    await prisma.contract.update({
+      where: { id: contractId },
       data: {
-        hpaAgreementUrl: hpaUpload.secure_url,
-        poaAgreementUrl: poaUpload.secure_url,
+        signedDocumentUrl: hpaUpload.secure_url, 
       }
     });
 
-    // 3. Dispatch the email with the exact same files
+    // 3. Dispatch the email 
     const ownerFullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Asset Owner";
     
     await sendSystemEmail({
