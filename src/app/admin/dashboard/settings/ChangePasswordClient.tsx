@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { KeyRound, ShieldCheck, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { KeyRound, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
 
 export default function ChangePasswordClient() {
-  const router = useRouter();
-  
-  const [step, setStep] = useState<1 | 2>(1); // 1 = Request OTP, 2 = Verify & Save
+  // 1 = Request OTP, 2 = Verify & Save
+  const [step, setStep] = useState<1 | 2>(1); 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
