@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { useRouter } from "next/navigation";
-import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2, ShieldCheck, XCircle } from "lucide-react";
+import { Loader2, PenTool, CheckSquare, Download, ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 
 export default function RiderVirtualAgreement({ rider, vehicle, contract, guarantors }: { rider: any, vehicle: any, contract: any, guarantors: any[] }) {
   const router = useRouter();
@@ -61,8 +61,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
       // @ts-ignore
       const html2pdf = (await import("html2pdf.js")).default;
       
-      // FIX 1: Removed 'avoid-all' to prevent bad calculations, relying solely on CSS classes.
-      // Added letterRendering for sharper text.
       const opt = {
         margin: [0.5, 0.5, 0.5, 0.5],
         image: { type: 'jpeg', quality: 0.98 },
@@ -97,7 +95,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   const HpaDocument = ({ isPdf = false }: { isPdf?: boolean }) => {
     const textStyle = isPdf ? "text-[11px] leading-snug text-black font-serif text-justify" : "text-sm text-slate-light leading-relaxed font-sans text-justify";
     
-    // FIX 2: Added `break-inside-avoid` to all standard text blocks so they jump to the next page instead of slicing
     const headingStyle = isPdf ? "font-bold text-[12px] border-b border-gray-400 pb-0.5 mt-3 mb-1.5 text-black uppercase break-after-avoid break-inside-avoid" : "font-bold text-crisp-white text-base mt-8 border-b border-cobalt/20 pb-2 uppercase";
     const paraSpacing = isPdf ? "mb-1.5 break-inside-avoid" : "mb-4";
     const listSpacing = isPdf ? "mb-1.5 space-y-0.5 break-inside-avoid" : "mb-6 space-y-2";
@@ -126,7 +123,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         <p className={paraSpacing}><strong>{rider?.firstName} {rider?.lastName}</strong>, NIN: {rider?.nin}, residing at {rider?.streetAddress}, Email: {rider?.email || "N/A"}, Phone: {rider?.phoneNumber} (hereinafter referred to as the <strong>“Driver/Rider”</strong>), of the second part;</p>
         
         <p className={`font-bold ${isPdf ? "mb-0.5 break-inside-avoid" : "mb-1"}`}>AND</p>
-        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-8"}><strong>THE GUARANTORS</strong>, whose names, addresses, and details are expressly set out in Clause 7 of this Agreement (hereinafter referred to as the <strong>"Guarantors"</strong>), of the third part.</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-8"}><strong>THE GUARANTORS</strong>, whose names, addresses, and details are expressly set out in Clause 9 of this Agreement (hereinafter referred to as the <strong>"Guarantors"</strong>), of the third part.</p>
 
         <h3 className={headingStyle}>RECITALS</h3>
         <p className={`font-bold ${isPdf ? "mb-1 break-inside-avoid" : "mb-2"}`}>WHEREAS:</p>
@@ -164,36 +161,57 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         
         <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>2.6 <strong>Tenure:</strong> The expected duration is <strong>{contract?.riderDurationWeeks || "---"}</strong> weeks, concluding when the Total Hire Purchase Price is fully paid.</p>
 
-        <h3 className={headingStyle}>3. DRIVER/RIDER’S OBLIGATIONS AND RISK</h3>
-        <p className={paraSpacing}>3.1 <strong>Absolute Risk:</strong> The Driver/Rider assumes 100% financial and operational risk for the Asset from the moment of handover. The Administrator makes no warranties regarding the mechanical longevity of the Asset.</p>
-        <p className={paraSpacing}>3.2 <strong>Maintenance & Repairs:</strong> The Driver/Rider shall be solely responsible for the cost of all mechanical repairs, routine maintenance, servicing, and breakdowns.</p>
-        <p className={paraSpacing}>3.3 <strong>Uninterrupted Remittance:</strong> Mechanical failure, illness, traffic delays, or vehicle impoundment shall not exempt the Driver/Rider from their obligation to pay the Weekly Remittance as and when due.</p>
-        <p className={paraSpacing}>3.4 <strong>Illegal Usage & Contraband:</strong> The Driver/Rider shall not use the Asset for any unlawful activity, including but not limited to smuggling, kidnapping, robbery, or transporting contraband. Any such use immediately nullifies this Agreement and invites law enforcement action.</p>
-        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>3.5 <strong>GPS & Telematics:</strong> A GPS tracking device is actively installed on the Asset. Tampering with, disconnecting, obscuring, or damaging the GPS tracker is considered an act of theft, resulting in immediate repossession and criminal prosecution.</p>
+        <h3 className={headingStyle}>3. WEEKLY REMITTANCE STRUCTURE AND DEFAULT POLICY</h3>
+        <p className={paraSpacing}>3.1 The total weekly remittance payable by the Rider/Driver consists of:</p>
+        <ul className={`list-disc pl-6 ${listSpacing}`}>
+          <li>the vehicle hire purchase repayment amount; and</li>
+          <li>the Company’s administrative/service charge.</li>
+        </ul>
+        <p className={paraSpacing}>3.2 Where a Rider/Driver fails to pay the full weekly remittance due for any week, any partial payment made shall first be applied toward the Company’s administrative/service charge. The balance remaining after deduction of the Company’s charge shall then be credited toward the Rider/Driver’s hire purchase repayment account.</p>
+        <p className={paraSpacing}>3.3 Accordingly, the Rider/Driver shall remain liable for the outstanding balance of the weekly hire purchase repayment not covered by the partial payment.</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>3.4 Where a Rider/Driver repeatedly fails to make full weekly remittances for two (2) to three (3) consecutive weeks, or otherwise persistently defaults in payment obligations, the Company reserves the right to repossess and recover the vehicle without prejudice to any other rights or remedies available under the Hire Purchase Agreement.</p>
 
-        <h3 className={headingStyle}>4. ADMINISTRATOR’S RIGHTS AND REPOSSESSION</h3>
-        <p className={paraSpacing}>4.1 <strong>Ownership Retention:</strong> The Asset remains the absolute property of the Asset Owner (managed by the Administrator) until the Total Hire Purchase Price is remitted. The Driver/Rider is merely a "Hirer" and cannot sell, lease, pawn, or use the Asset as collateral.</p>
-        <p className={`font-bold ${isPdf ? "mb-0.5 break-inside-avoid" : "mb-1"}`}>4.2 <strong>Right of Repossession:</strong> The Administrator reserves the right to forcefully recover and repossess the Asset without prior court order, legal notice, or liability for trespass if:</p>
+        <h3 className={headingStyle}>4. LATE PAYMENT PENALTY AND DEFAULT POLICY</h3>
+        <p className={paraSpacing}>4.1 All weekly remittances are due on the agreed payment date and must be paid in full by the Rider/Driver.</p>
+        <p className={`font-bold ${isPdf ? "mb-0.5 break-inside-avoid" : "mb-1"}`}>4.2 Where a Rider/Driver fails to make payment as and when due, a late payment penalty shall apply as follows:</p>
+        <ul className={`list-disc pl-6 ${listSpacing}`}>
+          <li>A penalty fee of ₦10,000 shall be charged if payment remains outstanding after the first 24 hours from the due date;</li>
+          <li>An additional ₦5,000 penalty shall be charged after 48 hours of non-payment, bringing the total penalty to ₦15,000;</li>
+          <li>Thereafter, an additional ₦5,000 penalty shall accrue for every further 24-hour period of default until full payment is made.</li>
+        </ul>
+        <p className={paraSpacing}>4.3 Unless the Rider/Driver separately pays the applicable penalty charges, such penalties shall be deducted directly from any amount subsequently paid by the Rider/Driver. The balance remaining after deduction of accrued penalties shall then be credited toward the Rider/Driver’s hire purchase repayment account.</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>4.4 Repeated failure to make timely payments, including persistent late payments or defaults occurring for two (2) to three (3) consecutive weeks, shall constitute a material breach of the Hire Purchase Arrangement. In such circumstances, the Company reserves the right to repossess and recover the vehicle without prejudice to any other legal or contractual remedies available to the Company.</p>
+
+        <h3 className={headingStyle}>5. DRIVER/RIDER’S OBLIGATIONS AND RISK</h3>
+        <p className={paraSpacing}>5.1 <strong>Absolute Risk:</strong> The Driver/Rider assumes 100% financial and operational risk for the Asset from the moment of handover. The Administrator makes no warranties regarding the mechanical longevity of the Asset.</p>
+        <p className={paraSpacing}>5.2 <strong>Maintenance & Repairs:</strong> The Driver/Rider shall be solely responsible for the cost of all mechanical repairs, routine maintenance, servicing, and breakdowns.</p>
+        <p className={paraSpacing}>5.3 <strong>Uninterrupted Remittance:</strong> Mechanical failure, illness, traffic delays, or vehicle impoundment shall not exempt the Driver/Rider from their obligation to pay the Weekly Remittance as and when due.</p>
+        <p className={paraSpacing}>5.4 <strong>Illegal Usage & Contraband:</strong> The Driver/Rider shall not use the Asset for any unlawful activity, including but not limited to smuggling, kidnapping, robbery, or transporting contraband. Any such use immediately nullifies this Agreement and invites law enforcement action.</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>5.5 <strong>GPS & Telematics:</strong> A GPS tracking device is actively installed on the Asset. Tampering with, disconnecting, obscuring, or damaging the GPS tracker is considered an act of theft, resulting in immediate repossession and criminal prosecution.</p>
+
+        <h3 className={headingStyle}>6. ADMINISTRATOR’S RIGHTS AND REPOSSESSION</h3>
+        <p className={paraSpacing}>6.1 <strong>Ownership Retention:</strong> The Asset remains the absolute property of the Asset Owner (managed by the Administrator) until the Total Hire Purchase Price is remitted. The Driver/Rider is merely a "Hirer" and cannot sell, lease, pawn, or use the Asset as collateral.</p>
+        <p className={`font-bold ${isPdf ? "mb-0.5 break-inside-avoid" : "mb-1"}`}>6.2 <strong>Right of Repossession:</strong> The Administrator reserves the right to forcefully recover and repossess the Asset without prior court order, legal notice, or liability for trespass if:</p>
         <ul className={`list-disc pl-6 ${listSpacing}`}>
           <li>The Driver/Rider defaults on the Weekly Remittance for seven (7) consecutive days.</li>
           <li>The Driver/Rider tampers with the GPS tracker.</li>
           <li>The Asset is found to be abandoned, grossly abused, or mechanically neglected.</li>
         </ul>
-        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>4.3 <strong>Absolute Forfeiture:</strong> In the event of repossession due to any default or breach of contract, all previous payments made by the Driver/Rider shall be legally classified as standard rental fees for the prior use of the Asset and shall not be refunded under any circumstances.</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>6.3 <strong>Absolute Forfeiture:</strong> In the event of repossession due to any default or breach of contract, all previous payments made by the Driver/Rider shall be legally classified as standard rental fees for the prior use of the Asset and shall not be refunded under any circumstances.</p>
 
-        <h3 className={headingStyle}>5. GUARANTORS’ STRICT LIABILITY AND UNDERTAKING</h3>
+        <h3 className={headingStyle}>7. GUARANTORS’ STRICT LIABILITY AND UNDERTAKING</h3>
         <p className={paraSpacing}>The Guarantors, having previously executed their Sworn Attestations, are legally bound to this Agreement as Primary Obligors. By acting as sureties, the Guarantors acknowledge and explicitly agree to the following strict liabilities:</p>
-        <p className={paraSpacing}>5.1 <strong>Joint and Several Liability:</strong> The Guarantors are equally and fully liable alongside the Driver/Rider for the Total Hire Purchase Price and any outstanding debt.</p>
-        <p className={paraSpacing}>5.2 <strong>Asset Theft and Damage:</strong> In the event the Asset is stolen, severely damaged, crashed, or vandalized, and the Driver/Rider is unable or unwilling to cover the costs, the Guarantors shall bear the absolute financial burden of repair or full replacement of the Asset.</p>
-        <p className={paraSpacing}>5.3 <strong>Duty to Produce the Rider:</strong> Should the Driver/Rider abscond with the Asset or evade weekly remittances, the Guarantors are legally obligated to physically produce the Driver/Rider to the Administrator or disclose the exact location of the Asset.</p>
-        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>5.4 <strong>Recovery Costs:</strong> If the Administrator is forced to employ asset recovery agents, legal counsel, or law enforcement to trace an absconded Driver/Rider, all tracking, legal, and recovery expenses shall be billed directly to the Guarantors.</p>
+        <p className={paraSpacing}>7.1 <strong>Joint and Several Liability:</strong> The Guarantors are equally and fully liable alongside the Driver/Rider for the Total Hire Purchase Price and any outstanding debt.</p>
+        <p className={paraSpacing}>7.2 <strong>Asset Theft and Damage:</strong> In the event the Asset is stolen, severely damaged, crashed, or vandalized, and the Driver/Rider is unable or unwilling to cover the costs, the Guarantors shall bear the absolute financial burden of repair or full replacement of the Asset.</p>
+        <p className={paraSpacing}>7.3 <strong>Duty to Produce the Rider:</strong> Should the Driver/Rider abscond with the Asset or evade weekly remittances, the Guarantors are legally obligated to physically produce the Driver/Rider to the Administrator or disclose the exact location of the Asset.</p>
+        <p className={isPdf ? "mb-2 break-inside-avoid" : "mb-6"}>7.4 <strong>Recovery Costs:</strong> If the Administrator is forced to employ asset recovery agents, legal counsel, or law enforcement to trace an absconded Driver/Rider, all tracking, legal, and recovery expenses shall be billed directly to the Guarantors.</p>
 
-        <h3 className={headingStyle}>6. GENERAL PROVISIONS</h3>
-        <p className={paraSpacing}>6.1 <strong>Transfer of Ownership:</strong> Upon the complete and timely payment of the Total Hire Purchase Price, the Administrator shall issue a Letter of Completion and facilitate the Change of Ownership Form transferring full legal ownership to the Driver/Rider.</p>
-        <p className={paraSpacing}>6.2 <strong>Severability:</strong> If any provision of this Agreement is found to be unenforceable by a court, the remaining provisions shall remain in full force and effect.</p>
-        <p className={isPdf ? "mb-3 break-inside-avoid" : "mb-6"}>6.3 <strong>Jurisdiction:</strong> This Agreement shall be governed by the laws of the Federal Republic of Nigeria. Any dispute shall be subject to the exclusive jurisdiction of the competent Courts of Nigeria.</p>
+        <h3 className={headingStyle}>8. GENERAL PROVISIONS</h3>
+        <p className={paraSpacing}>8.1 <strong>Transfer of Ownership:</strong> Upon the complete and timely payment of the Total Hire Purchase Price, the Administrator shall issue a Letter of Completion and facilitate the Change of Ownership Form transferring full legal ownership to the Driver/Rider.</p>
+        <p className={paraSpacing}>8.2 <strong>Severability:</strong> If any provision of this Agreement is found to be unenforceable by a court, the remaining provisions shall remain in full force and effect.</p>
+        <p className={isPdf ? "mb-3 break-inside-avoid" : "mb-6"}>8.3 <strong>Jurisdiction:</strong> This Agreement shall be governed by the laws of the Federal Republic of Nigeria. Any dispute shall be subject to the exclusive jurisdiction of the competent Courts of Nigeria.</p>
 
-        <h3 className={headingStyle}>7. GUARANTORS' EXECUTION</h3>
+        <h3 className={headingStyle}>9. GUARANTORS' EXECUTION</h3>
         <div className={`${isPdf ? "mb-3 p-3 border border-gray-400 bg-gray-50 break-inside-avoid" : "mb-8 p-4 border border-cobalt/30 bg-void-navy/50"}`}>
           <p className={`${isPdf ? "text-[9px]" : "text-[10px]"} italic mb-2 leading-tight`}>The Guarantors below have previously executed Sworn Guarantor Attestations digitally. Their IP addresses, identity documents, and digital signatures are verified and held by the Administrator.</p>
           
@@ -225,7 +243,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           </div>
         </div>
 
-        <h3 className={headingStyle}>8. SIGNATURES</h3>
+        <h3 className={headingStyle}>10. SIGNATURES</h3>
         <p className={paraSpacing}>IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
         
         <div className={`grid grid-cols-2 gap-6 ${isPdf ? "mb-4 break-inside-avoid" : "mb-8"}`}>
