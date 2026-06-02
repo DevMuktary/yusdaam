@@ -9,7 +9,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
   const [ledgerHistory, setLedgerHistory] = useState<any[]>([]);
-  const [weeklyCycles, setWeeklyCycles] = useState<any[]>([]); // NEW STATE
+  const [weeklyCycles, setWeeklyCycles] = useState<any[]>([]); 
   const [isLoadingLedger, setIsLoadingLedger] = useState(true);
   
   // Paystack Virtual Account State
@@ -26,7 +26,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
       .then(res => res.json())
       .then(data => {
         if (data.ledger) setLedgerHistory(data.ledger);
-        if (data.cycles) setWeeklyCycles(data.cycles); // Load the cycles
+        if (data.cycles) setWeeklyCycles(data.cycles); 
         setIsLoadingLedger(false);
       })
       .catch(err => {
@@ -59,100 +59,78 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
     }
   };
 
-  // --- DYNAMIC SCHEDULE GENERATOR (ISOLATED LOGIC) ---
+  // --- DYNAMIC SCHEDULE GENERATOR (UPDATED FOR PRE-GENERATED WEEKS) ---
   const schedule = useMemo(() => {
-    if (!contract) return [];
+    if (!contract || !weeklyCycles.length) return [];
     
-    const totalWeeks = contract.riderDurationWeeks || 100;
-    const weeklyTarget = contract.riderWeeklyRemittance || 0;
     const currentWeekNum = contract.currentWeek || 1;
-    const sysGrandTotal = contract.systemGrandTotal || 999999999; // Fallback for old records
-    
-    const generatedWeeks = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 1. PROCESS PAST WEEKS (Directly from DB Cycles)
+    // Sort the cycles directly from the database
     const sortedCycles = [...weeklyCycles].sort((a, b) => a.weekNumber - b.weekNumber);
     
-    sortedCycles.forEach(cycle => {
-      generatedWeeks.push({
+    return sortedCycles.map((cycle) => {
+      // 1. PAST WEEKS (Closed by Cron Job)
+      if (cycle.weekNumber < currentWeekNum) {
+        return {
+          week: cycle.weekNumber,
+          dueDate: new Date(cycle.endDate),
+          target: cycle.expectedAmount,
+          paid: cycle.amountPaid,
+          arrears: cycle.shortfallAmount,
+          status: cycle.isSettled ? "CLEARED" : "ARREARS"
+        };
+      }
+
+      // 2. CURRENT ACTIVE WEEK (Real-time Ledger Math)
+      if (cycle.weekNumber === currentWeekNum) {
+        const currentWeekStartDate = new Date(cycle.startDate);
+        const currentWeekEndDate = new Date(cycle.endDate);
+        
+        // Sum any payments made strictly during this current week's window
+        const currentWeekPayments = ledgerHistory
+          .filter(tx => new Date(tx.date) >= currentWeekStartDate && new Date(tx.date) <= currentWeekEndDate)
+          .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
+        let status = "PENDING";
+        
+        if (currentWeekPayments >= cycle.expectedAmount) {
+           status = "CLEARED";
+        } else if (currentWeekEndDate < today) {
+           status = "OVERDUE";
+        }
+
+        return {
+          week: cycle.weekNumber,
+          dueDate: currentWeekEndDate,
+          target: cycle.expectedAmount,
+          paid: currentWeekPayments, // Show real-time payments hitting the ledger right now
+          arrears: 0, // Not officially marked as arrears until the cron closes the week
+          status: status
+        };
+      }
+
+      // 3. FUTURE WEEKS (Pending Arrival)
+      return {
         week: cycle.weekNumber,
         dueDate: new Date(cycle.endDate),
-        target: cycle.expectedAmount, // The Cron job already accurately capped past records
-        paid: cycle.amountPaid,
-        arrears: cycle.shortfallAmount,
-        status: cycle.isSettled ? "CLEARED" : "ARREARS"
-      });
-    });
-
-    // 2. PROCESS CURRENT ACTIVE WEEK
-    const lastCycle = sortedCycles[sortedCycles.length - 1];
-    const currentWeekStartDate = lastCycle ? new Date(lastCycle.endDate) : new Date(contract.createdAt);
-    
-    const currentWeekPayments = ledgerHistory
-      .filter(tx => new Date(tx.date) > currentWeekStartDate)
-      .reduce((sum, tx) => sum + (tx.amount || 0), 0);
-
-    if (currentWeekNum <= totalWeeks && contract.isActive && contract.nextDueDate) {
-      const nextDue = new Date(contract.nextDueDate);
-      
-      // Calculate what the backend will actually cap it at
-      const cumulativeBilled = sortedCycles.reduce((sum, c) => sum + c.expectedAmount, 0);
-      let actualTarget = weeklyTarget;
-      
-      if (cumulativeBilled + weeklyTarget > sysGrandTotal) {
-        actualTarget = Math.max(0, sysGrandTotal - cumulativeBilled);
-      }
-
-      // INTELLIGENT DISPLAY LOGIC:
-      // Show normal amount by default. If they pay enough to clear the actual target, 
-      // reveal the true capped target so the row looks perfectly balanced and completed.
-      let displayTarget = weeklyTarget;
-      let status = "PENDING";
-      
-      if (currentWeekPayments >= actualTarget) {
-         status = "CLEARED";
-         displayTarget = actualTarget; // Morph into the true amount once paid!
-      } else if (nextDue < today) {
-         status = "OVERDUE";
-      }
-
-      generatedWeeks.push({
-        week: currentWeekNum,
-        dueDate: nextDue,
-        target: displayTarget,
-        paid: currentWeekPayments,
-        arrears: 0, // Not officially in arrears until the cron closes the week
-        status: status
-      });
-    }
-
-    // 3. PROCESS FUTURE WEEKS (Projections)
-    const baseDateForFuture = contract.nextDueDate ? new Date(contract.nextDueDate) : new Date();
-    for (let i = currentWeekNum + 1; i <= totalWeeks; i++) {
-      const futureDate = new Date(baseDateForFuture);
-      futureDate.setDate(futureDate.getDate() + ((i - currentWeekNum) * 7));
-      
-      generatedWeeks.push({
-        week: i,
-        dueDate: futureDate,
-        target: weeklyTarget, // Future weeks always show the normal target visually
+        target: cycle.expectedAmount,
         paid: 0,
         arrears: 0,
         status: "PENDING"
-      });
-    }
-    
-    return generatedWeeks;
+      };
+    });
   }, [contract, ledgerHistory, weeklyCycles]);
 
   // --- DERIVED METRICS ---
   // The sum of all payments ever made
   const totalPaidSum = ledgerHistory.reduce((sum, tx) => sum + (tx.amount || 0), 0);
   
-  // Arrears is now EXACTLY the sum of unsettled historical debt
-  const totalArrearsSum = weeklyCycles.reduce((sum, c) => sum + (c.isSettled ? 0 : c.shortfallAmount), 0);
+  // INTELLIGENT ARREARS MATH: Only calculate debt from past weeks (ignore future un-arrived weeks)
+  const totalArrearsSum = weeklyCycles
+    .filter(c => c.weekNumber < (contract?.currentWeek || 1))
+    .reduce((sum, c) => sum + (c.isSettled ? 0 : c.shortfallAmount), 0);
   
   const weeksCleared = schedule.filter(w => w.status === "CLEARED").length;
   const totalWeeks = schedule.length;
@@ -341,7 +319,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
                   </thead>
                   <tbody className="divide-y divide-cobalt/10">
                     {paginatedSchedule.map((row) => (
-                      <tr key={row.week} className="hover:bg-void-light/5 transition-colors group">
+                      <tr key={row.week} className={`hover:bg-void-light/5 transition-colors group ${row.week > contract.currentWeek ? "opacity-60" : ""}`}>
                         <td className="py-4 px-5 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded bg-cobalt/10 text-cobalt flex items-center justify-center text-xs font-bold font-mono">
@@ -373,7 +351,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
                               row.status === 'OVERDUE' || row.status === 'ARREARS' ? 'bg-signal-red/10 text-signal-red border border-signal-red/20' : 
                               'bg-void-light/10 text-slate-light/60 border border-void-light/20'}`}
                           >
-                            {row.status}
+                            {row.week > contract.currentWeek ? 'UPCOMING' : row.status}
                           </span>
                         </td>
                       </tr>
