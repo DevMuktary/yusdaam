@@ -2,9 +2,14 @@
 
 import { Scale, FileSignature, Download, ShieldCheck, FileText, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 
-export default function LegalClient({ rider, guarantors }: { rider: any, guarantors: any[] }) {
+// NEW: Added the optional `contract` prop so we can pull the URL directly from the active contract
+export default function LegalClient({ rider, guarantors, contract }: { rider: any, guarantors: any[], contract?: any }) {
   
-  const hpaUrl = rider.hpaAgreementUrl ? `${rider.hpaAgreementUrl}?fl_attachment=YUSDAAM_HPA_${rider.firstName}_${rider.lastName}.pdf` : null;
+  // Safely extract the signed document URL whether it was passed via the contract object or nested in the rider object
+  const rawUrl = contract?.contractUrl || contract?.hpaUrl || rider?.contract?.contractUrl || rider?.contract?.hpaUrl || rider?.hpaAgreementUrl;
+
+  // Append the Cloudinary download flag so it forces a PDF download instead of opening in the browser
+  const hpaUrl = rawUrl ? `${rawUrl}?fl_attachment=YUSDAAM_HPA_${rider.firstName}_${rider.lastName}.pdf` : null;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
