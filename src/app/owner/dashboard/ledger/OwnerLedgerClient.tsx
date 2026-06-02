@@ -25,14 +25,15 @@ export default function OwnerLedgerClient({ ledgers, cycles = [], user }: { ledg
   });
   const uniqueVehicles = Array.from(uniqueVehiclesMap.values());
 
-  // 2. Filter data based on selected vehicle
+  // 2. Filter data based on selected vehicle AND sort by weekNumber ascending (Week 1 down)
   const filteredLedgers = selectedVehicleId === "ALL" 
     ? ledgers 
     : ledgers.filter(tx => tx.vehicleId === selectedVehicleId);
     
-  const filteredCycles = selectedVehicleId === "ALL"
-    ? cycles
-    : cycles.filter(c => c.contract?.vehicleId === selectedVehicleId);
+  const filteredCycles = (selectedVehicleId === "ALL"
+    ? [...cycles] // Create a copy so we don't mutate the original array
+    : cycles.filter(c => c.contract?.vehicleId === selectedVehicleId))
+    .sort((a, b) => a.weekNumber - b.weekNumber);
 
   // 3. Calculate Financial Metrics
   const totalLifetimeEarnings = filteredLedgers.reduce((sum, tx) => sum + tx.amount, 0);
