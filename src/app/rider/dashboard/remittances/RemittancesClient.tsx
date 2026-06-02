@@ -9,7 +9,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
   const [ledgerHistory, setLedgerHistory] = useState<any[]>([]);
-  const [weeklyCycles, setWeeklyCycles] = useState<any[]>([]); 
+  const [weeklyCycles, setWeeklyCycles] = useState<any[]>([]);
   const [isLoadingLedger, setIsLoadingLedger] = useState(true);
   
   // Paystack Virtual Account State
@@ -59,7 +59,7 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
     }
   };
 
-  // --- DYNAMIC SCHEDULE GENERATOR (UPDATED FOR PRE-GENERATED WEEKS) ---
+  // --- DYNAMIC SCHEDULE GENERATOR ---
   const schedule = useMemo(() => {
     if (!contract || !weeklyCycles.length) return [];
     
@@ -67,7 +67,13 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Sort the cycles directly from the database
+    // CRITICAL FIX: Only use actual weekly remittance transactions for the schedule math.
+    // This prevents the Down Payment from falsely clearing Week 1.
+    const weeklyPaymentsLedger = ledgerHistory.filter(tx => 
+      tx.type === "PAYMENT_COLLECTED" || 
+      (tx.reference && !tx.reference.includes("DEPOSIT"))
+    );
+
     const sortedCycles = [...weeklyCycles].sort((a, b) => a.weekNumber - b.weekNumber);
     
     return sortedCycles.map((cycle) => {
@@ -88,8 +94,8 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
         const currentWeekStartDate = new Date(cycle.startDate);
         const currentWeekEndDate = new Date(cycle.endDate);
         
-        // Sum any payments made strictly during this current week's window
-        const currentWeekPayments = ledgerHistory
+        // Sum ONLY valid weekly payments made during this week's window
+        const currentWeekPayments = weeklyPaymentsLedger
           .filter(tx => new Date(tx.date) >= currentWeekStartDate && new Date(tx.date) <= currentWeekEndDate)
           .reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
@@ -99,14 +105,16 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
            status = "CLEARED";
         } else if (currentWeekEndDate < today) {
            status = "OVERDUE";
+        } else if (currentWeekPayments > 0) {
+           status = "PARTIAL";
         }
 
         return {
           week: cycle.weekNumber,
           dueDate: currentWeekEndDate,
           target: cycle.expectedAmount,
-          paid: currentWeekPayments, // Show real-time payments hitting the ledger right now
-          arrears: 0, // Not officially marked as arrears until the cron closes the week
+          paid: currentWeekPayments, 
+          arrears: 0, 
           status: status
         };
       }
@@ -124,10 +132,11 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
   }, [contract, ledgerHistory, weeklyCycles]);
 
   // --- DERIVED METRICS ---
-  // The sum of all payments ever made
-  const totalPaidSum = ledgerHistory.reduce((sum, tx) => sum + (tx.amount || 0), 0);
   
-  // INTELLIGENT ARREARS MATH: Only calculate debt from past weeks (ignore future un-arrived weeks)
+  // Total of ALL money ever paid (Includes Down Payment and Weekly Remittances)
+  const grandTotalPaid = ledgerHistory.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+  
+  // Arrears Math: Only calculate debt from past un-settled weeks
   const totalArrearsSum = weeklyCycles
     .filter(c => c.weekNumber < (contract?.currentWeek || 1))
     .reduce((sum, c) => sum + (c.isSettled ? 0 : c.shortfallAmount), 0);
@@ -232,7 +241,6 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
           {/* QUICK STATS METRICS */}
           <div className="bg-void-dark border border-cobalt/20 rounded-xl p-6 shadow-lg space-y-6">
             
-            {/* WEEKS CLEARED VS TOTAL WEEKS */}
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5"><PieChart size={12} className="text-cobalt" /> Tenure Progress</p>
@@ -266,15 +274,15 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
             
             <div className="h-px w-full bg-cobalt/20"></div>
 
-            {/* TOTALS */}
+            {/* TOTALS (Recombined into one Total Cleared field) */}
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Total Cleared</p>
-                <p className="text-lg font-black font-mono text-emerald-400">₦{totalPaidSum.toLocaleString()}</p>
+                <p className="text-xl font-black font-mono text-emerald-400">₦{grandTotalPaid.toLocaleString()}</p>
               </div>
               <div className="text-right">
                 <p className="text-[10px] text-slate-light font-bold uppercase tracking-widest mb-1">Historical Debt</p>
-                <p className={`text-lg font-black font-mono ${totalArrearsSum > 0 ? "text-signal-red" : "text-slate-light"}`}>
+                <p className={`text-xl font-black font-mono ${totalArrearsSum > 0 ? "text-signal-red" : "text-slate-light"}`}>
                   ₦{totalArrearsSum.toLocaleString()}
                 </p>
               </div>
