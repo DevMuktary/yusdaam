@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Banknote, UploadCloud, Loader2, CheckCircle2, ArrowRight, X, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -20,12 +20,17 @@ export default function PaymentsClient({ assignments, cycles }: { assignments: a
 
   const selectedAssignment = assignments.find(a => a.id === selectedVehicleId);
 
-  // Filter cycles specifically for the selected vehicle that have NOT been fully settled to the owner
-  const pendingOwnerCycles = cycles.filter(c => 
-    c.contract?.vehicleId === selectedVehicleId && 
-    !c.isOwnerSettled &&
-    (c.ownerExpectedAmount || 0) > 0
-  ).sort((a, b) => a.weekNumber - b.weekNumber);
+  // CRITICAL FIX: useMemo prevents the browser from freezing on every keystroke by 
+  // only calculating this massive list when the selected vehicle actually changes.
+  const pendingOwnerCycles = useMemo(() => {
+    if (!selectedVehicleId) return [];
+    
+    return cycles.filter(c => 
+      c.contract?.vehicleId === selectedVehicleId && 
+      !c.isOwnerSettled &&
+      (c.ownerExpectedAmount || 0) > 0
+    ).sort((a, b) => a.weekNumber - b.weekNumber);
+  }, [cycles, selectedVehicleId]);
 
   // Auto-fill amount based on transaction type
   const handleTypeChange = (type: "PAYMENT_COLLECTED" | "OWNER_REMITTANCE") => {
@@ -55,7 +60,7 @@ export default function PaymentsClient({ assignments, cycles }: { assignments: a
     }
   };
 
-  // NEW: Handle selecting a specific week for owner payout
+  // Handle selecting a specific week for owner payout
   const handleCycleChange = (cycleId: string) => {
     setSelectedCycleId(cycleId);
     
