@@ -35,8 +35,8 @@ export default async function DashboardHome() {
       streetAddress: true,
       bankName: true,
       accountNumber: true,
-      defaultWitnessName: true,           // <-- FETCHED NEW FIELD
-      defaultWitnessSignatureUrl: true,   // <-- FETCHED NEW FIELD
+      defaultWitnessName: true,
+      defaultWitnessSignatureUrl: true,
       ownedVehicles: {
         include: {
           contract: true
@@ -116,9 +116,9 @@ export default async function DashboardHome() {
     return (
       <div className="py-6 overflow-x-hidden">
         <VirtualAgreement 
-          contractId={assignedContract?.id || ""} // <-- PASSED REQUIRED PROP
-          initialWitnessName={user?.defaultWitnessName} // <-- PASSED REQUIRED PROP
-          initialWitnessSignature={user?.defaultWitnessSignatureUrl} // <-- PASSED REQUIRED PROP
+          contractId={assignedContract?.id || ""} 
+          initialWitnessName={user?.defaultWitnessName} 
+          initialWitnessSignature={user?.defaultWitnessSignatureUrl} 
           ownerName={fullName} 
           ownerId={user?.id}
           ownerEmail={user?.email || ""}
@@ -148,14 +148,19 @@ export default async function DashboardHome() {
     where: { ownerId: session.user.id },
   });
 
+  // CRITICAL FIX: Removed `take: 5` so we fetch EVERYTHING for accurate math.
   const ledgers = await prisma.ledger.findMany({
     where: { ownerId: session.user.id, type: "OWNER_REMITTANCE" },
-    orderBy: { date: 'desc' },
-    take: 5 
+    orderBy: { date: 'desc' }
   });
 
   const activeFleetCount = vehicles.filter(v => v.status === "ACTIVE").length;
+  
+  // Math is now calculated perfectly on the full historical array
   const totalRemitted = ledgers.reduce((sum, tx) => sum + tx.amount, 0);
+  
+  // NOW we slice it down to 5 items strictly for the visual UI list
+  const recentLedgers = ledgers.slice(0, 5);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden">
@@ -203,10 +208,10 @@ export default async function DashboardHome() {
           </div>
           
           <div className="space-y-2">
-            {ledgers.length === 0 ? (
+            {recentLedgers.length === 0 ? (
               <p className="text-sm text-slate-light italic py-4">No remittance history recorded yet.</p>
             ) : (
-              ledgers.map((tx) => (
+              recentLedgers.map((tx) => (
                 <div key={tx.id} className="flex justify-between items-center p-3 hover:bg-void-light/5 rounded-lg transition border border-transparent hover:border-cobalt/20">
                   <div>
                     <p className="text-sm font-bold text-crisp-white">{tx.description || "Weekly Remittance"}</p>
