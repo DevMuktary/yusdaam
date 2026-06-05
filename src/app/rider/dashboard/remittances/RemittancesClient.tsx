@@ -67,11 +67,11 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // CRITICAL FIX: Only use actual weekly remittance transactions for the schedule math.
-    // This prevents the Down Payment from falsely clearing Week 1.
+    // CRITICAL FIX 1: Only use ACTUAL rider payments. 
+    // We explicitly require the type to be "PAYMENT_COLLECTED", blocking any Admin-to-Owner pocket money.
     const weeklyPaymentsLedger = ledgerHistory.filter(tx => 
-      tx.type === "PAYMENT_COLLECTED" || 
-      (tx.reference && !tx.reference.includes("DEPOSIT"))
+      tx.type === "PAYMENT_COLLECTED" && 
+      (!tx.reference || !tx.reference.includes("DEPOSIT"))
     );
 
     const sortedCycles = [...weeklyCycles].sort((a, b) => a.weekNumber - b.weekNumber);
@@ -133,8 +133,11 @@ export default function RemittancesClient({ rider, contract }: { rider: any, con
 
   // --- DERIVED METRICS ---
   
-  // Total of ALL money ever paid (Includes Down Payment and Weekly Remittances)
-  const grandTotalPaid = ledgerHistory.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+  // CRITICAL FIX 2: Total of ALL money ever paid BY THE RIDER.
+  // We explicitly filter out "OWNER_REMITTANCE" so admin pocket money isn't added to the rider's cleared total.
+  const grandTotalPaid = ledgerHistory
+    .filter(tx => tx.type !== "OWNER_REMITTANCE")
+    .reduce((sum, tx) => sum + (tx.amount || 0), 0);
   
   // Arrears Math: Only calculate debt from past un-settled weeks
   const totalArrearsSum = weeklyCycles
