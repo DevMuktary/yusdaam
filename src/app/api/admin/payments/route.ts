@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // NEW: We now accept `cycleId` from the frontend dropdown to know exactly which week is being paid
+    // We accept `cycleId` from the frontend dropdown to know exactly which week is being paid
     const { vehicleId, type, amount, description, receiptBase64, cycleId } = await req.json();
 
     if (!vehicleId || !type || !amount) {
@@ -58,26 +58,45 @@ export async function POST(req: Request) {
         }
       });
 
-      // B. If it's an Owner Payout tied to a specific pending week, update the Cycle Tracking
-      if (type === "OWNER_REMITTANCE" && cycleId) {
+      // B. Update Cycle Tracking (For BOTH Owner Payouts and Rider Payments)
+      if (cycleId) {
         const cycle = await tx.weeklyCycle.findUnique({ where: { id: cycleId } });
         
         if (!cycle) {
           throw new Error("The selected weekly cycle could not be found.");
         }
 
-        const newRemittedAmount = (cycle.ownerRemittedAmount || 0) + numAmount;
-        
-        // Safety buffer of 0.01 to handle floating point decimal rounding
-        const isSettled = newRemittedAmount >= (cycle.ownerExpectedAmount - 0.01);
+        // If Admin is paying the owner
+        if (type === "OWNER_REMITTANCE") {
+          const newRemittedAmount = (cycle.ownerRemittedAmount || 0) + numAmount;
+          
+          // Safety buffer of 0.01 to handle floating point decimal rounding
+          const isSettled = newRemittedAmount >= (cycle.ownerExpectedAmount - 0.01);
 
-        await tx.weeklyCycle.update({
-          where: { id: cycleId },
-          data: {
-            ownerRemittedAmount: newRemittedAmount,
-            isOwnerSettled: isSettled
-          }
-        });
+          await tx.weeklyCycle.update({
+            where: { id: cycleId },
+            data: {
+              ownerRemittedAmount: newRemittedAmount,
+              isOwnerSettled: isSettled
+            }
+          });
+        } 
+        
+        // If Admin is logging a rider's payment
+        else if (type === "PAYMENT_COLLECTED") {
+          const newAmountPaid = (cycle.amountPaid || 0) + numAmount;
+          const newShortfall = Math.max(0, cycle.expectedAmount - newAmountPaid);
+          const isSettled = newShortfall === 0;
+
+          await tx.weeklyCycle.update({
+            where: { id: cycleId },
+            data: {
+              amountPaid: newAmountPaid,
+              shortfallAmount: newShortfall,
+              isSettled: isSettled
+            }
+          });
+        }
       }
 
       return ledger;
