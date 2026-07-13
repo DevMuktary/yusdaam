@@ -161,11 +161,29 @@ export async function GET(req: Request) {
       const newCumulativeBilled = cumulativeRiderBilled + expectedAmount;
 
       if (contract.currentWeek < contract.riderDurationWeeks && newCumulativeBilled < contract.systemGrandTotal) {
+        const nextDate = addDays(contract.nextDueDate, 7);
+        const nextWeekNumber = contract.currentWeek + 1;
+
+        // 1. Update the contract
         await prisma.contract.update({
           where: { id: contract.id },
           data: { 
-            currentWeek: contract.currentWeek + 1,
-            nextDueDate: addDays(contract.nextDueDate, 7) 
+            currentWeek: nextWeekNumber,
+            nextDueDate: nextDate 
+          }
+        });
+
+        // 2. Create the fresh WeeklyCycle for the new week
+        await prisma.weeklyCycle.create({
+          data: {
+            contractId: contract.id,
+            weekNumber: nextWeekNumber,
+            expectedAmount: contract.riderWeeklyRemittance, // Will be capped next week if needed
+            amountPaid: 0,
+            shortfallAmount: contract.riderWeeklyRemittance,
+            ownerExpectedAmount: 0, // Gets calculated next run
+            startDate: contract.nextDueDate, // Original due date serves as start of new week
+            endDate: nextDate
           }
         });
       } else {
