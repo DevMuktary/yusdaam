@@ -16,13 +16,12 @@ export async function GET(req: Request) {
   try {
     const today = new Date();
     
-    // Find contracts whose due date falls within today
+    // Find contracts whose due date is today OR IN THE PAST (self-healing)
     const dueContracts = await prisma.contract.findMany({
       where: {
         isActive: true,
         nextDueDate: {
-          gte: startOfDay(today),
-          lte: endOfDay(today),
+          lte: endOfDay(today), // REMOVED gte: Catch up on any missed days/weeks
         }
       },
       include: {
