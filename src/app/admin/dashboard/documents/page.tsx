@@ -61,8 +61,18 @@ export default async function AdminDocumentsPage() {
   const allUsers = await prisma.user.findMany({
     where: {
       OR: [
-        { hpaAgreementUrl: { not: null, not: "" } },
-        { poaAgreementUrl: { not: null, not: "" } }
+        {
+          AND: [
+            { hpaAgreementUrl: { not: null } },
+            { hpaAgreementUrl: { not: "" } }
+          ]
+        },
+        {
+          AND: [
+            { poaAgreementUrl: { not: null } },
+            { poaAgreementUrl: { not: "" } }
+          ]
+        }
       ]
     },
     include: {
