@@ -1,30 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Download, Search, ExternalLink, ShieldCheck } from "lucide-react";
+import { FileText, Download, Search, ShieldCheck, FileSignature } from "lucide-react";
 
 export default function DocumentsClient({ contracts }: { contracts: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
 
   // The Magic Function to Force Cloudinary Downloads
-  const handleForceDownload = (url: string, plateNo: string, riderName: string) => {
+  const handleForceDownload = (url: string, plateNo: string, riderName: string, docType: string) => {
     if (!url) return;
     
-    // Create a clean filename like: Yusdaam_Agreement_ABC123_John_Doe
     const cleanPlate = plateNo || "Unknown_Vehicle";
     const cleanName = riderName ? riderName.replace(/[^a-z0-9]/gi, '_') : "User";
-    const safeFilename = `Yusdaam_Agreement_${cleanPlate}_${cleanName}`;
+    const safeFilename = `Yusdaam_${docType}_${cleanPlate}_${cleanName}`;
 
-    // If it's a Cloudinary URL, inject the fl_attachment flag with our custom filename
     let downloadUrl = url;
     if (url.includes('cloudinary.com') && url.includes('/upload/')) {
       downloadUrl = url.replace('/upload/', `/upload/fl_attachment:${safeFilename}/`);
     }
 
-    // Trigger the download programmatically
     const link = document.createElement('a');
     link.href = downloadUrl;
-    // Fallback download attribute for non-cloudinary links
     link.download = safeFilename; 
     document.body.appendChild(link);
     link.click();
@@ -57,21 +53,24 @@ export default function DocumentsClient({ contracts }: { contracts: any[] }) {
       {/* Documents Table */}
       <div className="bg-[#0a0f1c] border border-white/10 rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
+          <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
               <tr className="bg-black/20 text-[10px] uppercase tracking-widest text-gray-400 border-b border-white/10">
                 <th className="p-5">Vehicle / Deployment</th>
                 <th className="p-5">Rider Details</th>
-                <th className="p-5">Owner Details</th>
                 <th className="p-5">Execution Date</th>
-                <th className="p-5 text-right">Document Actions</th>
+                <th className="p-5 text-right">Document Actions (Force Download)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-sm">
               {filteredContracts.map((contract) => {
                 const vehicle = contract.vehicle;
                 const rider = vehicle?.rider;
-                const owner = vehicle?.owner;
+
+                // Check which documents actually exist
+                const hasContractDoc = !!contract.signedDocumentUrl;
+                const hasHpaDoc = !!rider?.hpaAgreementUrl;
+                const hasPoaDoc = !!rider?.poaAgreementUrl;
 
                 return (
                   <tr key={contract.id} className="hover:bg-white/5 transition duration-150 group">
@@ -97,15 +96,6 @@ export default function DocumentsClient({ contracts }: { contracts: any[] }) {
                     </td>
 
                     <td className="p-5">
-                      {owner ? (
-                        <div>
-                          <p className="font-bold text-gray-300">{owner.firstName} {owner.lastName}</p>
-                          <p className="text-[10px] text-purple-400 font-mono mt-0.5">OWNER</p>
-                        </div>
-                      ) : <span className="text-gray-600 text-xs italic">Company Owned</span>}
-                    </td>
-
-                    <td className="p-5">
                       <p className="font-bold text-gray-300">{new Date(contract.updatedAt).toLocaleDateString('en-GB')}</p>
                       <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-400 uppercase tracking-widest font-bold">
                         <ShieldCheck size={12} /> Digitally Signed
@@ -113,30 +103,37 @@ export default function DocumentsClient({ contracts }: { contracts: any[] }) {
                     </td>
 
                     <td className="p-5">
-                      <div className="flex items-center justify-end gap-3 opacity-80 group-hover:opacity-100 transition">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
                         
-                        {/* View in Browser (Standard Link) */}
-                        <a 
-                          href={contract.signedDocumentUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          title="View in Browser"
-                          className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition"
-                        >
-                          <ExternalLink size={16} />
-                        </a>
+                        {/* 1. Master Contract Document */}
+                        {hasContractDoc && (
+                          <button
+                            onClick={() => handleForceDownload(contract.signedDocumentUrl!, vehicle?.registrationNumber, rider?.firstName, "Contract")}
+                            className="flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 hover:border-blue-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
+                          >
+                            <Download size={12} /> Master Contract
+                          </button>
+                        )}
 
-                        {/* Force Download (Bypasses Cloudinary Browser View) */}
-                        <button
-                          onClick={() => handleForceDownload(
-                            contract.signedDocumentUrl, 
-                            vehicle?.registrationNumber, 
-                            rider?.firstName
-                          )}
-                          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition shadow-lg"
-                        >
-                          <Download size={14} /> Download Copy
-                        </button>
+                        {/* 2. HPA Document */}
+                        {hasHpaDoc && (
+                          <button
+                            onClick={() => handleForceDownload(rider.hpaAgreementUrl!, vehicle?.registrationNumber, rider?.firstName, "HPA")}
+                            className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
+                          >
+                            <FileSignature size={12} /> HPA Agreement
+                          </button>
+                        )}
+
+                        {/* 3. POA Document */}
+                        {hasPoaDoc && (
+                          <button
+                            onClick={() => handleForceDownload(rider.poaAgreementUrl!, vehicle?.registrationNumber, rider?.firstName, "POA")}
+                            className="flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/30 hover:border-purple-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
+                          >
+                            <FileSignature size={12} /> POA Agreement
+                          </button>
+                        )}
 
                       </div>
                     </td>
@@ -146,10 +143,10 @@ export default function DocumentsClient({ contracts }: { contracts: any[] }) {
 
               {filteredContracts.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center text-gray-500">
+                  <td colSpan={4} className="p-12 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center">
                       <FileText size={36} className="text-gray-600 mb-3 opacity-40" />
-                      <p className="text-sm">No signed agreements found in the system vault.</p>
+                      <p className="text-sm">No signed agreements (Contract, HPA, or POA) found in the system vault.</p>
                     </div>
                   </td>
                 </tr>
