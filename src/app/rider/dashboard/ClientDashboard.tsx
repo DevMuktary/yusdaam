@@ -8,20 +8,17 @@ import {
   Copy, 
   Lock, 
   CarFront, 
-  WalletCards, 
   ShieldCheck, 
   Check, 
   MessageCircle, 
   Hourglass, 
-  Loader2, 
   Landmark, 
   AlertTriangle, 
   Receipt, 
   ClipboardList, 
   ArrowDownLeft,
   Banknote,
-  Calendar,
-  CreditCard
+  Calendar
 } from "lucide-react";
 import RiderVirtualAgreement from "./RiderVirtualAgreement";
 
@@ -39,13 +36,6 @@ export default function ClientDashboard({
   nextDueDate: string 
 }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [accountError, setAccountError] = useState("");
-
-  const [virtualAccount, setVirtualAccount] = useState({
-    no: rider.virtualAccountNo || null,
-    bank: rider.virtualBankName || null
-  });
 
   const guarantors = rider.guarantors || [];
   const g1 = guarantors[0];
@@ -70,22 +60,6 @@ export default function ClientDashboard({
     const link = `${baseUrl}/guarantor/${token}`;
     const text = `Hello ${name}, I have nominated you as a guarantor for my commercial vehicle allocation with YUSDAAM Autos. Please click this secure link to complete your legal attestation: ${link}`;
     return `https://wa.me/?text=${encodeURIComponent(text)}`;
-  };
-
-  const handleGenerateAccount = async () => {
-    setIsGenerating(true);
-    setAccountError("");
-    try {
-      const res = await fetch("/api/rider/generate-account", { method: "POST" });
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || "Failed to generate account");
-      setVirtualAccount({ no: data.accountNumber, bank: data.bankName });
-    } catch (err: any) {
-      setAccountError(err.message);
-    } finally {
-      setIsGenerating(false);
-    }
   };
 
   const totalPaidSum = history.reduce((sum, current) => sum + current.amount, 0) + (contract?.downPayment || 0);
@@ -275,58 +249,54 @@ export default function ClientDashboard({
           {/* LOWER RECONCILIATION CHANNELS DISPLAY */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* VIRTUAL ACCOUNT CARD COMPONENT */}
+            {/* STATIC REMITTANCE ACCOUNT CARD MODULE */}
             <div className="bg-gradient-to-br from-white/5 to-white/10 border border-white/10 rounded-2xl p-6 shadow-xl flex flex-col justify-between h-fit lg:col-span-1">
               <div>
                 <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-4">
                   <div className="p-2 bg-emerald-400/10 text-emerald-400 rounded-lg"><Landmark size={20} /></div>
                   <div>
                     <h3 className="font-bold text-white uppercase tracking-wider text-sm">Remittance Account</h3>
-                    <p className="text-[10px] text-slate-light">Dedicated platform collection portal</p>
+                    <p className="text-[10px] text-slate-light">Official company collection portal</p>
                   </div>
                 </div>
 
-                {accountError && <p className="text-signal-red text-xs font-bold mb-3">{accountError}</p>}
-
                 <p className="text-xs text-slate-light leading-relaxed mb-6">
-                  All manual or dynamic weekly hire purchase installments must be channeled to your custom processing details listed below. Deposits route directly into your statement tracking.
+                  All manual or dynamic weekly hire purchase installments must be channeled to the official company account below. Forward your receipt to management for ledger updates.
                 </p>
 
-                {virtualAccount.no ? (
-                  <div className="bg-black/30 border border-emerald-500/20 rounded-xl p-4 space-y-3 shadow-inner">
-                    <div>
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-emerald-400 block mb-0.5">Institution Node</span>
-                      <p className="text-sm font-black text-white uppercase font-sans">{virtualAccount.bank}</p>
-                    </div>
-                    <div>
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-emerald-400 block mb-0.5">Remittance Account No</span>
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-2xl font-mono font-bold tracking-wider text-emerald-400">{virtualAccount.no}</p>
-                        <button type="button" onClick={() => copyToClipboard(virtualAccount.no, 'vacc')} className="p-1.5 bg-white/5 hover:bg-white/10 rounded transition text-gray-400 hover:text-white">
-                          {copiedId === 'vacc' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                        </button>
-                      </div>
+                <div className="bg-black/30 border border-emerald-500/20 rounded-xl p-4 space-y-4 shadow-inner relative overflow-hidden">
+                  <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none">
+                    <Landmark size={80} />
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mb-2 relative z-10">
+                    <img src="/images/jaiz.png" alt="Jaiz Bank" className="h-6 object-contain bg-white/10 rounded px-1 py-0.5" />
+                    <p className="text-sm font-black text-white uppercase font-sans tracking-widest">JAIZ BANK</p>
+                  </div>
+                  
+                  <div className="relative z-10">
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-emerald-400 block mb-0.5">Account Number</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-2xl font-mono font-black tracking-wider text-emerald-400">0027125962</p>
+                      <button type="button" onClick={() => copyToClipboard('0027125962', 'vacc')} className="p-1.5 bg-white/5 hover:bg-white/10 rounded transition text-gray-400 hover:text-white">
+                        {copiedId === 'vacc' ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                      </button>
                     </div>
                   </div>
-                ) : (
-                  <div className="bg-black/20 border border-dashed border-white/10 rounded-xl p-6 text-center">
-                    <p className="text-xs text-gray-500 mb-4">No dedicated automated account link active for your profile yet.</p>
-                    <button
-                      type="button"
-                      onClick={handleGenerateAccount}
-                      disabled={isGenerating}
-                      className="inline-flex items-center gap-2 bg-cobalt px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:bg-void-light transition disabled:opacity-50"
-                    >
-                      {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <CreditCard size={14} />}
-                      Generate Payment Account
-                    </button>
+                  
+                  <div className="relative z-10">
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-emerald-400 block mb-0.5">Account Name</span>
+                    <p className="text-xs font-bold text-white uppercase tracking-wider">YUSDAAM AUTOS FLEET MANAGEMENT NIG LTD</p>
                   </div>
-                )}
+                </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-white/5 text-[10px] text-gray-500 leading-tight">
-                <span className="text-signal-red font-bold uppercase block mb-1">Notice:</span>
-                Never give cash to staff. Always route operations via this tracking account to safeguard balances.
+              <div className="mt-6 pt-4 border-t border-white/5 flex gap-3">
+                <AlertTriangle size={16} className="text-signal-red shrink-0 mt-0.5" />
+                <p className="text-[10px] text-gray-400 leading-tight">
+                  <span className="text-signal-red font-bold uppercase block mb-1">Strict Notice:</span>
+                  Never give cash to staff. Always route operations via this tracking account to safeguard balances.
+                </p>
               </div>
             </div>
 
