@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Download, Search, ShieldCheck, FileSignature } from "lucide-react";
+import { FileText, Download, Search, ShieldCheck, FileSignature, UserCheck } from "lucide-react";
 
 export default function DocumentsClient({ contracts }: { contracts: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
 
   // The Magic Function to Force Cloudinary Downloads
-  const handleForceDownload = (url: string, plateNo: string, riderName: string, docType: string) => {
+  const handleForceDownload = (url: string, plateNo: string, personName: string, docType: string) => {
     if (!url) return;
     
     const cleanPlate = plateNo || "Unknown_Vehicle";
-    const cleanName = riderName ? riderName.replace(/[^a-z0-9]/gi, '_') : "User";
+    const cleanName = personName ? personName.replace(/[^a-z0-9]/gi, '_') : "User";
     const safeFilename = `Yusdaam_${docType}_${cleanPlate}_${cleanName}`;
 
     let downloadUrl = url;
@@ -57,7 +57,7 @@ export default function DocumentsClient({ contracts }: { contracts: any[] }) {
             <thead>
               <tr className="bg-black/20 text-[10px] uppercase tracking-widest text-gray-400 border-b border-white/10">
                 <th className="p-5">Vehicle / Deployment</th>
-                <th className="p-5">Rider Details</th>
+                <th className="p-5">Personnel Details</th>
                 <th className="p-5">Execution Date</th>
                 <th className="p-5 text-right">Document Actions (Force Download)</th>
               </tr>
@@ -66,11 +66,14 @@ export default function DocumentsClient({ contracts }: { contracts: any[] }) {
               {filteredContracts.map((contract) => {
                 const vehicle = contract.vehicle;
                 const rider = vehicle?.rider;
+                const owner = vehicle?.owner;
 
-                // Check which documents actually exist
-                const hasContractDoc = !!contract.signedDocumentUrl;
-                const hasHpaDoc = !!rider?.hpaAgreementUrl;
-                const hasPoaDoc = !!rider?.poaAgreementUrl;
+                // Check which documents actually exist across Contract, Rider, and Owner
+                const hasMasterContract = !!contract.signedDocumentUrl;
+                const hasRiderHpa = !!rider?.hpaAgreementUrl;
+                const hasRiderPoa = !!rider?.poaAgreementUrl;
+                const hasOwnerHpa = !!owner?.hpaAgreementUrl;
+                const hasOwnerPoa = !!owner?.poaAgreementUrl;
 
                 return (
                   <tr key={contract.id} className="hover:bg-white/5 transition duration-150 group">
@@ -86,13 +89,20 @@ export default function DocumentsClient({ contracts }: { contracts: any[] }) {
                       </div>
                     </td>
 
-                    <td className="p-5">
+                    <td className="p-5 space-y-2">
                       {rider ? (
                         <div>
                           <p className="font-bold text-gray-300">{rider.firstName} {rider.lastName}</p>
                           <p className="text-[10px] text-emerald-400 font-mono mt-0.5">RIDER</p>
                         </div>
                       ) : <span className="text-gray-600 text-xs italic">Unassigned</span>}
+                      
+                      {owner && (
+                        <div>
+                          <p className="font-bold text-gray-400">{owner.firstName} {owner.lastName}</p>
+                          <p className="text-[10px] text-blue-400 font-mono mt-0.5">OWNER</p>
+                        </div>
+                      )}
                     </td>
 
                     <td className="p-5">
@@ -106,32 +116,48 @@ export default function DocumentsClient({ contracts }: { contracts: any[] }) {
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         
                         {/* 1. Master Contract Document */}
-                        {hasContractDoc && (
+                        {hasMasterContract && (
                           <button
-                            onClick={() => handleForceDownload(contract.signedDocumentUrl!, vehicle?.registrationNumber, rider?.firstName, "Contract")}
+                            onClick={() => handleForceDownload(contract.signedDocumentUrl!, vehicle?.registrationNumber, owner?.firstName || "Owner", "Master_Contract")}
                             className="flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 hover:border-blue-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
                           >
                             <Download size={12} /> Master Contract
                           </button>
                         )}
 
-                        {/* 2. HPA Document */}
-                        {hasHpaDoc && (
+                        {/* 2. Rider Documents */}
+                        {hasRiderHpa && (
                           <button
-                            onClick={() => handleForceDownload(rider.hpaAgreementUrl!, vehicle?.registrationNumber, rider?.firstName, "HPA")}
+                            onClick={() => handleForceDownload(rider.hpaAgreementUrl!, vehicle?.registrationNumber, rider?.firstName, "Rider_HPA")}
                             className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
                           >
-                            <FileSignature size={12} /> HPA Agreement
+                            <FileSignature size={12} /> Rider HPA
+                          </button>
+                        )}
+                        {hasRiderPoa && (
+                          <button
+                            onClick={() => handleForceDownload(rider.poaAgreementUrl!, vehicle?.registrationNumber, rider?.firstName, "Rider_POA")}
+                            className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
+                          >
+                            <FileSignature size={12} /> Rider POA
                           </button>
                         )}
 
-                        {/* 3. POA Document */}
-                        {hasPoaDoc && (
+                        {/* 3. Owner Documents */}
+                        {hasOwnerHpa && (
                           <button
-                            onClick={() => handleForceDownload(rider.poaAgreementUrl!, vehicle?.registrationNumber, rider?.firstName, "POA")}
+                            onClick={() => handleForceDownload(owner.hpaAgreementUrl!, vehicle?.registrationNumber, owner?.firstName, "Owner_HPA")}
                             className="flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/30 hover:border-purple-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
                           >
-                            <FileSignature size={12} /> POA Agreement
+                            <UserCheck size={12} /> Owner HPA
+                          </button>
+                        )}
+                        {hasOwnerPoa && (
+                          <button
+                            onClick={() => handleForceDownload(owner.poaAgreementUrl!, vehicle?.registrationNumber, owner?.firstName, "Owner_POA")}
+                            className="flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/30 hover:border-purple-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
+                          >
+                            <UserCheck size={12} /> Owner POA
                           </button>
                         )}
 
