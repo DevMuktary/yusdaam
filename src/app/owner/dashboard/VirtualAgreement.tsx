@@ -66,9 +66,6 @@ export default function VirtualAgreement(props: AgreementProps) {
   const poaContractRef = useRef<HTMLDivElement>(null);
   const [isDownloadingHpa, setIsDownloadingHpa] = useState(false);
   const [isDownloadingPoa, setIsDownloadingPoa] = useState(false);
-  
-  const [isDispatching, setIsDispatching] = useState(false);
-  const [dispatchComplete, setDispatchComplete] = useState(false);
 
   // PRE-LOAD WITNESS SIGNATURE INTO CANVAS
   useEffect(() => {
@@ -107,6 +104,24 @@ export default function VirtualAgreement(props: AgreementProps) {
     setIsSubmitting(true);
 
     try {
+      // 1. Generate PDFs FIRST
+      // @ts-ignore
+      const html2pdf = (await import("html2pdf.js")).default;
+      const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        image: { type: 'jpeg', quality: 0.8 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      const hpaDataUri = await html2pdf().set({ ...opt, filename: 'HPA.pdf' }).from(hpaContractRef.current).output('datauristring');
+      const poaDataUri = await html2pdf().set({ ...opt, filename: 'POA.pdf' }).from(poaContractRef.current).output('datauristring');
+
+      const hpaBase64 = hpaDataUri.split(',')[1];
+      const poaBase64 = poaDataUri.split(',')[1];
+
+      // 2. Send everything (including PDFs) to the sign route
       const res = await fetch("/api/owner/agreement/sign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -114,58 +129,29 @@ export default function VirtualAgreement(props: AgreementProps) {
           signature: hpaOwnerSig,
           witnessName: witnessName,
           witnessSignature: hpaWitnessSig,
-          contractId: props.contractId
+          contractId: props.contractId,
+          hpaBase64,
+          poaBase64
         }), 
       });
 
       if (!res.ok) throw new Error("Failed to process agreements.");
+
+      // 3. Fire off the email dispatch independently in the background
+      fetch("/api/owner/agreement/dispatch-docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hpaBase64, poaBase64 })
+      }).catch(err => console.error("Email dispatch failed", err));
       
       setStep(3);
-      setIsDispatching(true);
       setTimeout(() => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } catch (err: any) {
-      setErrorMsg(err.message);
+      setErrorMsg(err.message || "Failed to finalize documents.");
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  useEffect(() => {
-    if (step === 3 && isDispatching && !dispatchComplete) {
-      const compileAndSend = async () => {
-        try {
-          // @ts-ignore
-          const html2pdf = (await import("html2pdf.js")).default;
-          const opt = {
-            margin: [0.5, 0.5, 0.5, 0.5],
-            image: { type: 'jpeg', quality: 0.8 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-          };
-
-          const hpaDataUri = await html2pdf().set({ ...opt, filename: 'HPA.pdf' }).from(hpaContractRef.current).output('datauristring');
-          const poaDataUri = await html2pdf().set({ ...opt, filename: 'POA.pdf' }).from(poaContractRef.current).output('datauristring');
-
-          const hpaBase64 = hpaDataUri.split(',')[1];
-          const poaBase64 = poaDataUri.split(',')[1];
-
-          await fetch("/api/owner/agreement/dispatch-docs", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ hpaBase64, poaBase64 })
-          });
-
-        } catch (error) {
-          console.error("Background dispatch failed", error);
-        } finally {
-          setIsDispatching(false);
-          setDispatchComplete(true);
-        }
-      };
-      compileAndSend();
-    }
-  }, [step, isDispatching, dispatchComplete]);
 
   const handleDownloadPDF = async (ref: React.RefObject<HTMLDivElement>, filename: string, setLoader: (val: boolean) => void) => {
     if (!ref.current) return;
@@ -325,7 +311,7 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         <p className="mb-8 font-bold italic uppercase">IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
 
-        {/* SIGNATURE BLOCKS - FIXED FOR MOBILE RESPONSIVENESS */}
+        {/* SIGNATURE BLOCKS */}
         <div className={`grid ${isPdf ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
           <div className="space-y-4">
             <p className="font-bold mb-4">SIGNED by the within-named ADMINISTRATOR</p>
@@ -444,7 +430,7 @@ export default function VirtualAgreement(props: AgreementProps) {
 
         <p className="mb-10 font-bold italic uppercase">IN WITNESS WHEREOF, I have hereunto set my hand and seal this {currentDay} day of {currentMonth}, {currentYear}.</p>
 
-        {/* SIGNATURE BLOCKS - FIXED FOR MOBILE RESPONSIVENESS */}
+        {/* SIGNATURE BLOCKS */}
         <div className={`grid ${isPdf ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300" : ""}`}>
           <div className="space-y-4">
             <p className="font-bold underline text-xs">SIGNED, SEALED, AND DELIVERED by the within-named DONOR:</p>
@@ -496,39 +482,29 @@ export default function VirtualAgreement(props: AgreementProps) {
   if (step === 3) {
     return (
       <div ref={topRef} className="max-w-3xl mx-auto bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full overflow-x-hidden">
-        
-        {isDispatching ? (
-          <div className="flex flex-col items-center justify-center py-10">
-            <Loader2 size={48} className="text-emerald-400 animate-spin mb-6" />
-            <h2 className="text-2xl font-black uppercase tracking-wider text-crisp-white mb-2">Finalizing Documents</h2>
-            <p className="text-slate-light">Please wait while we encrypt your signatures and securely dispatch the PDF copies to your registered email...</p>
-          </div>
-        ) : (
-          <>
-            <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 size={40} className="text-emerald-400" />
-            </div>
-            <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreements Executed</h2>
-            <p className="text-slate-light leading-relaxed mb-10">
-              Your digital signatures have been permanently attached to the specific contract for this asset. Copies of the finalized agreements have been dispatched to your email.
-            </p>
+        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 size={40} className="text-emerald-400" />
+        </div>
+        <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreements Executed</h2>
+        <p className="text-slate-light leading-relaxed mb-10">
+          Your digital signatures have been permanently attached to the specific contract for this asset. Copies of the finalized agreements have been dispatched to your email.
+        </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button onClick={() => handleDownloadPDF(hpaContractRef, `HPA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingHpa)} disabled={isDownloadingHpa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
-                {isDownloadingHpa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download HPA</>}
-              </button>
-              
-              <button onClick={() => handleDownloadPDF(poaContractRef, `POA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingPoa)} disabled={isDownloadingPoa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
-                {isDownloadingPoa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download POA</>}
-              </button>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button onClick={() => handleDownloadPDF(hpaContractRef, `HPA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingHpa)} disabled={isDownloadingHpa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
+            {isDownloadingHpa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download HPA</>}
+          </button>
+          
+          <button onClick={() => handleDownloadPDF(poaContractRef, `POA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingPoa)} disabled={isDownloadingPoa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
+            {isDownloadingPoa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download POA</>}
+          </button>
 
-              <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
-                Return to Fleet <ArrowRight size={16} />
-              </button>
-            </div>
-          </>
-        )}
+          <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
+            Return to Fleet <ArrowRight size={16} />
+          </button>
+        </div>
 
+        {/* Required for manual downloading in Step 3 */}
         <div className="hidden">
           <div ref={hpaContractRef} className="bg-white p-12 w-[800px]"><HpaDocument isPdf={true} /></div>
           <div ref={poaContractRef} className="bg-white p-12 w-[800px]"><PoaDocument isPdf={true} /></div>
@@ -576,6 +552,12 @@ export default function VirtualAgreement(props: AgreementProps) {
               {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing Agreements</> : <><CheckSquare size={16} /> Submit & Execute Agreements</>}
             </button>
           </div>
+        </div>
+
+        {/* This hidden div MUST be here so html2pdf can find the refs when handleSubmitAll is fired */}
+        <div className="hidden">
+          <div ref={hpaContractRef} className="bg-white p-12 w-[800px]"><HpaDocument isPdf={true} /></div>
+          <div ref={poaContractRef} className="bg-white p-12 w-[800px]"><PoaDocument isPdf={true} /></div>
         </div>
       </div>
     );
