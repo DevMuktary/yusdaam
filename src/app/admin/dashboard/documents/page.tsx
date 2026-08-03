@@ -15,37 +15,103 @@ export default async function AdminDocumentsPage() {
     redirect("/login");
   }
 
-  // Fetch all contracts and their relations first
-  const allContracts = await prisma.contract.findMany({
+  const vaultEntries: any[] = [];
+
+  // 1. Fetch all Vehicles to act as the primary "Deployments"
+  const vehicles = await prisma.vehicle.findMany({
     include: {
-      vehicle: {
-        include: {
-          rider: true,
-          owner: true
-        }
-      }
+      rider: true,
+      owner: true,
+      contract: true
+    }
+  });
+
+  // Loop vehicles and create entries for those with docs
+  vehicles.forEach(v => {
+     const r = v.rider;
+     const o = v.owner;
+     const c = v.contract;
+
+     const rHpa = r?.hpaAgreementUrl || null;
+     const rPoa = r?.poaAgreementUrl || null;
+     const oHpa = o?.hpaAgreementUrl || null;
+     const oPoa = o?.poaAgreementUrl || null;
+     const cMaster = c?.signedDocumentUrl || null;
+
+     if (rHpa || rPoa || oHpa || oPoa || cMaster) {
+        vaultEntries.push({
+           id: v.id,
+           type: "DEPLOYMENT",
+           plateNumber: v.registrationNumber,
+           riderName: r ? `${r.firstName || ""} ${r.lastName || ""}`.trim() : "Unassigned",
+           ownerName: o ? `${o.firstName || ""} ${o.lastName || ""}`.trim() : "Unassigned",
+           updatedAt: c?.updatedAt || v.updatedAt,
+           docs: {
+             masterContractUrl: cMaster,
+             riderHpaUrl: rHpa,
+             riderPoaUrl: rPoa,
+             ownerHpaUrl: oHpa,
+             ownerPoaUrl: oPoa
+           }
+        });
+     }
+  });
+
+  // 2. Fetch Users with docs who have NO vehicle assigned yet
+  const allUsers = await prisma.user.findMany({
+    where: {
+      OR: [
+        { hpaAgreementUrl: { not: null, not: "" } },
+        { poaAgreementUrl: { not: null, not: "" } }
+      ]
     },
-    orderBy: { createdAt: "desc" }
+    include: {
+      assignedTrip: true,
+      ownedVehicles: true
+    }
   });
 
-  // Filter in memory to avoid Prisma's strict null/relation failures
-  const contractsWithDocs = allContracts.filter((contract) => {
-    const hasMaster = contract.signedDocumentUrl && contract.signedDocumentUrl.trim() !== "";
-    
-    // Check Rider Documents
-    const rider = contract.vehicle?.rider;
-    const hasRiderHpa = rider?.hpaAgreementUrl && rider.hpaAgreementUrl.trim() !== "";
-    const hasRiderPoa = rider?.poaAgreementUrl && rider.poaAgreementUrl.trim() !== "";
-    
-    // Check Owner Documents
-    const owner = contract.vehicle?.owner;
-    const hasOwnerHpa = owner?.hpaAgreementUrl && owner.hpaAgreementUrl.trim() !== "";
-    const hasOwnerPoa = owner?.poaAgreementUrl && owner.poaAgreementUrl.trim() !== "";
-
-    return hasMaster || hasRiderHpa || hasRiderPoa || hasOwnerHpa || hasOwnerPoa;
+  allUsers.forEach(u => {
+     // For riders with no assigned vehicle
+     if (u.role === "RIDER" && !u.assignedTrip) {
+       vaultEntries.push({
+         id: u.id,
+         type: "UNASSIGNED_RIDER",
+         plateNumber: "Pending Allocation",
+         riderName: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
+         ownerName: "N/A",
+         updatedAt: u.updatedAt,
+         docs: {
+           masterContractUrl: null,
+           riderHpaUrl: u.hpaAgreementUrl || null,
+           riderPoaUrl: u.poaAgreementUrl || null,
+           ownerHpaUrl: null,
+           ownerPoaUrl: null,
+         }
+       });
+     } 
+     // For owners with no owned vehicles
+     else if (u.role === "ASSET_OWNER" && (!u.ownedVehicles || u.ownedVehicles.length === 0)) {
+       vaultEntries.push({
+         id: u.id,
+         type: "UNASSIGNED_OWNER",
+         plateNumber: "Pending Allocation",
+         riderName: "N/A",
+         ownerName: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
+         updatedAt: u.updatedAt,
+         docs: {
+           masterContractUrl: null,
+           riderHpaUrl: null,
+           riderPoaUrl: null,
+           ownerHpaUrl: u.hpaAgreementUrl || null,
+           ownerPoaUrl: u.poaAgreementUrl || null,
+         }
+       });
+     }
   });
 
-  console.log(`[DOCUMENTS VAULT] Total Contracts: ${allContracts.length} | With Docs: ${contractsWithDocs.length}`);
+  // Sort by date (newest first)
+  vaultEntries.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -54,7 +120,7 @@ export default async function AdminDocumentsPage() {
         <p className="text-sm text-gray-400 mt-1">Access and strictly force-download digital contracts, HPAs, and POAs.</p>
       </div>
 
-      <DocumentsClient contracts={contractsWithDocs} />
+      <DocumentsClient entries={vaultEntries} />
     </div>
   );
 }
