@@ -32,10 +32,15 @@ export default async function AdminDocumentsPage() {
      const o = v.owner;
      const c = v.contract;
 
+     // Rider docs are still on the User profile (signed during KYC before assignment)
      const rHpa = r?.hpaAgreementUrl || null;
      const rPoa = r?.poaAgreementUrl || null;
-     const oHpa = o?.hpaAgreementUrl || null;
-     const oPoa = o?.poaAgreementUrl || null;
+     
+     // NEW: Owner docs are now isolated on the specific Contract for this vehicle
+     const oHpa = c?.ownerHpaUrl || null; 
+     const oPoa = c?.ownerPoaUrl || null;
+     
+     // The master system contract
      const cMaster = c?.signedDocumentUrl || null;
 
      if (rHpa || rPoa || oHpa || oPoa || cMaster) {
@@ -58,6 +63,7 @@ export default async function AdminDocumentsPage() {
   });
 
   // 2. Fetch Users with docs who have NO vehicle assigned yet
+  // This catches Riders who have completed KYC and signed, but are waiting for a vehicle.
   const allUsers = await prisma.user.findMany({
     where: {
       OR: [
@@ -100,7 +106,7 @@ export default async function AdminDocumentsPage() {
          }
        });
      } 
-     // For owners with no owned vehicles
+     // For legacy owners (if any still have documents stored on their user profile)
      else if (u.role === "ASSET_OWNER" && (!u.ownedVehicles || u.ownedVehicles.length === 0)) {
        vaultEntries.push({
          id: u.id,
@@ -127,7 +133,7 @@ export default async function AdminDocumentsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="border-b border-white/10 pb-6">
         <h1 className="text-3xl font-black text-white uppercase tracking-wider">Signed Agreements Vault</h1>
-        <p className="text-sm text-gray-400 mt-1">Access and strictly force-download digital contracts, HPAs, and POAs.</p>
+        <p className="text-sm text-gray-400 mt-1">Access and download digital contracts, HPAs, and POAs.</p>
       </div>
 
       <DocumentsClient entries={vaultEntries} />
