@@ -15,13 +15,28 @@ export default async function AdminDocumentsPage() {
     redirect("/login");
   }
 
-  // Fetch contracts where ANY of the 3 possible document fields exist
+  // Fetch contracts where ANY of the 3 possible document fields exist and are not empty
   const contracts = await prisma.contract.findMany({
     where: {
       OR: [
-        { signedDocumentUrl: { not: null, not: "" } },
-        { vehicle: { rider: { hpaAgreementUrl: { not: null, not: "" } } } },
-        { vehicle: { rider: { poaAgreementUrl: { not: null, not: "" } } } }
+        {
+          AND: [
+            { signedDocumentUrl: { not: null } },
+            { signedDocumentUrl: { not: "" } }
+          ]
+        },
+        {
+          AND: [
+            { vehicle: { rider: { hpaAgreementUrl: { not: null } } } },
+            { vehicle: { rider: { hpaAgreementUrl: { not: "" } } } }
+          ]
+        },
+        {
+          AND: [
+            { vehicle: { rider: { poaAgreementUrl: { not: null } } } },
+            { vehicle: { rider: { poaAgreementUrl: { not: "" } } } }
+          ]
+        }
       ]
     },
     include: {
