@@ -1,8 +1,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma"; // Adjust this import if your prisma instance is located elsewhere
+import { PrismaClient } from "@prisma/client";
 import RemittancesClient from "./RemittancesClient";
+
+const prisma = new PrismaClient();
 
 export default async function RemittancesPage() {
   const session = await getServerSession(authOptions);
