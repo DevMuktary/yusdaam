@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { sendSystemEmail } from "@/lib/email/sender";
 import { sendSms } from "@/lib/sms/termii"; 
-import { startOfDay, endOfDay, subDays, addDays } from "date-fns";
+import { endOfDay, addDays } from "date-fns";
 
 const prisma = new PrismaClient();
 
@@ -15,18 +15,14 @@ export async function GET(req: Request) {
   try {
     const today = new Date();
     
-    // THE FIX: This ensures it catches up on missed days without getting stuck
+    // Find all active contracts that have hit their due date
     const dueContracts = await prisma.contract.findMany({
       where: {
         isActive: true,
-        nextDueDate: {
-          lte: endOfDay(today), // Catch up on any missed days/weeks
-        }
+        nextDueDate: { lte: endOfDay(today) }
       },
       include: {
-        vehicle: {
-          include: { rider: true }
-        }
+        vehicle: { include: { rider: true } }
       }
     });
 
@@ -35,22 +31,18 @@ export async function GET(req: Request) {
     for (const contract of dueContracts) {
       if (!contract.nextDueDate) continue; 
 
-      const cycleStartDate = subDays(contract.nextDueDate, 7);
-      
-      const cyclePayments = await prisma.ledger.aggregate({
-        where: {
-          vehicleId: contract.vehicleId,
-          type: "PAYMENT_COLLECTED",
-          date: {
-            gte: cycleStartDate,
-            lte: contract.nextDueDate
-          }
-        },
-        _sum: { amount: true }
+      // 1. Fetch the EXACT Weekly Cycle record for the current week
+      const currentCycle = await prisma.weeklyCycle.findFirst({
+        where: { contractId: contract.id, weekNumber: contract.currentWeek }
       });
 
-      const totalPaid = cyclePayments._sum.amount || 0;
+      if (!currentCycle) continue;
 
+      // 2. THE FIX: Trust the admin payment route! 
+      // Do NOT aggregate ledgers by date. Just use the amount the admin already logged into this cycle.
+      const totalPaid = currentCycle.amountPaid || 0;
+
+      // 3. Calculate historical billing to apply absolute caps
       const pastCycles = await prisma.weeklyCycle.aggregate({
         where: { contractId: contract.id },
         _sum: { expectedAmount: true, ownerExpectedAmount: true }
@@ -72,23 +64,21 @@ export async function GET(req: Request) {
          }
       }
       
+      // Calculate shortfall based on the new capped expected amount
       const shortfallAmount = Math.max(0, expectedAmount - totalPaid);
-      const isSettled = shortfallAmount === 0;
+      const isSettled = shortfallAmount <= 0.01;
 
-      // Update the PRE-EXISTING Weekly Cycle Record
-      await prisma.weeklyCycle.updateMany({
-        where: {
-          contractId: contract.id,
-          weekNumber: contract.currentWeek
-        },
+      // 4. Finalize the Current Cycle
+      await prisma.weeklyCycle.update({
+        where: { id: currentCycle.id },
         data: {
-          amountPaid: totalPaid,
           shortfallAmount: shortfallAmount,
           isSettled: isSettled,
           ownerExpectedAmount: ownerExpectedAmount 
         }
       });
 
+      // 5. Check if the Rider is in Arrears
       const debtCheck = await prisma.weeklyCycle.aggregate({
         where: { contractId: contract.id, isSettled: false },
         _sum: { shortfallAmount: true }
@@ -102,11 +92,8 @@ export async function GET(req: Request) {
         } else if (totalHistoricalDebt > shortfallAmount) {
           displayAmount = totalHistoricalDebt;
         }
-
-        console.log(`Arrears Flagged: ${contract.vehicle.rider?.firstName} is short. Requesting ₦${displayAmount}`);
         
         const rider = contract.vehicle.rider;
-        
         if (rider) {
           if (rider.phoneNumber) {
             const smsMessage = `URGENT: Dear ${rider.firstName}, your remittance of N${displayAmount.toLocaleString()} for Week ${contract.currentWeek} (${contract.vehicle.registrationNumber}) is OVERDUE. Kindly make payment immediately. - YUSDAAM`;
@@ -118,16 +105,28 @@ export async function GET(req: Request) {
                toEmail: rider.email,
                toName: `${rider.firstName} ${rider.lastName}`,
                subject: `URGENT: Week ${contract.currentWeek} Remittance Overdue`,
-               htmlBody: `<p>Dear ${rider.firstName}, your payment is overdue...</p>` // Keep your original HTML here
-             });
+               htmlBody: `
+                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #001232; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                   <div style="background-color: #ef4444; padding: 24px; text-align: center;">
+                     <h2 style="color: #ffffff; margin: 0;">Payment Overdue</h2>
+                   </div>
+                   <div style="padding: 32px; background-color: #ffffff;">
+                     <p>Dear ${rider.firstName},</p>
+                     <p>Your vehicle remittance for Week ${contract.currentWeek} has not been fully settled and is now overdue.</p>
+                     <p style="font-size: 20px; font-weight: bold; color: #ef4444;">Pending Amount: ₦${displayAmount.toLocaleString()}</p>
+                     <p>Please fund your account immediately to prevent immobilization of your vehicle.</p>
+                   </div>
+                 </div>
+               `
+             }).catch(err => console.error(err));
           }
         }
       }
 
+      // 6. Roll over Contract Dates
       const newCumulativeBilled = cumulativeRiderBilled + expectedAmount;
 
       if (contract.currentWeek < contract.riderDurationWeeks && newCumulativeBilled < contract.systemGrandTotal) {
-        // ONLY roll over the contract dates. DO NOT create a new cycle since they are pre-drafted!
         await prisma.contract.update({
           where: { id: contract.id },
           data: { 
