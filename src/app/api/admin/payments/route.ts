@@ -14,38 +14,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // We accept `cycleId` from the frontend dropdown to know exactly which week is being paid
-    const { vehicleId, type, amount, description, receiptBase64, cycleId } = await req.json();
+    const body = await req.json();
+    const { vehicleId, type, amount, description, receiptBase64, cycleId } = body;
 
-    if (!vehicleId || !type || !amount) {
+    if (!vehicleId || !type || !amount || !cycleId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const numAmount = Number(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return NextResponse.json({ error: "Invalid amount provided" }, { status: 400 });
+    }
 
-    // 1. Get Vehicle Data to extract Owner and Rider
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: vehicleId },
-      include: {
-        owner: true,
-        rider: true
-      }
+      include: { owner: true, rider: true }
     });
 
     if (!vehicle || !vehicle.ownerId) {
       return NextResponse.json({ error: "Vehicle or Owner not found" }, { status: 400 });
     }
 
-    // Capture as non-null const so TypeScript narrows the type inside the transaction callback
     const ownerId = vehicle.ownerId;
-
-    // 2. Generate Unique Transaction Ref (e.g., YUS-PAY-1234567)
     const reference = `YUS-${type === "PAYMENT_COLLECTED" ? "IN" : "OUT"}-${Math.floor(1000000 + Math.random() * 9000000)}`;
 
-    // 3. SECURE DATABASE TRANSACTION: Create Ledger & Update Cycle simultaneously
     const result = await prisma.$transaction(async (tx) => {
-      
-      // A. Create the Ledger Entry
+      // 1. Create the universal Ledger entry
       const ledger = await tx.ledger.create({
         data: {
           amount: numAmount,
@@ -58,51 +52,44 @@ export async function POST(req: Request) {
         }
       });
 
-      // B. Update Cycle Tracking (For BOTH Owner Payouts and Rider Payments)
-      if (cycleId) {
-        const cycle = await tx.weeklyCycle.findUnique({ where: { id: cycleId } });
-        
-        if (!cycle) {
-          throw new Error("The selected weekly cycle could not be found.");
-        }
+      // 2. Fetch the specific target week
+      const cycle = await tx.weeklyCycle.findUnique({ where: { id: cycleId } });
+      if (!cycle) throw new Error("The selected weekly cycle could not be found.");
 
-        // If Admin is paying the owner
-        if (type === "OWNER_REMITTANCE") {
-          const newRemittedAmount = (cycle.ownerRemittedAmount || 0) + numAmount;
-          
-          // Safety buffer of 0.01 to handle floating point decimal rounding
-          const isSettled = newRemittedAmount >= (cycle.ownerExpectedAmount - 0.01);
+      // 3. Update the specific week based on transaction type
+      if (type === "OWNER_REMITTANCE") {
+        const newRemittedAmount = (cycle.ownerRemittedAmount || 0) + numAmount;
+        // Float math safety
+        const isSettled = newRemittedAmount >= (cycle.ownerExpectedAmount - 0.01);
 
-          await tx.weeklyCycle.update({
-            where: { id: cycleId },
-            data: {
-              ownerRemittedAmount: newRemittedAmount,
-              isOwnerSettled: isSettled
-            }
-          });
-        } 
-        
-        // If Admin is logging a rider's payment
-        else if (type === "PAYMENT_COLLECTED") {
-          const newAmountPaid = (cycle.amountPaid || 0) + numAmount;
-          const newShortfall = Math.max(0, cycle.expectedAmount - newAmountPaid);
-          const isSettled = newShortfall === 0;
+        await tx.weeklyCycle.update({
+          where: { id: cycleId },
+          data: { 
+            ownerRemittedAmount: newRemittedAmount, 
+            isOwnerSettled: isSettled 
+          }
+        });
+      } 
+      else if (type === "PAYMENT_COLLECTED") {
+        const newAmountPaid = (cycle.amountPaid || 0) + numAmount;
+        const newShortfall = Math.max(0, cycle.expectedAmount - newAmountPaid);
+        // Float math safety
+        const isSettled = newShortfall <= 0.01;
 
-          await tx.weeklyCycle.update({
-            where: { id: cycleId },
-            data: {
-              amountPaid: newAmountPaid,
-              shortfallAmount: newShortfall,
-              isSettled: isSettled
-            }
-          });
-        }
+        await tx.weeklyCycle.update({
+          where: { id: cycleId },
+          data: { 
+            amountPaid: newAmountPaid, 
+            shortfallAmount: newShortfall, 
+            isSettled: isSettled 
+          }
+        });
       }
 
       return ledger;
     });
 
-    // 4. Send Email Notifications
+    // 4. Dispatch strict E-Receipts based on exact Admin input
     const formattedAmount = numAmount.toLocaleString();
     const dateStr = new Date().toLocaleDateString('en-GB');
 
@@ -114,7 +101,7 @@ export async function POST(req: Request) {
         htmlBody: getPaymentCollectedEmail({
           firstName: vehicle.rider.firstName || "Rider",
           email: vehicle.rider.email,
-          amount: formattedAmount,
+          amount: formattedAmount, 
           weekDescription: description,
           vehiclePlate: vehicle.registrationNumber,
           reference,
@@ -126,10 +113,10 @@ export async function POST(req: Request) {
     if (type === "OWNER_REMITTANCE" && vehicle.owner?.email) {
       await sendSystemEmail({
         toEmail: vehicle.owner.email,
-        toName: vehicle.owner.firstName || "Asset Owner",
-        subject: `Remittance Dispatched: ${description}`,
+        toName: vehicle.owner.firstName || "Owner",
+        subject: `Payout Remittance: ${description}`,
         htmlBody: getOwnerPayoutEmail({
-          firstName: vehicle.owner.firstName || "Asset Owner",
+          firstName: vehicle.owner.firstName || "Owner",
           email: vehicle.owner.email,
           amount: formattedAmount,
           weekDescription: description,
@@ -137,7 +124,7 @@ export async function POST(req: Request) {
           reference,
           date: dateStr
         })
-      }).catch(err => console.error("Failed to email owner remittance:", err));
+      }).catch(err => console.error("Failed to email owner receipt:", err));
     }
 
     return NextResponse.json({ success: true, ledger: result });
