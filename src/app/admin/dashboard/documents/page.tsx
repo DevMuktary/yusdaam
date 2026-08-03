@@ -4,6 +4,10 @@ import { PrismaClient } from "@prisma/client";
 import { redirect } from "next/navigation";
 import DocumentsClient from "./DocumentsClient";
 
+// 1. FORCE DYNAMIC: This tells Next.js NEVER to cache this page. 
+// It will query the database fresh every single time you refresh the page.
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient();
 
 export default async function AdminDocumentsPage() {
@@ -13,10 +17,13 @@ export default async function AdminDocumentsPage() {
     redirect("/login");
   }
 
-  // Fetch all contracts that have a signed document attached
+  // 2. Fetch contracts where the URL is NOT null AND NOT an empty string
   const contracts = await prisma.contract.findMany({
     where: {
-      signedDocumentUrl: { not: null }
+      AND: [
+        { signedDocumentUrl: { not: null } },
+        { signedDocumentUrl: { not: "" } }
+      ]
     },
     include: {
       vehicle: {
@@ -28,6 +35,9 @@ export default async function AdminDocumentsPage() {
     },
     orderBy: { createdAt: "desc" }
   });
+
+  // 3. System Log so you can actually see what the DB is finding in your Railway logs!
+  console.log(`[DOCUMENTS VAULT] Found ${contracts.length} signed contracts.`);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
