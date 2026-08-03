@@ -16,7 +16,8 @@ import {
   FileCheck,
   MessageSquare,
   ClipboardList,
-  Settings
+  Settings,
+  FileText
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -33,6 +34,7 @@ export default function Sidebar() {
     { name: "MESSAGE", href: "/admin/dashboard/messages", icon: MessageSquare },
     { name: "USERS", href: "/admin/dashboard/users", icon: Users },
     { name: "ASSIGNMENT", href: "/admin/dashboard/assignment", icon: ClipboardList },
+    { name: "DOCUMENTS", href: "/admin/dashboard/documents", icon: FileText },
     { name: "SETTINGS", href: "/admin/dashboard/settings", icon: Settings },
   ];
 
