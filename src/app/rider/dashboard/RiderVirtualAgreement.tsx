@@ -66,7 +66,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, windowWidth: 800, letterRendering: true },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] } 
+        // FIX: Added 'avoid-all' to stop text from cutting off at the end of PDF pages
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
       };
 
       const dataUri = await html2pdf().set({ ...opt, filename: 'HPA.pdf' }).from(pdfContractRef.current).output('datauristring');
@@ -95,6 +96,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   const HpaDocument = ({ isPdf = false }: { isPdf?: boolean }) => {
     const textStyle = isPdf ? "text-[11px] leading-snug text-black font-serif text-justify" : "text-sm text-slate-light leading-relaxed font-sans text-justify";
     
+    // Strengthened page-break avoidance for elements
     const headingStyle = isPdf ? "font-bold text-[12px] border-b border-gray-400 pb-0.5 mt-3 mb-1.5 text-black uppercase break-after-avoid break-inside-avoid" : "font-bold text-crisp-white text-base mt-8 border-b border-cobalt/20 pb-2 uppercase";
     const paraSpacing = isPdf ? "mb-1.5 break-inside-avoid" : "mb-4";
     const listSpacing = isPdf ? "mb-1.5 space-y-0.5 break-inside-avoid" : "mb-6 space-y-2";
