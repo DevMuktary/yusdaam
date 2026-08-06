@@ -13,13 +13,11 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
   const [selectedRider, setSelectedRider] = useState<string>("");
   const [selectedOwner, setSelectedOwner] = useState<string>("");
 
-  // Financial Form State
+  // Financial Form State (Removed systemGrandTotal and weeklyServiceFee)
   const [formData, setFormData] = useState({
     totalHirePurchasePrice: "",
-    systemGrandTotal: "", // <-- NEW: Master ceiling
     downPayment: "",
     riderWeeklyRemittance: "",
-    weeklyServiceFee: "", 
     riderDurationWeeks: "",
     ownerWeeklyPayout: "",
     ownerDurationWeeks: ""
@@ -50,6 +48,9 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
           vehicleId: selectedVehicle,
           riderId: selectedRider || null, // Handle optional missing rider
           ownerId: selectedOwner || null, // Handle optional missing owner
+          // Pass defaults to prevent Prisma schema NaN errors
+          systemGrandTotal: formData.totalHirePurchasePrice, 
+          weeklyServiceFee: "0", 
           ...formData
         }),
       });
@@ -62,7 +63,7 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
       alert("Success! Assignment completed and contract parameters established.");
       router.refresh();
       setSelectedVehicle(""); setSelectedRider(""); setSelectedOwner("");
-      setFormData({ totalHirePurchasePrice: "", systemGrandTotal: "", downPayment: "", riderWeeklyRemittance: "", weeklyServiceFee: "", riderDurationWeeks: "", ownerWeeklyPayout: "", ownerDurationWeeks: "" });
+      setFormData({ totalHirePurchasePrice: "", downPayment: "", riderWeeklyRemittance: "", riderDurationWeeks: "", ownerWeeklyPayout: "", ownerDurationWeeks: "" });
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -137,9 +138,8 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
                 <input type="text" name="totalHirePurchasePrice" value={formData.totalHirePurchasePrice} onChange={handleInputChange} placeholder="e.g. 3500000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required={!!selectedRider} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">System Grand Total (₦) *</label>
-                <input type="text" name="systemGrandTotal" value={formData.systemGrandTotal} onChange={handleInputChange} placeholder="e.g. 4000000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required={!!selectedRider} />
-                <p className="text-[9px] text-gray-500 mt-1 uppercase tracking-wider">Vehicle Cost + Total Admin Fees</p>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Down Payment (₦)</label>
+                <input type="text" name="downPayment" value={formData.downPayment} onChange={handleInputChange} placeholder="Optional" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" />
               </div>
             </div>
 
@@ -149,19 +149,8 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
                 <input type="text" name="riderWeeklyRemittance" value={formData.riderWeeklyRemittance} onChange={handleInputChange} placeholder="e.g. 30000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required={!!selectedRider} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Service Fee (₦) *</label>
-                <input type="text" name="weeklyServiceFee" value={formData.weeklyServiceFee} onChange={handleInputChange} placeholder="e.g. 5000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required={!!selectedRider} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Duration (Weeks) *</label>
                 <input type="text" name="riderDurationWeeks" value={formData.riderDurationWeeks} onChange={handleInputChange} placeholder="e.g. 104" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" required={!!selectedRider} />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Down Payment (₦)</label>
-                <input type="text" name="downPayment" value={formData.downPayment} onChange={handleInputChange} placeholder="Optional" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono" />
               </div>
             </div>
           </div>
