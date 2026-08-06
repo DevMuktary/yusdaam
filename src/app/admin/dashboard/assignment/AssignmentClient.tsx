@@ -172,7 +172,7 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
 
             <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-lg mt-4 flex gap-3">
               <AlertCircle size={20} className="text-purple-400 shrink-0" />
-              <p className="text-xs text-purple-200">The difference between Rider Inflow and Owner Payout represents the Yusdaam administrative and maintenance management margin.</p>
+              <p className="text-xs text-purple-200">Click Exeute Assignents below to save</p>
             </div>
           </div>
 
