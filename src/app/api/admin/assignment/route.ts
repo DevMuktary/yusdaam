@@ -80,33 +80,23 @@ export async function POST(req: Request) {
       // 3. --- PRE-GENERATE ALL WEEKLY CYCLES INSTANTLY ---
       const rDuration = Number(riderDurationWeeks);
       const oDuration = Number(ownerDurationWeeks);
-      const sysTotal = Number(systemGrandTotal);
-      const hpTotal = Number(totalHirePurchasePrice); // Owner's max cap
       const rWeekly = Number(riderWeeklyRemittance);
       const oWeekly = Number(ownerWeeklyPayout);
       
-      let cumulativeRiderBilled = 0;
-      let cumulativeOwnerBilled = 0;
       const cyclesData = [];
 
       // The loop runs for the length of the Rider's tenure
       for (let week = 1; week <= rDuration; week++) {
         
-        // --- 1. RIDER CAPPING (Against Grand Total) ---
+        // --- 1. RIDER LOGIC: Strictly fixed expected amount ---
+        // We removed the systemGrandTotal capping that was artificially forcing this to 0.
         let expAmt = rWeekly;
-        if (cumulativeRiderBilled + expAmt > sysTotal) {
-          expAmt = Math.max(0, sysTotal - cumulativeRiderBilled);
-        }
-        cumulativeRiderBilled += expAmt;
 
-        // --- 2. OWNER CAPPING (Against pure HP Price) ---
+        // --- 2. OWNER LOGIC: Strictly fixed payout for their duration ---
+        // We removed the hpTotal capping that was artificially forcing this to 0.
         let ownExpAmt = 0;
         if (week <= oDuration) {
           ownExpAmt = oWeekly;
-          if (cumulativeOwnerBilled + ownExpAmt > hpTotal) {
-             ownExpAmt = Math.max(0, hpTotal - cumulativeOwnerBilled);
-          }
-          cumulativeOwnerBilled += ownExpAmt;
         }
 
         const wStartDate = new Date(baseDate);
@@ -124,7 +114,7 @@ export async function POST(req: Request) {
           isSettled: expAmt <= 0,
           ownerExpectedAmount: ownExpAmt, 
           ownerRemittedAmount: 0,
-          isOwnerSettled: ownExpAmt <= 0, 
+          isOwnerSettled: ownExpAmt <= 0, // This will only be true for weeks AFTER the owner's tenure ends
           startDate: wStartDate,
           endDate: wEndDate
         });
