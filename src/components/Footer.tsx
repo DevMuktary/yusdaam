@@ -56,7 +56,7 @@ export default function Footer() {
             <div className="flex flex-col items-center sm:items-start">
               <h4 className="text-[11px] sm:text-xs font-bold text-slate-light/60 uppercase tracking-widest mb-5">Contact Us</h4>
               <div className="flex flex-col gap-4 text-xs sm:text-sm font-medium text-slate-light items-center sm:items-start w-full">
-                <a href="tel:09033358098" className="flex flex-col sm:flex-row items-center sm:items-start gap-2 hover:text-signal-red transition">
+                <a href="tel:09065000860" className="flex flex-col sm:flex-row items-center sm:items-start gap-2 hover:text-signal-red transition">
                   <span className="w-8 h-8 shrink-0 rounded-full bg-void-light border border-cobalt flex items-center justify-center text-signal-red mb-1 sm:mb-0">
                     <Phone size={14} />
                   </span>
