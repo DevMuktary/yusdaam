@@ -11,3 +11,35 @@
     @apply text-crisp-white font-semibold;
   }
 }
+
+/* PDF Generation & Page Break Rules */
+.html2pdf__page-break {
+  page-break-before: always !important;
+  break-before: always !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block;
+}
+
+.avoid-page-break {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+.pdf-render-container {
+  color: #000000;
+  line-height: 1.4;
+  background-color: #ffffff;
+}
+
+.pdf-render-container p,
+.pdf-render-container li,
+.pdf-render-container h2,
+.pdf-render-container h3,
+.pdf-render-container h4,
+.pdf-render-container .avoid-break {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+

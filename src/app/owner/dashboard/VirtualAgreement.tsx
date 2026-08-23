@@ -108,11 +108,15 @@ export default function VirtualAgreement(props: AgreementProps) {
       // @ts-ignore
       const html2pdf = (await import("html2pdf.js")).default;
       const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
+        margin: [0.4, 0.4, 0.4, 0.4],
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 800, letterRendering: true },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 800, scrollX: 0, scrollY: 0 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+        pagebreak: { 
+          mode: ['css', 'legacy'], 
+          before: '.html2pdf__page-break',
+          avoid: ['p', 'h2', 'h3', 'h4', 'ul', 'li', '.avoid-page-break', '.signature-block', '.guarantor-card'] 
+        }
       };
 
       const hpaDataUri = await html2pdf().set({ ...opt, filename: 'HPA.pdf' }).from(hpaContractRef.current).output('datauristring');
@@ -160,11 +164,15 @@ export default function VirtualAgreement(props: AgreementProps) {
       // @ts-ignore
       const html2pdf = (await import("html2pdf.js")).default;
       const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
+        margin: [0.4, 0.4, 0.4, 0.4],
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 800, letterRendering: true },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 800, scrollX: 0, scrollY: 0 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+        pagebreak: { 
+          mode: ['css', 'legacy'], 
+          before: '.html2pdf__page-break',
+          avoid: ['p', 'h2', 'h3', 'h4', 'ul', 'li', '.avoid-page-break', '.signature-block', '.guarantor-card'] 
+        }
       };
 
       const pdfBlob = await html2pdf().set(opt).from(ref.current).output('blob');
@@ -185,15 +193,20 @@ export default function VirtualAgreement(props: AgreementProps) {
   };
 
   const HpaDocument = ({ isPdf = false }: { isPdf?: boolean }) => {
-    const textStyle = isPdf ? "text-[11px] leading-relaxed text-black font-serif text-justify" : "text-sm text-slate-light leading-relaxed font-sans text-justify";
-    const headingStyle = isPdf ? "font-bold text-[12px] underline mt-6 mb-2 text-black uppercase break-after-avoid break-inside-avoid" : "font-bold text-crisp-white text-base mt-8 border-b border-cobalt/20 pb-2 uppercase";
-    const paraSpacing = isPdf ? "mb-2 break-inside-avoid" : "mb-2";
-    const listSpacing = isPdf ? "mb-6 space-y-2 break-inside-avoid" : "mb-6 space-y-2";
+    const textStyle = isPdf 
+      ? "text-[11px] leading-[1.45] text-black font-serif text-justify pdf-render-container" 
+      : "text-sm text-slate-light leading-relaxed font-sans text-justify";
+    const headingStyle = isPdf 
+      ? "font-bold text-[12px] underline mt-4 mb-1.5 text-black uppercase avoid-page-break" 
+      : "font-bold text-crisp-white text-base mt-8 border-b border-cobalt/20 pb-2 uppercase";
+    const paraSpacing = isPdf ? "mb-1.5 avoid-page-break" : "mb-2";
+    const listSpacing = isPdf ? "mb-2 space-y-1 avoid-page-break" : "mb-6 space-y-2";
+    const pdfBreakAvoid = isPdf ? { pageBreakInside: "avoid" as const, breakInside: "avoid" as const } : undefined;
 
     return (
       <div className={textStyle}>
         
-        <div className={`text-center ${isPdf ? "pb-3 mb-4 break-after-avoid break-inside-avoid border border-gray-300 rounded overflow-hidden" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
+        <div style={pdfBreakAvoid} className={`text-center avoid-page-break ${isPdf ? "pb-3 mb-4 border border-gray-300 rounded overflow-hidden" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
           <div className={isPdf ? "bg-[#001232] py-4 w-full" : "bg-void-navy"}>
             <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: isPdf ? "60px" : "45px", width: "auto", margin: "0 auto", display: "block", objectFit: "contain" }} />
           </div>
@@ -203,40 +216,40 @@ export default function VirtualAgreement(props: AgreementProps) {
           </div>
         </div>
 
-        <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-6 break-after-avoid break-inside-avoid" : "text-lg text-signal-red mb-8"}`}>HIRE PURCHASE ADMINISTRATION AGREEMENT</h2>
+        <h2 style={pdfBreakAvoid} className={`text-center font-black uppercase avoid-page-break ${isPdf ? "text-sm mb-4" : "text-lg text-signal-red mb-8"}`}>HIRE PURCHASE ADMINISTRATION AGREEMENT</h2>
 
-        <p className={paraSpacing}><strong>THIS AGREEMENT</strong> is made this <strong>{currentDay}</strong> day of <strong>{currentMonth}</strong>, <strong>{currentYear}</strong>.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}><strong>THIS AGREEMENT</strong> is made this <strong>{currentDay}</strong> day of <strong>{currentMonth}</strong>, <strong>{currentYear}</strong>.</p>
 
-        <p className={`font-bold ${isPdf ? "mb-1 break-inside-avoid" : "mb-2"}`}>BETWEEN</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company duly incorporated under the Companies and Allied Matters Act (CAMA) with RC: 9562528, having its registered office at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu, Nigeria, Email: admin@yusdaamautos.com (hereinafter referred to as the <strong>“Administrator”</strong>, which expression shall, where the context so admits, include its successors-in-title and assigns) of the first part;</p>
+        <p style={pdfBreakAvoid} className={`font-bold avoid-page-break ${isPdf ? "mb-0.5" : "mb-2"}`}>BETWEEN</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}><strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company duly incorporated under the Companies and Allied Matters Act (CAMA) with RC: 9562528, having its registered office at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu, Nigeria, Email: admin@yusdaamautos.com (hereinafter referred to as the <strong>“Administrator”</strong>, which expression shall, where the context so admits, include its successors-in-title and assigns) of the first part;</p>
 
-        <p className={`font-bold ${isPdf ? "mb-1 break-inside-avoid" : "mb-2"}`}>AND</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}><strong>{props.ownerName || fallback}</strong>, BVN: {props.bvn || fallback}, NIN: {props.nin || fallback}, residing at {props.ownerAddress || fallback}, Email: {props.ownerEmail || fallback}, Phone: {props.ownerPhone || fallback} (hereinafter referred to as the <strong>“Owner”</strong>, which expression shall, where the context so admits, include their heirs, personal representatives, and assigns) of the second part.</p>
-        <p className={isPdf ? "mb-6 break-inside-avoid" : "mb-8"}>The Administrator and the Owner are hereinafter collectively referred to as the <strong>"Parties"</strong> and individually as a <strong>"Party"</strong>.</p>
+        <p style={pdfBreakAvoid} className={`font-bold avoid-page-break ${isPdf ? "mb-0.5" : "mb-2"}`}>AND</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}><strong>{props.ownerName || fallback}</strong>, BVN: {props.bvn || fallback}, NIN: {props.nin || fallback}, residing at {props.ownerAddress || fallback}, Email: {props.ownerEmail || fallback}, Phone: {props.ownerPhone || fallback} (hereinafter referred to as the <strong>“Owner”</strong>, which expression shall, where the context so admits, include their heirs, personal representatives, and assigns) of the second part.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>The Administrator and the Owner are hereinafter collectively referred to as the <strong>"Parties"</strong> and individually as a <strong>"Party"</strong>.</p>
 
-        <h3 className={headingStyle}>RECITALS</h3>
-        <p className={`font-bold ${isPdf ? "mb-1 break-inside-avoid" : "mb-2"}`}>WHEREAS:</p>
-        <ul className={`list-[upper-alpha] pl-5 ${listSpacing}`}>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>RECITALS</h3>
+        <p style={pdfBreakAvoid} className={`font-bold avoid-page-break ${isPdf ? "mb-1" : "mb-2"}`}>WHEREAS:</p>
+        <ul style={pdfBreakAvoid} className={`list-[upper-alpha] pl-5 ${listSpacing}`}>
           <li>The Owner is the absolute legal owner, or intends to become the legal purchaser, of a commercial transport asset (including but not limited to a tricycle, mini-bus, car, truck, tipper, or bus) and desires to engage professional administrative services to manage the asset under a hire purchase arrangement.</li>
           <li>The Administrator specializes in the management of hire purchase vehicles on behalf of asset owners via a Power of Attorney, providing services that include rider/driver vetting, remittance collection, GPS monitoring, compliance enforcement, and asset repossession.</li>
           <li>The Parties have agreed that the Administrator shall provide these services to the Owner at zero direct cost (₦0), deriving its revenue exclusively from an administrative service fee levied directly upon the designated rider/driver.</li>
           <li>The Parties now wish to enter into this Agreement to formalize the terms, conditions, and obligations governing this arrangement.</li>
         </ul>
 
-        <p className={`font-bold ${paraSpacing}`}>NOW, THEREFORE, IT IS HEREBY AGREED AS FOLLOWS:</p>
+        <p style={pdfBreakAvoid} className={`font-bold ${paraSpacing}`}>NOW, THEREFORE, IT IS HEREBY AGREED AS FOLLOWS:</p>
 
-        <h3 className={headingStyle}>1. DEFINITIONS AND INTERPRETATION</h3>
-        <p className={paraSpacing}>1.1 In this Agreement, unless the context otherwise requires:</p>
-        <ul className={`list-disc pl-5 ${listSpacing}`}>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>1. DEFINITIONS AND INTERPRETATION</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>1.1 In this Agreement, unless the context otherwise requires:</p>
+        <ul style={pdfBreakAvoid} className={`list-disc pl-5 ${listSpacing}`}>
           <li><strong>"Asset"</strong> means the commercial transport vehicle described in Clause 2.1 of this Agreement.</li>
           <li><strong>"Net Weekly Remittance"</strong> means the agreed target payout routed to the Owner weekly.</li>
           <li><strong>"Rider"</strong> or <strong>"Driver"</strong> means the third-party individual selected and managed by the Administrator to operate the Asset under a separate hire purchase agreement.</li>
           <li><strong>"Tenure"</strong> means the agreed duration of the hire purchase arrangement necessary for the Rider to complete their obligations.</li>
         </ul>
 
-        <h3 className={headingStyle}>2. APPOINTMENT AND ASSET DESCRIPTION</h3>
-        <p className={paraSpacing}>2.1 The Owner hereby appoints the Administrator, and the Administrator accepts such appointment, to manage, operate, monitor, and enforce the hire purchase terms for one (1) unit of a commercial transport asset (the "Asset") detailed as follows:</p>
-        <ul className={`list-disc pl-5 mb-4 space-y-1 ${isPdf ? "font-mono text-[10px] break-inside-avoid" : "font-mono bg-void-navy/50 p-4 rounded-lg"}`}>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>2. APPOINTMENT AND ASSET DESCRIPTION</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>2.1 The Owner hereby appoints the Administrator, and the Administrator accepts such appointment, to manage, operate, monitor, and enforce the hire purchase terms for one (1) unit of a commercial transport asset (the "Asset") detailed as follows:</p>
+        <ul style={pdfBreakAvoid} className={`list-disc pl-5 mb-4 space-y-1 ${isPdf ? "font-mono text-[10px] avoid-page-break" : "font-mono bg-void-navy/50 p-4 rounded-lg"}`}>
           <li><strong>Owner ID:</strong> {props.ownerId || fallback}</li>
           <li><strong>Asset Type:</strong> {props.vehicleType || fallback}</li>
           <li><strong>Make/Model:</strong> {props.makeModel || fallback}</li>
@@ -245,76 +258,76 @@ export default function VirtualAgreement(props: AgreementProps) {
           <li><strong>Chassis Number:</strong> {props.chassisNo || fallback}</li>
           <li><strong>Registration/Plate Number:</strong> {props.plateNo || fallback}</li>
         </ul>
-        <p className={paraSpacing}>2.2 The Owner shall execute a Power of Attorney (attached hereto as <strong>Schedule D</strong>) granting the Administrator the legal authority to act on their behalf regarding the daily management, enforcement, and repossession of the Asset.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>2.3 Legal and beneficial ownership of the Asset shall remain wholly vested in the Owner until successfully transferred to the Rider upon the completion of the Tenure, as outlined in Clause 9. The Administrator claims no ownership interest in the Asset.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>2.2 The Owner shall execute a Power of Attorney (attached hereto as <strong>Schedule D</strong>) granting the Administrator the legal authority to act on their behalf regarding the daily management, enforcement, and repossession of the Asset.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>2.3 Legal and beneficial ownership of the Asset shall remain wholly vested in the Owner until successfully transferred to the Rider upon the completion of the Tenure, as outlined in Clause 9. The Administrator claims no ownership interest in the Asset.</p>
 
-        <h3 className={headingStyle}>3. VEHICLE PURCHASE AND PAYMENT FACILITATION</h3>
-        <p className={paraSpacing}>3.1 The Owner shall make all payments for the acquisition of the Asset directly to the vehicle dealer or supplier. Under no circumstances shall the Administrator receive, hold, or disburse the Owner's capital funds for the purchase of the Asset.</p>
-        <p className={paraSpacing}>3.2 The Administrator's role is strictly limited to facilitation. The Administrator shall provide the Owner with a Purchase Facilitation Quote and a supplier invoice for approval.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>3.3 Proof of the Owner's direct payment to the dealer shall be annexed to this Agreement as <strong>Schedule A</strong>.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>3. VEHICLE PURCHASE AND PAYMENT FACILITATION</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>3.1 The Owner shall make all payments for the acquisition of the Asset directly to the vehicle dealer or supplier. Under no circumstances shall the Administrator receive, hold, or disburse the Owner's capital funds for the purchase of the Asset.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>3.2 The Administrator's role is strictly limited to facilitation. The Administrator shall provide the Owner with a Purchase Facilitation Quote and a supplier invoice for approval.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>3.3 Proof of the Owner's direct payment to the dealer shall be annexed to this Agreement as <strong>Schedule A</strong>.</p>
 
-        <h3 className={headingStyle}>4. TENURE AND FINANCIAL PROVISIONS</h3>
-        <p className={paraSpacing}>4.1 <strong>Tenure:</strong> This Agreement shall remain valid for an estimated period of <strong>{props.ownerDurationWeeks || fallback}</strong> weeks, commencing on {props.startDate || fallback} and terminating on {props.endDate || fallback}, subject to earlier termination as provided in Clause 10.</p>
-        <p className={paraSpacing}>4.2 <strong>Target Remittance:</strong> The Owner's Target Weekly Remittance is defined as <strong>₦{Number(props.targetWeeklyRemittance).toLocaleString() || fallback}</strong>. The Parties acknowledge that this figure is a target based on current market data for the Asset type and is expressly not guaranteed by the Administrator in the event of rider default.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>4.3 <strong>Payment Collection:</strong> All payments made by the Rider shall be deposited directly into the Administrator's designated Client Remittance Account. The Administrator shall transfer the Net Weekly Remittance to the Owner's nominated bank account (<strong>Bank:</strong> {props.ownerBank || fallback}, <strong>Account No:</strong> {props.ownerAcctNo || fallback}) within forty-eight (48) hours of cleared receipt.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>4. TENURE AND FINANCIAL PROVISIONS</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>4.1 <strong>Tenure:</strong> This Agreement shall remain valid for an estimated period of <strong>{props.ownerDurationWeeks || fallback}</strong> weeks, commencing on {props.startDate || fallback} and terminating on {props.endDate || fallback}, subject to earlier termination as provided in Clause 10.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>4.2 <strong>Target Remittance:</strong> The Owner's Target Weekly Remittance is defined as <strong>₦{Number(props.targetWeeklyRemittance).toLocaleString() || fallback}</strong>. The Parties acknowledge that this figure is a target based on current market data for the Asset type and is expressly not guaranteed by the Administrator in the event of rider default.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>4.3 <strong>Payment Collection:</strong> All payments made by the Rider shall be deposited directly into the Administrator's designated Client Remittance Account. The Administrator shall transfer the Net Weekly Remittance to the Owner's nominated bank account (<strong>Bank:</strong> {props.ownerBank || fallback}, <strong>Account No:</strong> {props.ownerAcctNo || fallback}) within forty-eight (48) hours of cleared receipt.</p>
 
-        <h3 className={headingStyle}>5. ADMINISTRATOR'S OBLIGATIONS AND REMUNERATION</h3>
-        <p className={paraSpacing}>5.1 The Administrator shall provide the following services at no cost to the Owner: vetting and recruiting Riders, executing hire purchase contracts with Riders, monitoring the Asset, collecting remittances, enforcing payment compliance, executing repossessions in the event of a default, and providing Monthly Operation Reports.</p>
-        <p className={paraSpacing}>5.2 The Administrator shall automatically forward Weekly Remittance Advice and GPS location logs to the Owner's designated email address.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>5.3 The Administrator shall not charge the Owner any administration fees. The Administrator's sole income for its services is derived from the administrative charges paid directly by the Rider.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>5. ADMINISTRATOR'S OBLIGATIONS AND REMUNERATION</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>5.1 The Administrator shall provide the following services at no cost to the Owner: vetting and recruiting Riders, executing hire purchase contracts with Riders, monitoring the Asset, collecting remittances, enforcing payment compliance, executing repossessions in the event of a default, and providing Monthly Operation Reports.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>5.2 The Administrator shall automatically forward Weekly Remittance Advice and GPS location logs to the Owner's designated email address.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>5.3 The Administrator shall not charge the Owner any administration fees. The Administrator's sole income for its services is derived from the administrative charges paid directly by the Rider.</p>
 
-        <h3 className={headingStyle}>6. REMITTANCE STRUCTURE</h3>
-        <p className={paraSpacing}>6.1 <strong>Administrator's Fee:</strong> The Administrator shall charge an administrative service fee directly to the Rider. This fee covers GPS monitoring, enforcement, reporting, insurance facilitation, and repossession efforts. This fee is independent of the Owner's target remittance and remains the exclusive property of the Administrator.</p>
-        <p className={paraSpacing}>6.2 <strong>Net Remittance:</strong> The Net Weekly Remittance transferred to the Owner shall be the agreed Target Weekly Remittance stated in Clause 4.2.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>6.3 <strong>Shortfall Non-Liability:</strong> If the Rider defaults on payment due to accidents, illness, or other unforeseen circumstances, resulting in reduced collections, the Administrator does not guarantee the Owner's Net Weekly Remittance. The Administrator shall not be held financially liable for such shortfalls but remains obligated to enforce recovery or repossession using the Power of Attorney.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>6. REMITTANCE STRUCTURE</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>6.1 <strong>Administrator's Fee:</strong> The Administrator shall charge an administrative service fee directly to the Rider. This fee covers GPS monitoring, enforcement, reporting, insurance facilitation, and repossession efforts. This fee is independent of the Owner's target remittance and remains the exclusive property of the Administrator.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>6.2 <strong>Net Remittance:</strong> The Net Weekly Remittance transferred to the Owner shall be the agreed Target Weekly Remittance stated in Clause 4.2.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>6.3 <strong>Shortfall Non-Liability:</strong> If the Rider defaults on payment due to accidents, illness, or other unforeseen circumstances, resulting in reduced collections, the Administrator does not guarantee the Owner's Net Weekly Remittance. The Administrator shall not be held financially liable for such shortfalls but remains obligated to enforce recovery or repossession using the Power of Attorney.</p>
 
-        <h3 className={headingStyle}>7. RISK ALLOCATION, INSURANCE, AND LIABILITY</h3>
-        <p className={paraSpacing}>7.1 <strong>Rider's Risk:</strong> The Rider bears one hundred percent (100%) of the risk and financial cost associated with mechanical failures, accident damage, routine maintenance, and breakdowns occurring during the Tenure. The Administrator makes no warranties regarding the Rider's performance or the Asset's mechanical longevity.</p>
-        <p className={paraSpacing}>7.2 <strong>Insurance:</strong> The Asset must carry, at a minimum, Third-Party Insurance as required by the National Insurance Commission (NAICOM), bearing Policy No: {props.policyNo || fallback}. The Owner shall pay the insurer directly. Comprehensive insurance is highly recommended and shall be at the Owner's sole discretion and expense. A copy of the insurance policy shall be annexed as <strong>Schedule B</strong>.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>7.3 <strong>Enforcement Liability:</strong> While the Administrator is strictly obligated to execute repossessions if the Rider defaults on payments or repairs, the Administrator shall bear no financial liability for the loss of the Asset, lost anticipated income, or any repair costs. <strong>The Rider and their provided Guarantors bear the ultimate legal and financial responsibility for any such liabilities, damages, or outstanding shortfalls.</strong></p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>7. RISK ALLOCATION, INSURANCE, AND LIABILITY</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>7.1 <strong>Rider's Risk:</strong> The Rider bears one hundred percent (100%) of the risk and financial cost associated with mechanical failures, accident damage, routine maintenance, and breakdowns occurring during the Tenure. The Administrator makes no warranties regarding the Rider's performance or the Asset's mechanical longevity.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>7.2 <strong>Insurance:</strong> The Asset must carry, at a minimum, Third-Party Insurance as required by the National Insurance Commission (NAICOM), bearing Policy No: {props.policyNo || fallback}. The Owner shall pay the insurer directly. Comprehensive insurance is highly recommended and shall be at the Owner's sole discretion and expense. A copy of the insurance policy shall be annexed as <strong>Schedule B</strong>.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>7.3 <strong>Enforcement Liability:</strong> While the Administrator is strictly obligated to execute repossessions if the Rider defaults on payments or repairs, the Administrator shall bear no financial liability for the loss of the Asset, lost anticipated income, or any repair costs. <strong>The Rider and their provided Guarantors bear the ultimate legal and financial responsibility for any such liabilities, damages, or outstanding shortfalls.</strong></p>
 
-        <h3 className={headingStyle}>8. OWNER'S OBLIGATIONS</h3>
-        <p className={paraSpacing}>8.1 The Owner covenants not to interfere with the Administrator's day-to-day management, Rider selection, route optimization, or enforcement actions carried out under the Power of Attorney.</p>
-        <p className={paraSpacing}>8.2 The Owner shall notify the Administrator in writing within forty-eight (48) hours of any changes to their bank details, residential address, or next of kin.</p>
-        <p className={paraSpacing}>8.3 The Owner warrants and represents that all funds utilized for the acquisition of the Asset originate from legitimate sources and do not constitute the proceeds of unlawful activity.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>8.4 <strong>GPS Tracking:</strong> The Owner shall be solely responsible for the cost and provision of the Global Positioning System (GPS) tracking device to be installed on the Asset prior to deployment.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>8. OWNER'S OBLIGATIONS</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>8.1 The Owner covenants not to interfere with the Administrator's day-to-day management, Rider selection, route optimization, or enforcement actions carried out under the Power of Attorney.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>8.2 The Owner shall notify the Administrator in writing within forty-eight (48) hours of any changes to their bank details, residential address, or next of kin.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>8.3 The Owner warrants and represents that all funds utilized for the acquisition of the Asset originate from legitimate sources and do not constitute the proceeds of unlawful activity.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>8.4 <strong>GPS Tracking:</strong> The Owner shall be solely responsible for the cost and provision of the Global Positioning System (GPS) tracking device to be installed on the Asset prior to deployment.</p>
 
-        <h3 className={headingStyle}>9. TRANSFER OF OWNERSHIP</h3>
-        <p className={paraSpacing}>9.1 Upon the Rider's successful completion of the Tenure, the Administrator shall promptly issue a Letter of Completion to both the Owner and the Rider.</p>
-        <p className={paraSpacing}>9.2 Upon receipt of the Letter of Completion, the Owner shall, within fourteen (14) days, execute a Change of Ownership Form and surrender the original purchase receipt to the Rider.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>9.3 The Administrator shall facilitate this transfer. <strong>Failure or deliberate delay by the Owner in executing the required transfer documentation upon the Rider's successful completion of the Tenure constitutes a material breach of contract, which may lead to immediate civil prosecution and legal action against the Owner.</strong> The Power of Attorney shall automatically expire upon the successful transfer of ownership.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>9. TRANSFER OF OWNERSHIP</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>9.1 Upon the Rider's successful completion of the Tenure, the Administrator shall promptly issue a Letter of Completion to both the Owner and the Rider.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>9.2 Upon receipt of the Letter of Completion, the Owner shall, within fourteen (14) days, execute a Change of Ownership Form and surrender the original purchase receipt to the Rider.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>9.3 The Administrator shall facilitate this transfer. <strong>Failure or deliberate delay by the Owner in executing the required transfer documentation upon the Rider's successful completion of the Tenure constitutes a material breach of contract, which may lead to immediate civil prosecution and legal action against the Owner.</strong> The Power of Attorney shall automatically expire upon the successful transfer of ownership.</p>
 
-        <h3 className={headingStyle}>10. TERMINATION AND REPOSSESSION</h3>
-        <p className={paraSpacing}>10.1 <strong>Lock-in Period:</strong> The Owner shall not terminate this Agreement within the first twenty-six (26) weeks of the Tenure, except in the event of a proven material breach of contract by the Administrator.</p>
-        <p className={paraSpacing}>10.2 <strong>Standard Termination:</strong> Subsequent to Week 26, the Owner may terminate this Agreement by providing thirty (30) days' written notice. Upon such termination, the Administrator shall hand over all Rider agreements, GPS access credentials, and repossession rights to the Owner.</p>
-        <p className={paraSpacing}>10.3 <strong>Termination for Administrator Default:</strong> If the Administrator fails to enforce or remit collected payments for four (4) consecutive weeks (excluding Force Majeure events), the Owner may revoke the Power of Attorney with seven (7) days' written notice and assume direct management of the Asset.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>10.4 <strong>Rider Default:</strong> In the event the Rider permanently defaults or fails to complete the Tenure, full control of the Asset shall revert to the Owner. The Administrator shall deliver the Asset, keys, relevant documents, and a formal repossession report to the Owner within seven (7) days of the Rider's termination.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>10. TERMINATION AND REPOSSESSION</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>10.1 <strong>Lock-in Period:</strong> The Owner shall not terminate this Agreement within the first twenty-six (26) weeks of the Tenure, except in the event of a proven material breach of contract by the Administrator.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>10.2 <strong>Standard Termination:</strong> Subsequent to Week 26, the Owner may terminate this Agreement by providing thirty (30) days' written notice. Upon such termination, the Administrator shall hand over all Rider agreements, GPS access credentials, and repossession rights to the Owner.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>10.3 <strong>Termination for Administrator Default:</strong> If the Administrator fails to enforce or remit collected payments for four (4) consecutive weeks (excluding Force Majeure events), the Owner may revoke the Power of Attorney with seven (7) days' written notice and assume direct management of the Asset.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>10.4 <strong>Rider Default:</strong> In the event the Rider permanently defaults or fails to complete the Tenure, full control of the Asset shall revert to the Owner. The Administrator shall deliver the Asset, keys, relevant documents, and a formal repossession report to the Owner within seven (7) days of the Rider's termination.</p>
 
-        <h3 className={headingStyle}>11. FORCE MAJEURE</h3>
-        <p className={paraSpacing}>11.1 Neither Party shall be deemed in breach of this Agreement or otherwise liable for any delay or failure in performance arising from circumstances beyond their reasonable control (a "Force Majeure Event"). Such events include, but are not limited to, acts of God, war, nationwide strikes, government bans on specific vehicle types, pandemic lockdowns, or natural disasters.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>11.2 Administrative duties and remittance obligations shall be suspended during a Force Majeure Event and shall resume immediately upon its resolution. The Tenure of the Agreement shall be extended by a period equal to the duration of the suspension.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>11. FORCE MAJEURE</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>11.1 Neither Party shall be deemed in breach of this Agreement or otherwise liable for any delay or failure in performance arising from circumstances beyond their reasonable control (a "Force Majeure Event"). Such events include, but are not limited to, acts of God, war, nationwide strikes, government bans on specific vehicle types, pandemic lockdowns, or natural disasters.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>11.2 Administrative duties and remittance obligations shall be suspended during a Force Majeure Event and shall resume immediately upon its resolution. The Tenure of the Agreement shall be extended by a period equal to the duration of the suspension.</p>
 
-        <h3 className={headingStyle}>12. COMPLIANCE, ANTI-MONEY LAUNDERING, AND DATA PRIVACY</h3>
-        <p className={paraSpacing}>12.1 <strong>Confidentiality:</strong> The Parties agree to maintain strict confidentiality regarding the terms of this Agreement, disclosing information only as strictly required for tax, regulatory, or judicial purposes.</p>
-        <p className={paraSpacing}>12.2 <strong>Statutory Compliance:</strong> The Administrator shall comply with the Money Laundering (Prevention and Prohibition) Act 2022 and the Nigeria Data Protection Act (NDPA) 2023. The Owner's KYC documents are annexed as <strong>Schedule C</strong>. Sensitive data (including BVN and NIN) shall be stored in an encrypted drive accessible only by authorized compliance personnel.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>12.3 <strong>Reporting:</strong> The Administrator reserves the right to report any suspicious financial transactions to the Nigerian Financial Intelligence Unit (NFIU) in accordance with statutory obligations.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>12. COMPLIANCE, ANTI-MONEY LAUNDERING, AND DATA PRIVACY</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>12.1 <strong>Confidentiality:</strong> The Parties agree to maintain strict confidentiality regarding the terms of this Agreement, disclosing information only as strictly required for tax, regulatory, or judicial purposes.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>12.2 <strong>Statutory Compliance:</strong> The Administrator shall comply with the Money Laundering (Prevention and Prohibition) Act 2022 and the Nigeria Data Protection Act (NDPA) 2023. The Owner's KYC documents are annexed as <strong>Schedule C</strong>. Sensitive data (including BVN and NIN) shall be stored in an encrypted drive accessible only by authorized compliance personnel.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>12.3 <strong>Reporting:</strong> The Administrator reserves the right to report any suspicious financial transactions to the Nigerian Financial Intelligence Unit (NFIU) in accordance with statutory obligations.</p>
 
-        <h3 className={headingStyle}>13. DISPUTE RESOLUTION AND GOVERNING LAW</h3>
-        <p className={paraSpacing}>13.1 This Agreement shall be governed by and construed in accordance with the Laws of the Federal Republic of Nigeria.</p>
-        <p className={paraSpacing}>13.2 Any dispute, controversy, or claim arising out of or relating to this Agreement shall first be referred to <strong>mediation at a recognized Multi-Door Courthouse or dispute resolution center of competent jurisdiction within Nigeria.</strong></p>
-        <p className={paraSpacing}>13.3 Should mediation fail to yield a settlement within thirty (30) days, the dispute shall be resolved by binding arbitration in Nigeria, conducted by a single arbitrator in accordance with the Arbitration and Mediation Act 2023.</p>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-6"}>13.4 The Courts of the Federal Republic of Nigeria shall retain exclusive jurisdiction for the enforcement of any arbitral award or equitable relief.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>13. DISPUTE RESOLUTION AND GOVERNING LAW</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>13.1 This Agreement shall be governed by and construed in accordance with the Laws of the Federal Republic of Nigeria.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>13.2 Any dispute, controversy, or claim arising out of or relating to this Agreement shall first be referred to <strong>mediation at a recognized Multi-Door Courthouse or dispute resolution center of competent jurisdiction within Nigeria.</strong></p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>13.3 Should mediation fail to yield a settlement within thirty (30) days, the dispute shall be resolved by binding arbitration in Nigeria, conducted by a single arbitrator in accordance with the Arbitration and Mediation Act 2023.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>13.4 The Courts of the Federal Republic of Nigeria shall retain exclusive jurisdiction for the enforcement of any arbitral award or equitable relief.</p>
 
-        <h3 className={headingStyle}>14. GENERAL PROVISIONS</h3>
-        <p className={paraSpacing}>14.1 <strong>Entire Agreement:</strong> This Agreement, alongside Schedules A, B, C, and D, constitutes the entire understanding between the Parties and supersedes all prior agreements or representations. Any amendments must be made in writing and duly signed by both Parties.</p>
-        <p className={paraSpacing}>14.2 <strong>Severability:</strong> If any provision of this Agreement is found to be void or unenforceable by a court of competent jurisdiction, the remaining provisions shall remain in full force and effect.</p>
-        <p className={paraSpacing}>14.3 <strong>Notices:</strong> Official notices shall be sent to the email addresses provided herein and shall be legally deemed received twenty-four (24) hours after successful transmission.</p>
-        <p className={isPdf ? "mb-6 break-inside-avoid" : "mb-6"}>14.4 <strong>Stamp Duty:</strong> Any applicable stamp duties associated with this Agreement shall be borne by the Administrator.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>14. GENERAL PROVISIONS</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>14.1 <strong>Entire Agreement:</strong> This Agreement, alongside Schedules A, B, C, and D, constitutes the entire understanding between the Parties and supersedes all prior agreements or representations. Any amendments must be made in writing and duly signed by both Parties.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>14.2 <strong>Severability:</strong> If any provision of this Agreement is found to be void or unenforceable by a court of competent jurisdiction, the remaining provisions shall remain in full force and effect.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>14.3 <strong>Notices:</strong> Official notices shall be sent to the email addresses provided herein and shall be legally deemed received twenty-four (24) hours after successful transmission.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>14.4 <strong>Stamp Duty:</strong> Any applicable stamp duties associated with this Agreement shall be borne by the Administrator.</p>
 
-        <p className={`font-bold italic uppercase ${isPdf ? "mb-6 break-inside-avoid" : "mb-8"}`}>IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
+        <p style={pdfBreakAvoid} className={`font-bold italic uppercase avoid-page-break ${isPdf ? "mb-4" : "mb-8"}`}>IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
 
         {/* SIGNATURE BLOCKS */}
-        <div className={`grid ${isPdf ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300 break-inside-avoid" : ""}`}>
+        <div style={pdfBreakAvoid} className={`grid ${isPdf ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-10 mt-6 avoid-page-break signature-block ${isPdf ? "pt-4 border-t border-gray-300" : ""}`}>
           <div className="space-y-4">
             <p className="font-bold mb-4">SIGNED by the within-named ADMINISTRATOR</p>
             <p className="font-bold text-xs uppercase">YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
@@ -373,13 +386,19 @@ export default function VirtualAgreement(props: AgreementProps) {
   };
 
   const PoaDocument = ({ isPdf = false }: { isPdf?: boolean }) => {
-    const textStyle = isPdf ? "text-[11px] leading-relaxed text-black font-serif text-justify" : "text-sm text-slate-light leading-relaxed font-sans text-justify";
-    const headingStyle = isPdf ? "font-bold text-[12px] underline mt-6 mb-2 text-black uppercase break-after-avoid break-inside-avoid" : "font-bold text-crisp-white text-base mt-8 border-b border-cobalt/20 pb-2 uppercase";
+    const textStyle = isPdf 
+      ? "text-[11px] leading-[1.45] text-black font-serif text-justify pdf-render-container" 
+      : "text-sm text-slate-light leading-relaxed font-sans text-justify";
+    const headingStyle = isPdf 
+      ? "font-bold text-[12px] underline mt-4 mb-1.5 text-black uppercase avoid-page-break" 
+      : "font-bold text-crisp-white text-base mt-8 border-b border-cobalt/20 pb-2 uppercase";
+    const paraSpacing = isPdf ? "mb-1.5 avoid-page-break" : "mb-6";
+    const pdfBreakAvoid = isPdf ? { pageBreakInside: "avoid" as const, breakInside: "avoid" as const } : undefined;
 
     return (
       <div className={textStyle}>
         
-        <div className={`text-center ${isPdf ? "pb-3 mb-4 break-after-avoid break-inside-avoid border border-gray-300 rounded overflow-hidden" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
+        <div style={pdfBreakAvoid} className={`text-center avoid-page-break ${isPdf ? "pb-3 mb-4 border border-gray-300 rounded overflow-hidden" : "border-b border-cobalt/30 pb-6 mb-8"}`}>
           <div className={isPdf ? "bg-[#001232] py-4 w-full" : "bg-void-navy"}>
             <img src="/images/logo2.PNG" alt="YUSDAAM AUTOS Logo" style={{ height: isPdf ? "60px" : "45px", width: "auto", margin: "0 auto", display: "block", objectFit: "contain" }} />
           </div>
@@ -389,14 +408,14 @@ export default function VirtualAgreement(props: AgreementProps) {
           </div>
         </div>
 
-        <h2 className={`text-center font-black uppercase ${isPdf ? "text-sm mb-8 break-after-avoid break-inside-avoid" : "text-lg text-signal-red mb-8"}`}>SPECIFIC POWER OF ATTORNEY</h2>
+        <h2 style={pdfBreakAvoid} className={`text-center font-black uppercase avoid-page-break ${isPdf ? "text-sm mb-4" : "text-lg text-signal-red mb-8"}`}>SPECIFIC POWER OF ATTORNEY</h2>
 
-        <p className={isPdf ? "mb-6 leading-relaxed break-inside-avoid" : "mb-6 leading-relaxed"}>
+        <p style={pdfBreakAvoid} className={paraSpacing}>
           <strong>KNOW ALL MEN BY THESE PRESENTS</strong> that I, <strong>{props.ownerName}</strong>, of {props.ownerAddress || fallback}, holding Bank Verification Number (BVN) {props.bvn || fallback} and National Identification Number (NIN) {props.nin || fallback} (hereinafter referred to as the <strong>"Donor"</strong>), DO HEREBY APPOINT <strong>YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</strong>, a company incorporated under the laws of the Federal Republic of Nigeria with RC: 9562528, having its registered address at 18, Alhaji Olakunle Close Selewu Teacher's Quater Igbogbo Ikorodu (hereinafter referred to as the <strong>"Donee"</strong>), to be my true and lawful Attorney, to act in my name and on my behalf to do all or any of the following acts and things in respect of the commercial transport asset detailed below (hereinafter referred to as the <strong>"Asset"</strong>):
         </p>
 
-        <h3 className={headingStyle}>ASSET DESCRIPTION:</h3>
-        <ul className={`list-disc pl-5 mb-6 space-y-1 ${isPdf ? "font-mono text-[10px] break-inside-avoid" : "font-mono bg-void-navy/50 p-4 rounded-lg"}`}>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>ASSET DESCRIPTION:</h3>
+        <ul style={pdfBreakAvoid} className={`list-disc pl-5 mb-4 space-y-1 ${isPdf ? "font-mono text-[10px] avoid-page-break" : "font-mono bg-void-navy/50 p-4 rounded-lg"}`}>
           <li><strong>Asset Type:</strong> {props.vehicleType || fallback}</li>
           <li><strong>Make/Model:</strong> {props.makeModel || fallback}</li>
           <li><strong>Year of Manufacture:</strong> {props.year || fallback}</li>
@@ -405,35 +424,35 @@ export default function VirtualAgreement(props: AgreementProps) {
           <li><strong>Registration/Plate Number:</strong> {props.plateNo || fallback}</li>
         </ul>
 
-        <h3 className={headingStyle}>DELEGATED POWERS</h3>
-        <p className={isPdf ? "mb-4 break-inside-avoid" : "mb-4"}>I hereby grant my said Attorney the absolute power and legal authority to execute the following actions regarding the Asset:</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>DELEGATED POWERS</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>I hereby grant my said Attorney the absolute power and legal authority to execute the following actions regarding the Asset:</p>
         
-        <ul className={`space-y-4 mb-6 list-none pl-0 ${isPdf ? "break-inside-avoid" : ""}`}>
-          <li><strong>1. General Management:</strong> To manage, control, and oversee the daily commercial operations of the Asset under a hire purchase arrangement.</li>
-          <li><strong>2. Execution of Contracts:</strong> To vet riders/drivers and to negotiate, execute, sign, and deliver hire purchase agreements, terms of use, and any other relevant operational documents with third-party riders/drivers on my behalf.</li>
-          <li><strong>3. Financial Collection:</strong> To demand, collect, receive, and issue receipts for all weekly remittances, fees, or charges payable by the rider/driver in connection with the use and hire purchase of the Asset.</li>
-          <li><strong>4. Asset Monitoring & GPS:</strong> To install, maintain, and monitor Global Positioning System (GPS) tracking devices on the Asset, and to use the data derived to ensure compliance.</li>
-          <li><strong>5. Enforcement & Repossession:</strong> To take all lawful and necessary steps to enforce the terms of the hire purchase agreement against the rider/driver. In the event of default, abandonment, or breach of contract by the rider/driver, to seize, recover, and repossess the Asset without further recourse to me.</li>
-          <li><strong>6. Liaison with Authorities:</strong> To represent me and the Asset before any governmental agency, law enforcement agency (including the Nigerian Police Force), road traffic management authority, or insurance provider in matters concerning the recovery of the Asset, reporting of theft, or resolution of traffic and operational infractions.</li>
-          <li><strong>7. Custody of Documents:</strong> To hold necessary operational copies of the vehicle particulars and insurance documents for the purpose of carrying out the administrative duties described herein.</li>
+        <ul style={pdfBreakAvoid} className={`space-y-2 mb-4 list-none pl-0 ${isPdf ? "avoid-page-break" : ""}`}>
+          <li style={pdfBreakAvoid} className="avoid-page-break"><strong>1. General Management:</strong> To manage, control, and oversee the daily commercial operations of the Asset under a hire purchase arrangement.</li>
+          <li style={pdfBreakAvoid} className="avoid-page-break"><strong>2. Execution of Contracts:</strong> To vet riders/drivers and to negotiate, execute, sign, and deliver hire purchase agreements, terms of use, and any other relevant operational documents with third-party riders/drivers on my behalf.</li>
+          <li style={pdfBreakAvoid} className="avoid-page-break"><strong>3. Financial Collection:</strong> To demand, collect, receive, and issue receipts for all weekly remittances, fees, or charges payable by the rider/driver in connection with the use and hire purchase of the Asset.</li>
+          <li style={pdfBreakAvoid} className="avoid-page-break"><strong>4. Asset Monitoring & GPS:</strong> To install, maintain, and monitor Global Positioning System (GPS) tracking devices on the Asset, and to use the data derived to ensure compliance.</li>
+          <li style={pdfBreakAvoid} className="avoid-page-break"><strong>5. Enforcement & Repossession:</strong> To take all lawful and necessary steps to enforce the terms of the hire purchase agreement against the rider/driver. In the event of default, abandonment, or breach of contract by the rider/driver, to seize, recover, and repossess the Asset without further recourse to me.</li>
+          <li style={pdfBreakAvoid} className="avoid-page-break"><strong>6. Liaison with Authorities:</strong> To represent me and the Asset before any governmental agency, law enforcement agency (including the Nigerian Police Force), road traffic management authority, or insurance provider in matters concerning the recovery of the Asset, reporting of theft, or resolution of traffic and operational infractions.</li>
+          <li style={pdfBreakAvoid} className="avoid-page-break"><strong>7. Custody of Documents:</strong> To hold necessary operational copies of the vehicle particulars and insurance documents for the purpose of carrying out the administrative duties described herein.</li>
         </ul>
 
-        <h3 className={headingStyle}>LIMITATIONS</h3>
-        <ul className={`space-y-4 mb-6 list-none pl-0 ${isPdf ? "break-inside-avoid" : ""}`}>
-          <li><strong>1. No Transfer of Ownership:</strong> This Power of Attorney <strong>DOES NOT</strong> grant the Donee the right or authority to sell, mortgage, pledge, or permanently transfer the legal ownership of the Asset to any third party, except as explicitly directed by me upon the rider's successful completion of the hire purchase tenure as stipulated in our Administration Agreement.</li>
-          <li><strong>2. Scope:</strong> The powers granted herein are strictly limited to the management and administration of the Asset listed above.</li>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>LIMITATIONS</h3>
+        <ul style={pdfBreakAvoid} className={`space-y-2 mb-4 list-none pl-0 ${isPdf ? "avoid-page-break" : ""}`}>
+          <li style={pdfBreakAvoid} className="avoid-page-break"><strong>1. No Transfer of Ownership:</strong> This Power of Attorney <strong>DOES NOT</strong> grant the Donee the right or authority to sell, mortgage, pledge, or permanently transfer the legal ownership of the Asset to any third party, except as explicitly directed by me upon the rider's successful completion of the hire purchase tenure as stipulated in our Administration Agreement.</li>
+          <li style={pdfBreakAvoid} className="avoid-page-break"><strong>2. Scope:</strong> The powers granted herein are strictly limited to the management and administration of the Asset listed above.</li>
         </ul>
 
-        <h3 className={headingStyle}>DURATION AND REVOCABILITY</h3>
-        <p className={isPdf ? "mb-6 break-inside-avoid" : "mb-6"}>This Power of Attorney is issued pursuant to the Hire Purchase Administration Agreement executed between the Donor and the Donee on {formattedDate}. It shall remain valid and operational for the duration of the agreed Tenure. It is irrevocable during the first twenty-six (26) weeks of the Tenure except in the event of a material breach by the Donee, after which it may be revoked subject to the termination clauses of the primary Administration Agreement.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>DURATION AND REVOCABILITY</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>This Power of Attorney is issued pursuant to the Hire Purchase Administration Agreement executed between the Donor and the Donee on {formattedDate}. It shall remain valid and operational for the duration of the agreed Tenure. It is irrevocable during the first twenty-six (26) weeks of the Tenure except in the event of a material breach by the Donee, after which it may be revoked subject to the termination clauses of the primary Administration Agreement.</p>
 
-        <h3 className={headingStyle}>RATIFICATION</h3>
-        <p className={isPdf ? "mb-8 break-inside-avoid" : "mb-8"}>I HEREBY AGREE to ratify and confirm all lawful actions that my said Attorney shall do, or cause to be done, by virtue of this Power of Attorney, provided such actions are within the scope of the powers granted herein and align with the governing Hire Purchase Administration Agreement.</p>
+        <h3 style={pdfBreakAvoid} className={headingStyle}>RATIFICATION</h3>
+        <p style={pdfBreakAvoid} className={paraSpacing}>I HEREBY AGREE to ratify and confirm all lawful actions that my said Attorney shall do, or cause to be done, by virtue of this Power of Attorney, provided such actions are within the scope of the powers granted herein and align with the governing Hire Purchase Administration Agreement.</p>
 
-        <p className={`font-bold italic uppercase ${isPdf ? "mb-10 break-inside-avoid" : "mb-10"}`}>IN WITNESS WHEREOF, I have hereunto set my hand and seal this {currentDay} day of {currentMonth}, {currentYear}.</p>
+        <p style={pdfBreakAvoid} className={`font-bold italic uppercase avoid-page-break ${isPdf ? "mb-4" : "mb-10"}`}>IN WITNESS WHEREOF, I have hereunto set my hand and seal this {currentDay} day of {currentMonth}, {currentYear}.</p>
 
         {/* SIGNATURE BLOCKS */}
-        <div className={`grid ${isPdf ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-10 mt-12 ${isPdf ? "pt-8 border-t border-gray-300 break-inside-avoid" : ""}`}>
+        <div style={pdfBreakAvoid} className={`grid ${isPdf ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"} gap-10 mt-6 avoid-page-break signature-block ${isPdf ? "pt-4 border-t border-gray-300" : ""}`}>
           <div className="space-y-4">
             <p className="font-bold underline text-xs">SIGNED, SEALED, AND DELIVERED by the within-named DONOR:</p>
             
@@ -483,154 +502,166 @@ export default function VirtualAgreement(props: AgreementProps) {
 
   if (step === 3) {
     return (
-      <div ref={topRef} className="max-w-3xl mx-auto bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full overflow-x-hidden">
-        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 size={40} className="text-emerald-400" />
-        </div>
-        <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreements Executed</h2>
-        <p className="text-slate-light leading-relaxed mb-10">
-          Your digital signatures have been permanently attached to the specific contract for this asset. Copies of the finalized agreements have been dispatched to your email.
-        </p>
+      <>
+        <div ref={topRef} className="max-w-3xl mx-auto bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full overflow-x-hidden">
+          <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 size={40} className="text-emerald-400" />
+          </div>
+          <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreements Executed</h2>
+          <p className="text-slate-light leading-relaxed mb-10">
+            Your digital signatures have been permanently attached to the specific contract for this asset. Copies of the finalized agreements have been dispatched to your email.
+          </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button onClick={() => handleDownloadPDF(hpaContractRef, `HPA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingHpa)} disabled={isDownloadingHpa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
-            {isDownloadingHpa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download HPA</>}
-          </button>
-          
-          <button onClick={() => handleDownloadPDF(poaContractRef, `POA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingPoa)} disabled={isDownloadingPoa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
-            {isDownloadingPoa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download POA</>}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button onClick={() => handleDownloadPDF(hpaContractRef, `HPA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingHpa)} disabled={isDownloadingHpa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
+              {isDownloadingHpa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download HPA</>}
+            </button>
+            
+            <button onClick={() => handleDownloadPDF(poaContractRef, `POA_Agreement_${props.ownerName.replace(/\s+/g, '_')}`, setIsDownloadingPoa)} disabled={isDownloadingPoa} className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition disabled:opacity-50">
+              {isDownloadingPoa ? <><Loader2 size={16} className="animate-spin" /> Generating</> : <><Download size={16} /> Download POA</>}
+            </button>
 
-          <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
-            Return to Fleet <ArrowRight size={16} />
-          </button>
+            <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
+              Return to Fleet <ArrowRight size={16} />
+            </button>
+          </div>
         </div>
 
-        {/* Required for manual downloading in Step 3 */}
-        <div className="hidden">
-          <div ref={hpaContractRef} className="bg-white p-12 w-[800px]"><HpaDocument isPdf={true} /></div>
-          <div ref={poaContractRef} className="bg-white p-12 w-[800px]"><PoaDocument isPdf={true} /></div>
+        {/* Stable off-screen rendering container for html2pdf */}
+        <div style={{ position: "fixed", left: "-9999px", top: 0, width: "800px", zIndex: -9999, pointerEvents: "none" }}>
+          <div ref={hpaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><HpaDocument isPdf={true} /></div>
+          <div ref={poaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><PoaDocument isPdf={true} /></div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (step === 2) {
     return (
-      <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-right-8 duration-500 w-full overflow-x-hidden">
-        <div className="p-8 sm:p-12 bg-void-navy/50">
-          <PoaDocument isPdf={false} />
-        </div>
-
-        <div className="p-8 border-t border-cobalt/30 bg-void-navy">
-          {errorMsg && <p className="text-signal-red text-sm font-bold mb-4">{errorMsg}</p>}
-          
-          <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
-            <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Donor Signature</label>
-            <div className="bg-crisp-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
-              <SignatureCanvas 
-                ref={poaOwnerSigCanvas} 
-                clearOnResize={false} 
-                penColor="#001232" 
-                canvasProps={{ className: "w-full h-40 cursor-crosshair" }} 
-                onEnd={() => setPoaOwnerSig(poaOwnerSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)}
-              />
-            </div>
-            <div className="flex justify-end mt-2">
-              <button type="button" onClick={() => { poaOwnerSigCanvas.current?.clear(); setPoaOwnerSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Canvas</button>
-            </div>
+      <>
+        <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-right-8 duration-500 w-full overflow-x-hidden">
+          <div className="p-8 sm:p-12 bg-void-navy/50">
+            <PoaDocument isPdf={false} />
           </div>
 
-          <label className="flex items-start gap-3 cursor-pointer mb-8 group">
-            <input type="checkbox" className="mt-1 w-4 h-4 accent-signal-red cursor-pointer" checked={poaAgreed} onChange={(e) => setPoaAgreed(e.target.checked)} />
-            <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">I, {props.ownerName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.</span>
-          </label>
+          <div className="p-8 border-t border-cobalt/30 bg-void-navy">
+            {errorMsg && <p className="text-signal-red text-sm font-bold mb-4">{errorMsg}</p>}
+            
+            <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
+              <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Donor Signature</label>
+              <div className="bg-crisp-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
+                <SignatureCanvas 
+                  ref={poaOwnerSigCanvas} 
+                  clearOnResize={false} 
+                  penColor="#001232" 
+                  canvasProps={{ className: "w-full h-40 cursor-crosshair" }} 
+                  onEnd={() => setPoaOwnerSig(poaOwnerSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)}
+                />
+              </div>
+              <div className="flex justify-end mt-2">
+                <button type="button" onClick={() => { poaOwnerSigCanvas.current?.clear(); setPoaOwnerSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Canvas</button>
+              </div>
+            </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button onClick={() => { setStep(1); setTimeout(() => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }} className="px-8 py-4 bg-void-light/10 text-slate-light text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/20 transition">
-              Back
-            </button>
-            <button onClick={handleSubmitAll} disabled={isSubmitting} className="flex-1 flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition disabled:opacity-50">
-              {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing Agreements</> : <><CheckSquare size={16} /> Submit & Execute Agreements</>}
-            </button>
+            <label className="flex items-start gap-3 cursor-pointer mb-8 group">
+              <input type="checkbox" className="mt-1 w-4 h-4 accent-signal-red cursor-pointer" checked={poaAgreed} onChange={(e) => setPoaAgreed(e.target.checked)} />
+              <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">I, {props.ownerName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.</span>
+            </label>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button onClick={() => { setStep(1); setTimeout(() => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }} className="px-8 py-4 bg-void-light/10 text-slate-light text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/20 transition">
+                Back
+              </button>
+              <button onClick={handleSubmitAll} disabled={isSubmitting} className="flex-1 flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition disabled:opacity-50">
+                {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Processing Agreements</> : <><CheckSquare size={16} /> Submit & Execute Agreements</>}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* This hidden div MUST be here so html2pdf can find the refs when handleSubmitAll is fired */}
-        <div className="hidden">
-          <div ref={hpaContractRef} className="bg-white p-12 w-[800px]"><HpaDocument isPdf={true} /></div>
-          <div ref={poaContractRef} className="bg-white p-12 w-[800px]"><PoaDocument isPdf={true} /></div>
+        {/* Stable off-screen rendering container for html2pdf */}
+        <div style={{ position: "fixed", left: "-9999px", top: 0, width: "800px", zIndex: -9999, pointerEvents: "none" }}>
+          <div ref={hpaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><HpaDocument isPdf={true} /></div>
+          <div ref={poaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><PoaDocument isPdf={true} /></div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-x-hidden">
-      <div className="p-8 sm:p-12 bg-void-navy/50">
-        <HpaDocument isPdf={false} />
-      </div>
+    <>
+      <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-x-hidden">
+        <div className="p-8 sm:p-12 bg-void-navy/50">
+          <HpaDocument isPdf={false} />
+        </div>
 
-      <div className="p-8 border-t border-cobalt/30 bg-void-navy">
-        {errorMsg && <p className="text-signal-red text-sm font-bold mb-6 bg-signal-red/10 border border-signal-red/20 p-4 rounded-lg">{errorMsg}</p>}
-        
-        {/* Witness Details Inputs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-void-light/5 border border-cobalt/20 rounded-xl">
-          <div className="md:col-span-2">
-            <h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Owner's Witness Details</h4>
-            {props.initialWitnessName && <p className="text-xs text-slate-light mt-1">Pre-filled with your previous witness. Edit if necessary.</p>}
+        <div className="p-8 border-t border-cobalt/30 bg-void-navy">
+          {errorMsg && <p className="text-signal-red text-sm font-bold mb-6 bg-signal-red/10 border border-signal-red/20 p-4 rounded-lg">{errorMsg}</p>}
+          
+          {/* Witness Details Inputs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-void-light/5 border border-cobalt/20 rounded-xl">
+            <div className="md:col-span-2">
+              <h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Owner's Witness Details</h4>
+              {props.initialWitnessName && <p className="text-xs text-slate-light mt-1">Pre-filled with your previous witness. Edit if necessary.</p>}
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Full Name</label>
+              <input type="text" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-base md:text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="Jane Doe" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Address</label>
+              <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-base md:text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
+              <div className="bg-crisp-white rounded-lg border-2 border-cobalt/30 overflow-hidden shadow-inner">
+                <SignatureCanvas 
+                  ref={hpaWitnessSigCanvas} 
+                  clearOnResize={false} 
+                  penColor="#001232" 
+                  canvasProps={{ className: "w-full h-40 cursor-crosshair" }} 
+                  onEnd={() => setHpaWitnessSig(hpaWitnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)}
+                />
+              </div>
+              <div className="flex justify-end mt-2">
+                <button type="button" onClick={() => { hpaWitnessSigCanvas.current?.clear(); setHpaWitnessSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Witness Canvas</button>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Full Name</label>
-            <input type="text" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-base md:text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="Jane Doe" />
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Address</label>
-            <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-base md:text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street" />
-          </div>
-          <div className="md:col-span-2">
-            <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
-            <div className="bg-crisp-white rounded-lg border-2 border-cobalt/30 overflow-hidden shadow-inner">
+
+          {/* Owner Signature */}
+          <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
+            <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Owner Signature</label>
+            <div className="bg-crisp-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
               <SignatureCanvas 
-                ref={hpaWitnessSigCanvas} 
+                ref={hpaOwnerSigCanvas} 
                 clearOnResize={false} 
                 penColor="#001232" 
                 canvasProps={{ className: "w-full h-40 cursor-crosshair" }} 
-                onEnd={() => setHpaWitnessSig(hpaWitnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)}
+                onEnd={() => setHpaOwnerSig(hpaOwnerSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)}
               />
             </div>
             <div className="flex justify-end mt-2">
-              <button type="button" onClick={() => { hpaWitnessSigCanvas.current?.clear(); setHpaWitnessSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Witness Canvas</button>
+              <button type="button" onClick={() => { hpaOwnerSigCanvas.current?.clear(); setHpaOwnerSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Owner Canvas</button>
             </div>
           </div>
+
+          <label className="flex items-start gap-3 cursor-pointer mb-8 group">
+            <input type="checkbox" className="mt-1 w-4 h-4 accent-signal-red cursor-pointer" checked={hpaAgreed} onChange={(e) => setHpaAgreed(e.target.checked)} />
+            <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">I, {props.ownerName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.</span>
+          </label>
+
+          <button onClick={handleNextToPoa} className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
+            Next: Review Specific Power of Attorney <ArrowRight size={16} />
+          </button>
         </div>
-
-        {/* Owner Signature */}
-        <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
-          <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Owner Signature</label>
-          <div className="bg-crisp-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
-            <SignatureCanvas 
-              ref={hpaOwnerSigCanvas} 
-              clearOnResize={false} 
-              penColor="#001232" 
-              canvasProps={{ className: "w-full h-40 cursor-crosshair" }} 
-              onEnd={() => setHpaOwnerSig(hpaOwnerSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)}
-            />
-          </div>
-          <div className="flex justify-end mt-2">
-            <button type="button" onClick={() => { hpaOwnerSigCanvas.current?.clear(); setHpaOwnerSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red transition">Clear Owner Canvas</button>
-          </div>
-        </div>
-
-        <label className="flex items-start gap-3 cursor-pointer mb-8 group">
-          <input type="checkbox" className="mt-1 w-4 h-4 accent-signal-red cursor-pointer" checked={hpaAgreed} onChange={(e) => setHpaAgreed(e.target.checked)} />
-          <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">I, {props.ownerName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.</span>
-        </label>
-
-        <button onClick={handleNextToPoa} className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
-          Next: Review Specific Power of Attorney <ArrowRight size={16} />
-        </button>
       </div>
-    </div>
+
+      {/* Stable off-screen rendering container for html2pdf */}
+      <div style={{ position: "fixed", left: "-9999px", top: 0, width: "800px", zIndex: -9999, pointerEvents: "none" }}>
+        <div ref={hpaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><HpaDocument isPdf={true} /></div>
+        <div ref={poaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><PoaDocument isPdf={true} /></div>
+      </div>
+    </>
   );
 }
