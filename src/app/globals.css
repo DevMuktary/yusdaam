@@ -29,17 +29,36 @@
 
 .pdf-render-container {
   color: #000000;
-  line-height: 1.4;
+  line-height: 1.45;
   background-color: #ffffff;
+  box-sizing: border-box !important;
+  width: 750px !important;
+  max-width: 750px !important;
+  padding: 24px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-align: left !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+  word-break: normal !important;
+}
+
+.pdf-render-container * {
+  box-sizing: border-box !important;
+  max-width: 100% !important;
 }
 
 .pdf-render-container p,
 .pdf-render-container li,
+.pdf-render-container span,
 .pdf-render-container h2,
 .pdf-render-container h3,
 .pdf-render-container h4,
 .pdf-render-container .avoid-break {
   page-break-inside: avoid !important;
   break-inside: avoid !important;
+  text-align: left !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
 }
 

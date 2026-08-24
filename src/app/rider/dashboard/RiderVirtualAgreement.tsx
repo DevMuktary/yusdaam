@@ -64,7 +64,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
       const opt = {
         margin: [0.4, 0.4, 0.4, 0.4],
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 800, scrollX: 0, scrollY: 0 },
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 1200, scrollX: 0, scrollY: 0 },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
         pagebreak: { 
           mode: ['css', 'legacy'], 
@@ -98,7 +98,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
 
   const HpaDocument = ({ isPdf = false }: { isPdf?: boolean }) => {
     const textStyle = isPdf 
-      ? "text-[11px] leading-[1.45] text-black font-serif text-justify pdf-render-container" 
+      ? "text-[11px] leading-[1.45] text-black font-serif text-left pdf-render-container" 
       : "text-sm text-slate-light leading-relaxed font-sans text-justify";
     
     const headingStyle = isPdf 
@@ -298,7 +298,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
                 {witnessSig ? (
                   <img src={witnessSig} alt="Witness Signature" className={`absolute left-14 bottom-0 h-10 object-contain ${!isPdf ? "bg-white p-1 rounded" : "mix-blend-multiply"}`} />
                 ) : (
-                  <div className={`absolute bottom-0 left-12 w-full border-b ${isPdf ? "border-gray-400" : "border-slate-light"}`}></div>
+                  <div className={`absolute bottom-0 right-0 left-12 border-b ${isPdf ? "border-gray-400" : "border-slate-light"}`}></div>
                 )}
               </div>
             </div>
@@ -396,8 +396,8 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           </button>
         </div>
 
-        <div style={{ position: "fixed", left: "-9999px", top: 0, width: "800px", zIndex: -9999, pointerEvents: "none" }}>
-          <div ref={pdfContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container">
+        <div style={{ position: "fixed", left: "-9999px", top: 0, width: "750px", zIndex: -9999, pointerEvents: "none" }}>
+          <div ref={pdfContractRef} className="bg-white p-6 w-[750px] text-black pdf-render-container" style={{ width: "750px", boxSizing: "border-box" }}>
             <HpaDocument isPdf={true} />
           </div>
         </div>

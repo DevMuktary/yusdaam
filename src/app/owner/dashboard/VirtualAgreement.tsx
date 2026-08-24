@@ -110,7 +110,7 @@ export default function VirtualAgreement(props: AgreementProps) {
       const opt = {
         margin: [0.4, 0.4, 0.4, 0.4],
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 800, scrollX: 0, scrollY: 0 },
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 1200, scrollX: 0, scrollY: 0 },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
         pagebreak: { 
           mode: ['css', 'legacy'], 
@@ -166,7 +166,7 @@ export default function VirtualAgreement(props: AgreementProps) {
       const opt = {
         margin: [0.4, 0.4, 0.4, 0.4],
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 800, scrollX: 0, scrollY: 0 },
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 1200, scrollX: 0, scrollY: 0 },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
         pagebreak: { 
           mode: ['css', 'legacy'], 
@@ -194,7 +194,7 @@ export default function VirtualAgreement(props: AgreementProps) {
 
   const HpaDocument = ({ isPdf = false }: { isPdf?: boolean }) => {
     const textStyle = isPdf 
-      ? "text-[11px] leading-[1.45] text-black font-serif text-justify pdf-render-container" 
+      ? "text-[11px] leading-[1.45] text-black font-serif text-left pdf-render-container" 
       : "text-sm text-slate-light leading-relaxed font-sans text-justify";
     const headingStyle = isPdf 
       ? "font-bold text-[12px] underline mt-4 mb-1.5 text-black uppercase avoid-page-break" 
@@ -387,7 +387,7 @@ export default function VirtualAgreement(props: AgreementProps) {
 
   const PoaDocument = ({ isPdf = false }: { isPdf?: boolean }) => {
     const textStyle = isPdf 
-      ? "text-[11px] leading-[1.45] text-black font-serif text-justify pdf-render-container" 
+      ? "text-[11px] leading-[1.45] text-black font-serif text-left pdf-render-container" 
       : "text-sm text-slate-light leading-relaxed font-sans text-justify";
     const headingStyle = isPdf 
       ? "font-bold text-[12px] underline mt-4 mb-1.5 text-black uppercase avoid-page-break" 
@@ -528,9 +528,9 @@ export default function VirtualAgreement(props: AgreementProps) {
         </div>
 
         {/* Stable off-screen rendering container for html2pdf */}
-        <div style={{ position: "fixed", left: "-9999px", top: 0, width: "800px", zIndex: -9999, pointerEvents: "none" }}>
-          <div ref={hpaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><HpaDocument isPdf={true} /></div>
-          <div ref={poaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><PoaDocument isPdf={true} /></div>
+        <div style={{ position: "fixed", left: "-9999px", top: 0, width: "750px", zIndex: -9999, pointerEvents: "none" }}>
+          <div ref={hpaContractRef} className="bg-white p-6 w-[750px] text-black pdf-render-container" style={{ width: "750px", boxSizing: "border-box" }}><HpaDocument isPdf={true} /></div>
+          <div ref={poaContractRef} className="bg-white p-6 w-[750px] text-black pdf-render-container" style={{ width: "750px", boxSizing: "border-box" }}><PoaDocument isPdf={true} /></div>
         </div>
       </>
     );
@@ -580,9 +580,9 @@ export default function VirtualAgreement(props: AgreementProps) {
         </div>
 
         {/* Stable off-screen rendering container for html2pdf */}
-        <div style={{ position: "fixed", left: "-9999px", top: 0, width: "800px", zIndex: -9999, pointerEvents: "none" }}>
-          <div ref={hpaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><HpaDocument isPdf={true} /></div>
-          <div ref={poaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><PoaDocument isPdf={true} /></div>
+        <div style={{ position: "fixed", left: "-9999px", top: 0, width: "750px", zIndex: -9999, pointerEvents: "none" }}>
+          <div ref={hpaContractRef} className="bg-white p-6 w-[750px] text-black pdf-render-container" style={{ width: "750px", boxSizing: "border-box" }}><HpaDocument isPdf={true} /></div>
+          <div ref={poaContractRef} className="bg-white p-6 w-[750px] text-black pdf-render-container" style={{ width: "750px", boxSizing: "border-box" }}><PoaDocument isPdf={true} /></div>
         </div>
       </>
     );
@@ -658,9 +658,9 @@ export default function VirtualAgreement(props: AgreementProps) {
       </div>
 
       {/* Stable off-screen rendering container for html2pdf */}
-      <div style={{ position: "fixed", left: "-9999px", top: 0, width: "800px", zIndex: -9999, pointerEvents: "none" }}>
-        <div ref={hpaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><HpaDocument isPdf={true} /></div>
-        <div ref={poaContractRef} className="bg-white p-6 w-[800px] text-black pdf-render-container"><PoaDocument isPdf={true} /></div>
+      <div style={{ position: "fixed", left: "-9999px", top: 0, width: "750px", zIndex: -9999, pointerEvents: "none" }}>
+        <div ref={hpaContractRef} className="bg-white p-6 w-[750px] text-black pdf-render-container" style={{ width: "750px", boxSizing: "border-box" }}><HpaDocument isPdf={true} /></div>
+        <div ref={poaContractRef} className="bg-white p-6 w-[750px] text-black pdf-render-container" style={{ width: "750px", boxSizing: "border-box" }}><PoaDocument isPdf={true} /></div>
       </div>
     </>
   );
