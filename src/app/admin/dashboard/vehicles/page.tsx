@@ -1,7 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import VehiclesClient from "./VehiclesClient";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "Vehicle Inventory | Yusdaam Admin",

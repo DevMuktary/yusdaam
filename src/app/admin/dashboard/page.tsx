@@ -1,8 +1,8 @@
 import { Users, Car, ShieldAlert, Banknote, Landmark } from "lucide-react";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-// Initialize Prisma
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AdminDashboardOverview() {
   // 1. Fetch Real Data from Database Concurrently for maximum speed

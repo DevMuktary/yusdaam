@@ -1,11 +1,12 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { BookOpen } from "lucide-react";
 import AdminLedgerClient from "./AdminLedgerClient";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AdminLedgerPage() {
   const session = await getServerSession(authOptions);
@@ -14,33 +15,51 @@ export default async function AdminLedgerPage() {
     redirect("/admin/login");
   }
 
-  // Fetch Raw Transactions
-  const ledgers = await prisma.ledger.findMany({
-    orderBy: { date: 'desc' },
-    include: {
-      vehicle: { include: { rider: true } },
-      owner: true,
-    }
-  });
+  // Fetch Raw Transactions, Dropdown Users, and Weekly Cycles in PARALLEL
+  const [ledgers, users, cycles] = await Promise.all([
+    // 1. Fetch Raw Transactions
+    prisma.ledger.findMany({
+      orderBy: { date: 'desc' },
+      take: 200, // Safety cap to avoid giant memory spikes
+      include: {
+        vehicle: { 
+          include: { 
+            rider: { select: { id: true, firstName: true, lastName: true } } 
+          } 
+        },
+        owner: { select: { id: true, firstName: true, lastName: true } },
+      }
+    }),
 
-  // Fetch Users for Dropdown Filters
-  const users = await prisma.user.findMany({
-    where: { role: { in: ["RIDER", "ASSET_OWNER"] } },
-    select: { id: true, firstName: true, lastName: true, role: true, phoneNumber: true }
-  });
+    // 2. Fetch Users for Dropdown Filters
+    prisma.user.findMany({
+      where: { role: { in: ["RIDER", "ASSET_OWNER"] } },
+      select: { id: true, firstName: true, lastName: true, role: true, phoneNumber: true },
+      orderBy: { firstName: 'asc' }
+    }),
 
-  // NEW: Fetch all Weekly Billing Cycles to monitor Arrears
-  const cycles = await prisma.weeklyCycle.findMany({
-    orderBy: [{ contractId: 'asc' }, { weekNumber: 'desc' }],
-    include: {
-      contract: {
-        include: {
-          vehicle: { include: { rider: true } },
-          owner: true
+    // 3. Fetch Weekly Billing Cycles to monitor Arrears
+    prisma.weeklyCycle.findMany({
+      where: {
+        contract: {
+          vehicle: { status: "ACTIVE" }
+        }
+      },
+      orderBy: [{ contractId: 'asc' }, { weekNumber: 'desc' }],
+      include: {
+        contract: {
+          include: {
+            vehicle: { 
+              include: { 
+                rider: { select: { id: true, firstName: true, lastName: true, phoneNumber: true } } 
+              } 
+            },
+            owner: { select: { id: true, firstName: true, lastName: true } }
+          }
         }
       }
-    }
-  });
+    })
+  ]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden">

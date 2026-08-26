@@ -1,29 +1,36 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import UsersClient from "./UsersClient";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "Global User Directory | Yusdaam Admin",
 };
 
 export default async function UsersDirectoryPage() {
-  // Fetch ALL users and their deep relational data
+  // Fetch ALL users and their relational data with lightweight projections (excluding heavy receipt base64 strings)
   const rawUsers = await prisma.user.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
-      // If they are a Rider, get their trip, contract, and what they've paid
+      // If they are a Rider, get their trip, contract, and what they've paid (excluding heavy base64 blobs)
       assignedTrip: {
         include: {
           contract: true,
-          ledgers: { where: { type: "PAYMENT_COLLECTED" } }
+          ledgers: { 
+            where: { type: "PAYMENT_COLLECTED" },
+            select: { amount: true, type: true, date: true }
+          }
         }
       },
       // If they are an Owner, get their vehicles, contracts, and what they've been paid
       ownedVehicles: {
         include: {
           contract: true,
-          ledgers: { where: { type: "OWNER_REMITTANCE" } }
+          ledgers: { 
+            where: { type: "OWNER_REMITTANCE" },
+            select: { amount: true, type: true, date: true }
+          }
         }
       },
       // Include guarantors for riders
