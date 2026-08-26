@@ -23,9 +23,10 @@ export default async function AdminDashboardLayout({
       <Sidebar />
       
       {/* Main Content Area */}
-      {/* The global header has been removed so page-specific headers sit at the top */}
-      <main className="flex-1 lg:ml-64 p-6 pt-24 lg:p-10 lg:pt-10 h-screen overflow-y-auto">
-        {children}
+      <main className="flex-1 lg:ml-64 p-4 pt-20 sm:p-6 lg:p-8 lg:pt-8 min-h-screen overflow-y-auto overflow-x-hidden w-full max-w-full">
+        <div className="max-w-5xl mx-auto w-full">
+          {children}
+        </div>
       </main>
     </div>
   );

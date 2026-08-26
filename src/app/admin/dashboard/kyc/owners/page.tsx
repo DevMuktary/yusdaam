@@ -1,7 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import OwnersKycClient from "./OwnersKycClient";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "Owners KYC | Yusdaam Admin",
@@ -11,6 +12,35 @@ export default async function OwnersKycPage() {
   // Fetch all Asset Owners from the database
   const owners = await prisma.user.findMany({
     where: { role: "ASSET_OWNER" },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      middleName: true,
+      email: true,
+      phoneNumber: true,
+      country: true,
+      state: true,
+      streetAddress: true,
+      nin: true,
+      bvn: true,
+      passportUrl: true,
+      utilityBillUrl: true,
+      signatureUrl: true,
+      bankName: true,
+      accountNumber: true,
+      accountName: true,
+      preferredAssetClass: true,
+      intendedVolume: true,
+      accountStatus: true,
+      nokFirstName: true,
+      nokLastName: true,
+      nokRelationship: true,
+      nokPhone: true,
+      nokAddress: true,
+      createdAt: true,
+      updatedAt: true,
+    },
     orderBy: { createdAt: 'desc' }
   });
 

@@ -1,91 +1,88 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import DocumentsClient from "./DocumentsClient";
 
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
+export const revalidate = 0;
 
 export default async function AdminDocumentsPage() {
   const session = await getServerSession(authOptions);
   
   if (!session || session.user.role !== "ADMIN") {
-    redirect("/login");
+    redirect("/admin/login");
   }
 
   const vaultEntries: any[] = [];
 
-  // 1. Fetch all Vehicles to act as the primary "Deployments"
-  const vehicles = await prisma.vehicle.findMany({
-    include: {
-      rider: true,
-      owner: true,
-      contract: true
-    }
-  });
-
-  // Loop vehicles and create entries for those with docs
-  vehicles.forEach(v => {
-     const r = v.rider;
-     const o = v.owner;
-     const c = v.contract;
-
-     // Rider docs are still on the User profile (signed during KYC before assignment)
-     const rHpa = r?.hpaAgreementUrl || null;
-     const rPoa = r?.poaAgreementUrl || null;
-     
-     // NEW: Owner docs are now isolated on the specific Contract for this vehicle
-     const oHpa = c?.ownerHpaUrl || null; 
-     const oPoa = c?.ownerPoaUrl || null;
-     
-     // The master system contract
-     const cMaster = c?.signedDocumentUrl || null;
-
-     if (rHpa || rPoa || oHpa || oPoa || cMaster) {
-        vaultEntries.push({
-           id: v.id,
-           type: "DEPLOYMENT",
-           plateNumber: v.registrationNumber,
-           riderName: r ? `${r.firstName || ""} ${r.lastName || ""}`.trim() : "Unassigned",
-           ownerName: o ? `${o.firstName || ""} ${o.lastName || ""}`.trim() : "Unassigned",
-           updatedAt: c?.updatedAt || v.updatedAt,
-           docs: {
-             masterContractUrl: cMaster,
-             riderHpaUrl: rHpa,
-             riderPoaUrl: rPoa,
-             ownerHpaUrl: oHpa,
-             ownerPoaUrl: oPoa
-           }
-        });
-     }
-  });
-
-  // 2. Fetch Users with docs who have NO vehicle assigned yet
-  // This catches Riders who have completed KYC and signed, but are waiting for a vehicle.
-  const allUsers = await prisma.user.findMany({
-    where: {
-      OR: [
-        {
-          AND: [
-            { hpaAgreementUrl: { not: null } },
-            { hpaAgreementUrl: { not: "" } }
-          ]
+  // Fetch Vehicles and Users concurrently in parallel with targeted field selection
+  const [vehicles, allUsers] = await Promise.all([
+    // 1. Fetch all Vehicles to act as the primary "Deployments"
+    prisma.vehicle.findMany({
+      select: {
+        id: true,
+        registrationNumber: true,
+        updatedAt: true,
+        rider: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            hpaAgreementUrl: true,
+            poaAgreementUrl: true,
+          }
         },
-        {
-          AND: [
-            { poaAgreementUrl: { not: null } },
-            { poaAgreementUrl: { not: "" } }
-          ]
+        owner: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          }
+        },
+        contract: {
+          select: {
+            id: true,
+            signedDocumentUrl: true,
+            ownerHpaUrl: true,
+            ownerPoaUrl: true,
+            updatedAt: true,
+          }
         }
-      ]
-    },
-    include: {
-      assignedTrip: true,
-      ownedVehicles: true
-    }
-  });
+      }
+    }),
+
+    // 2. Fetch Users with docs who have NO vehicle assigned yet
+    prisma.user.findMany({
+      where: {
+        OR: [
+          {
+            AND: [
+              { hpaAgreementUrl: { not: null } },
+              { hpaAgreementUrl: { not: "" } }
+            ]
+          },
+          {
+            AND: [
+              { poaAgreementUrl: { not: null } },
+              { poaAgreementUrl: { not: "" } }
+            ]
+          }
+        ]
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        hpaAgreementUrl: true,
+        poaAgreementUrl: true,
+        updatedAt: true,
+        assignedTrip: { select: { id: true } },
+        ownedVehicles: { select: { id: true } }
+      }
+    })
+  ]);
 
   allUsers.forEach(u => {
      // For riders with no assigned vehicle
