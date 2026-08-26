@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Car, Plus, X, Loader2, Search, Wrench, CheckCircle2, UserMinus, ChevronDown } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Car, Plus, X, Loader2, Search, Wrench, CheckCircle2, UserMinus, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Vehicle = any;
+
+const ITEMS_PER_PAGE = 10;
 
 export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
   const router = useRouter();
@@ -12,6 +14,7 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const [formData, setFormData] = useState({
     type: "TRICYCLE",
@@ -60,7 +63,7 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
     }
   };
 
-  // NEW: Handle changing vehicle status or unassigning
+  // Handle changing vehicle status or unassigning
   const handleVehicleAction = async (vehicleId: string, action: "MAINTENANCE" | "ACTIVE" | "UNASSIGN") => {
     if (action === "UNASSIGN") {
       const confirmUnassign = window.confirm(
@@ -90,11 +93,20 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
     }
   };
 
-  const filteredVehicles = vehicles.filter(v => 
-    v.registrationNumber.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    v.makeModel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.chassisNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVehicles = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    return vehicles.filter(v => 
+      v.registrationNumber.toLowerCase().includes(q) || 
+      v.makeModel?.toLowerCase().includes(q) ||
+      v.chassisNumber?.toLowerCase().includes(q)
+    );
+  }, [vehicles, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE));
+  const paginatedVehicles = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return filteredVehicles.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredVehicles, page]);
 
   return (
     <div className="space-y-6">
@@ -107,8 +119,8 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
             type="text" 
             placeholder="Search by Plate, Make, or Chassis..." 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-cobalt"
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+            className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-base sm:text-sm text-white focus:outline-none focus:border-cobalt"
           />
         </div>
         <button 
@@ -121,7 +133,7 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
 
       {/* Vehicle Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredVehicles.map(vehicle => (
+        {paginatedVehicles.map(vehicle => (
           <div key={vehicle.id} className="bg-white/5 border border-white/10 rounded-xl p-5 hover:border-white/20 transition relative overflow-hidden flex flex-col justify-between group">
             
             <div>
@@ -202,7 +214,38 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
 
           </div>
         ))}
-      </div>
+      {/* PAGINATION BAR (10 ITEMS PER VIEW) */}
+      {filteredVehicles.length > 0 && (
+        <div className="p-3.5 border border-white/10 rounded-xl bg-[#0e1626] flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span className="text-gray-400">
+            Showing <strong className="text-white">{(page - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong className="text-white">{Math.min(page * ITEMS_PER_PAGE, filteredVehicles.length)}</strong> of <strong className="text-white">{filteredVehicles.length}</strong> vehicles
+          </span>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="p-1.5 rounded-lg border border-white/15 bg-[#141f33] text-gray-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            <span className="px-2.5 py-1 text-xs font-semibold text-white">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="p-1.5 rounded-lg border border-white/15 bg-[#141f33] text-gray-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {filteredVehicles.length === 0 && (
         <div className="text-center py-20 bg-white/5 border border-white/10 border-dashed rounded-xl">

@@ -9,39 +9,77 @@ export const metadata = {
 };
 
 export default async function UsersDirectoryPage() {
-  // Fetch ALL users and their relational data with lightweight projections (excluding heavy receipt base64 strings)
-  const rawUsers = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: {
-      // If they are a Rider, get their trip, contract, and what they've paid (excluding heavy base64 blobs)
+  // Fetch ALL users with strictly selective projections (excluding megabytes of base64 documents/photos)
+  const safeUsers = await prisma.user.findMany({
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phoneNumber: true,
+      role: true,
+      accountStatus: true,
+      createdAt: true,
+      state: true,
+      streetAddress: true,
+      nin: true,
+      bvn: true,
+      bankName: true,
+      accountNumber: true,
+      accountName: true,
+      preferredAssetClass: true,
+      // If they are a Rider, get trip and lean contract financials
       assignedTrip: {
-        include: {
-          contract: true,
-          ledgers: { 
+        select: {
+          id: true,
+          registrationNumber: true,
+          makeModel: true,
+          contract: {
+            select: {
+              id: true,
+              totalHirePurchasePrice: true,
+              downPayment: true,
+              riderWeeklyRemittance: true,
+              ownerWeeklyPayout: true,
+            }
+          },
+          ledgers: {
             where: { type: "PAYMENT_COLLECTED" },
-            select: { amount: true, type: true, date: true }
+            select: { amount: true }
           }
         }
       },
-      // If they are an Owner, get their vehicles, contracts, and what they've been paid
+      // If they are an Owner, get vehicles and lean contract financials
       ownedVehicles: {
-        include: {
-          contract: true,
-          ledgers: { 
+        select: {
+          id: true,
+          registrationNumber: true,
+          makeModel: true,
+          contract: {
+            select: {
+              id: true,
+              ownerWeeklyPayout: true,
+              totalHirePurchasePrice: true,
+            }
+          },
+          ledgers: {
             where: { type: "OWNER_REMITTANCE" },
-            select: { amount: true, type: true, date: true }
+            select: { amount: true }
           }
         }
       },
       // Include guarantors for riders
-      guarantors: true
-    }
-  });
-
-  // SECURITY: Strip out passwords before sending data to the client component
-  const safeUsers = rawUsers.map((user) => {
-    const { password, ...safeData } = user;
-    return safeData;
+      guarantors: {
+        select: {
+          id: true,
+          fullName: true,
+          phone: true,
+          status: true,
+          relationship: true,
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
   });
 
   return (

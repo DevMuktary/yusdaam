@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   ShieldCheck, Loader2, X, CheckCircle, 
-  ChevronDown, ChevronUp, UserCheck, UserX, FileText, Briefcase 
+  ChevronDown, ChevronUp, UserCheck, UserX, FileText, Briefcase, Search, ChevronLeft, ChevronRight 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Owner = any; 
+
+const ITEMS_PER_PAGE = 10;
 
 // DocumentPreview now includes e.stopPropagation() so clicking it doesn't accidentally trigger other elements
 const DocumentPreview = ({ url, label }: { url: string, label: string }) => {
@@ -35,10 +37,32 @@ export default function OwnersKycClient({ owners }: { owners: Owner[] }) {
   const [ninData, setNinData] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [page, setPage] = useState(1);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
+
+  const filteredOwners = useMemo(() => {
+    return owners.filter(o => {
+      const matchesStatus = statusFilter === "ALL" || o.accountStatus === statusFilter;
+      const q = searchTerm.toLowerCase();
+      const matchesSearch = !q || 
+        o.firstName?.toLowerCase().includes(q) || 
+        o.lastName?.toLowerCase().includes(q) || 
+        o.email?.toLowerCase().includes(q) || 
+        o.phoneNumber?.toLowerCase().includes(q);
+      return matchesStatus && matchesSearch;
+    });
+  }, [owners, statusFilter, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredOwners.length / ITEMS_PER_PAGE));
+  const paginatedOwners = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return filteredOwners.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredOwners, page]);
 
   const handleVerifyNIN = async (nin: string, userId: string) => {
     setVerifyingId(userId);
@@ -90,7 +114,36 @@ export default function OwnersKycClient({ owners }: { owners: Owner[] }) {
 
   return (
     <div className="space-y-4">
-      {owners.map((owner) => (
+      {/* FILTER CONTROLS */}
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-[#0e1626] p-3.5 rounded-xl border border-white/10">
+        <div className="flex gap-1.5 w-full sm:w-auto overflow-x-auto">
+          {["ALL", "PENDING", "APPROVED", "REJECTED"].map((st) => (
+            <button
+              key={st}
+              onClick={() => { setStatusFilter(st); setPage(1); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition ${
+                statusFilter === st ? "bg-cobalt text-white" : "bg-white/5 text-gray-400 hover:text-white"
+              }`}
+            >
+              {st}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+            placeholder="Search owners..."
+            className="w-full bg-[#141f33] border border-white/15 rounded-lg pl-8 pr-3 py-1.5 text-base sm:text-xs text-white placeholder-gray-400 outline-none"
+          />
+        </div>
+      </div>
+
+      {/* OWNERS LIST (PAGINATED - 10 PER PAGE) */}
+      {paginatedOwners.map((owner) => (
         <div key={owner.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all">
           
           {/* ACCORDION HEADER */}
@@ -310,6 +363,45 @@ export default function OwnersKycClient({ owners }: { owners: Owner[] }) {
               Close
             </button>
           </div>
+        </div>
+      )}
+      {/* PAGINATION BAR (10 ITEMS PER VIEW) */}
+      {filteredOwners.length > 0 && (
+        <div className="p-3.5 border border-white/10 rounded-xl bg-[#0e1626] flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span className="text-gray-400">
+            Showing <strong className="text-white">{(page - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong className="text-white">{Math.min(page * ITEMS_PER_PAGE, filteredOwners.length)}</strong> of <strong className="text-white">{filteredOwners.length}</strong> owners
+          </span>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="p-1.5 rounded-lg border border-white/15 bg-[#141f33] text-gray-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            <span className="px-2.5 py-1 text-xs font-semibold text-white">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="p-1.5 rounded-lg border border-white/15 bg-[#141f33] text-gray-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {filteredOwners.length === 0 && (
+        <div className="p-8 text-center text-gray-500 text-xs bg-[#0e1626] rounded-xl border border-white/10">
+          <Briefcase size={32} className="mx-auto text-gray-600 mb-2 opacity-50" />
+          <p>No asset owners found.</p>
         </div>
       )}
 

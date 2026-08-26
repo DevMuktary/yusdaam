@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Search, User, ShieldAlert, CheckCircle2, Ban, Briefcase, X, Banknote, Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, User, ShieldAlert, CheckCircle2, Ban, Briefcase, X, Banknote, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type UserData = any;
+
+const ITEMS_PER_PAGE = 10;
 
 export default function UsersClient({ users }: { users: UserData[] }) {
   const router = useRouter();
@@ -12,14 +14,23 @@ export default function UsersClient({ users }: { users: UserData[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Filter Logic
-  const filteredUsers = users.filter((user) => {
-    const matchesTab = activeTab === "ALL" || user.role === activeTab;
-    const searchString = `${user.firstName} ${user.lastName} ${user.email} ${user.phoneNumber}`.toLowerCase();
-    const matchesSearch = searchString.includes(searchTerm.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const matchesTab = activeTab === "ALL" || user.role === activeTab;
+      const searchString = `${user.firstName} ${user.lastName} ${user.email} ${user.phoneNumber}`.toLowerCase();
+      const matchesSearch = searchString.includes(searchTerm.toLowerCase());
+      return matchesTab && matchesSearch;
+    });
+  }, [users, activeTab, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE));
+  const paginatedUsers = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredUsers, page]);
 
   // Action Handler (Suspend / Reactivate)
   const handleStatusChange = async (userId: string, currentStatus: string) => {
@@ -121,7 +132,7 @@ export default function UsersClient({ users }: { users: UserData[] }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filteredUsers.map((user) => (
+              {paginatedUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-white/5 transition duration-150">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
@@ -173,6 +184,39 @@ export default function UsersClient({ users }: { users: UserData[] }) {
             </div>
           )}
         </div>
+
+        {/* PAGINATION BAR (10 ITEMS PER VIEW) */}
+        {filteredUsers.length > 0 && (
+          <div className="p-3.5 border-t border-white/10 bg-[#141f33]/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="text-gray-400">
+              Showing <strong className="text-white">{(page - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong className="text-white">{Math.min(page * ITEMS_PER_PAGE, filteredUsers.length)}</strong> of <strong className="text-white">{filteredUsers.length}</strong> users
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="p-1.5 rounded-lg border border-white/15 bg-[#0e1626] text-gray-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <span className="px-2.5 py-1 text-xs font-semibold text-white">
+                Page {page} of {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="p-1.5 rounded-lg border border-white/15 bg-[#0e1626] text-gray-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* GOD MODE MODAL (DETAILED DOSSIER) */}
