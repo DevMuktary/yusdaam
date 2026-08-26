@@ -13,19 +13,40 @@ export default async function PaymentsPage() {
     where: { status: "ACTIVE" },
     include: {
       contract: true,
-      owner: { select: { id: true, firstName: true, lastName: true, email: true, bankName: true, accountNumber: true } },
-      rider: { select: { id: true, firstName: true, lastName: true, email: true } },
+      owner: { 
+        select: { 
+          id: true, 
+          firstName: true, 
+          lastName: true, 
+          email: true, 
+          phoneNumber: true,
+          bankName: true, 
+          accountNumber: true,
+          accountName: true 
+        } 
+      },
+      rider: { 
+        select: { 
+          id: true, 
+          firstName: true, 
+          lastName: true, 
+          email: true,
+          phoneNumber: true 
+        } 
+      },
     }
   });
 
-  // Fetch pending weekly cycles for owners to populate the payout dropdown
+  // Fetch pending weekly cycles for both riders AND owners (isolated)
   const pendingCycles = await prisma.weeklyCycle.findMany({
     where: {
-      isOwnerSettled: false,
-      ownerExpectedAmount: { gt: 0 }
+      OR: [
+        { isSettled: false },
+        { isOwnerSettled: false, ownerExpectedAmount: { gt: 0 } }
+      ]
     },
     include: {
-      contract: true // Client needs this to match c.contract.vehicleId === selectedVehicleId
+      contract: true
     },
     orderBy: {
       weekNumber: 'asc'

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet, ArrowDownRight, Receipt, Calendar, ArrowRightLeft, ShieldCheck, Download, Car, ExternalLink, AlertTriangle, Layers, CalendarDays } from "lucide-react";
+import { Wallet, ArrowDownRight, Receipt, Calendar, ArrowRightLeft, ShieldCheck, Download, Car, ExternalLink, AlertTriangle, Layers, CalendarDays, ChevronDown } from "lucide-react";
 
 export default function OwnerLedgerClient({ ledgers, cycles = [], user }: { ledgers: any[], cycles?: any[], user: any }) {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("ALL");
@@ -113,18 +113,23 @@ export default function OwnerLedgerClient({ ledgers, cycles = [], user }: { ledg
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <select 
-            value={selectedVehicleId} 
-            onChange={(e) => { setSelectedVehicleId(e.target.value); setCurrentPage(1); }}
-            className="bg-[#001232] border border-cobalt/30 text-white text-xs font-bold tracking-wider rounded-lg px-4 py-2.5 focus:outline-none focus:border-cobalt w-full sm:w-auto"
-          >
-            <option value="ALL" className="bg-[#001232] text-white">ALL ASSETS (PORTFOLIO)</option>
-            {uniqueVehicles.map((v: any) => (
-              <option key={v.id} value={v.id} className="bg-[#001232] text-white">
-                {v.registrationNumber} - {v.makeModel}
-              </option>
-            ))}
-          </select>
+          <div className="relative w-full sm:w-auto">
+            <select 
+              value={selectedVehicleId} 
+              onChange={(e) => { setSelectedVehicleId(e.target.value); setCurrentPage(1); }}
+              className="bg-[#0f172a] hover:bg-[#131d35] border-2 border-white/20 focus:border-cobalt text-white text-xs font-bold tracking-wider rounded-xl px-4 py-2.5 pr-10 focus:outline-none w-full sm:w-auto appearance-none cursor-pointer shadow-inner transition-all"
+            >
+              <option value="ALL" className="bg-[#0f172a] text-white">ALL ASSETS (PORTFOLIO)</option>
+              {uniqueVehicles.map((v: any) => (
+                <option key={v.id} value={v.id} className="bg-[#0f172a] text-white">
+                  {v.registrationNumber} - {v.makeModel || 'Vehicle'}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-300">
+              <ChevronDown size={16} />
+            </div>
+          </div>
         </div>
 
       </div>

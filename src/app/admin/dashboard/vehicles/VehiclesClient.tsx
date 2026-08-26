@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Car, Plus, X, Loader2, Search, Wrench, CheckCircle2, UserMinus } from "lucide-react";
+import { Car, Plus, X, Loader2, Search, Wrench, CheckCircle2, UserMinus, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Vehicle = any;
@@ -222,14 +222,25 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
             
             <form onSubmit={handleAddVehicle} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1.5">Asset Type *</label>
-                <select name="type" value={formData.type} onChange={handleTextChange} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cobalt appearance-none" required>
-                  <option value="TRICYCLE" className="bg-void-navy text-white">Tricycle (Keke)</option>
-                  <option value="MINIBUS_KOROPE" className="bg-void-navy text-white">Mini-Bus (Korope)</option>
-                  <option value="CAR_UBER" className="bg-void-navy text-white">Uber Sedan</option>
-                  <option value="TIPPER" className="bg-void-navy text-white">Tipper Truck</option>
-                  <option value="OTHERS" className="bg-void-navy text-white">Others (Specify)</option>
-                </select>
+                <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">Asset Type *</label>
+                <div className="relative">
+                  <select 
+                    name="type" 
+                    value={formData.type} 
+                    onChange={handleTextChange} 
+                    className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-cobalt rounded-xl px-4 py-3 pr-11 text-white font-medium text-sm transition-all outline-none appearance-none cursor-pointer shadow-inner" 
+                    required
+                  >
+                    <option value="TRICYCLE" className="bg-[#0f172a] text-white py-2">Tricycle (Keke)</option>
+                    <option value="MINIBUS_KOROPE" className="bg-[#0f172a] text-white py-2">Mini-Bus (Korope)</option>
+                    <option value="CAR_UBER" className="bg-[#0f172a] text-white py-2">Uber Sedan</option>
+                    <option value="TIPPER" className="bg-[#0f172a] text-white py-2">Tipper Truck</option>
+                    <option value="OTHERS" className="bg-[#0f172a] text-white py-2">Others (Specify)</option>
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-300">
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
               </div>
 
               {formData.type === "OTHERS" && (

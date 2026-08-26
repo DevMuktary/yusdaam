@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ArrowDownRight, ArrowUpRight, Banknote, User, FileText, CalendarDays, Layers, AlertTriangle } from "lucide-react";
+import { Search, ArrowDownRight, ArrowUpRight, Banknote, User, FileText, CalendarDays, Layers, AlertTriangle, ChevronDown } from "lucide-react";
 
 export default function AdminLedgerClient({ ledgers, users, cycles }: { ledgers: any[], users: any[], cycles: any[] }) {
   const [selectedUserId, setSelectedUserId] = useState<string>("ALL");
@@ -65,37 +65,40 @@ export default function AdminLedgerClient({ ledgers, users, cycles }: { ledgers:
       </div>
 
       {/* CONTROLS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-void-navy p-5 rounded-xl border border-white/10 shadow-lg">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#0f172a] p-5 rounded-2xl border border-white/15 shadow-xl">
         <div>
-          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Filter by User</label>
+          <label className="block text-[11px] font-bold text-gray-300 uppercase tracking-widest mb-2">Filter by User</label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <select 
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-cobalt appearance-none cursor-pointer"
+              className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-cobalt rounded-xl pl-10 pr-10 py-3 text-sm text-white font-medium transition-all outline-none appearance-none cursor-pointer shadow-inner"
             >
-              <option value="ALL" className="bg-void-navy text-white">All Platform Records</option>
-              <optgroup label="--- Riders ---" className="bg-void-navy text-emerald-400 font-bold">
-                {riders.map(r => <option key={r.id} value={r.id} className="text-white">{r.firstName} {r.lastName} ({r.phoneNumber})</option>)}
+              <option value="ALL" className="bg-[#0f172a] text-white py-2">-- All Platform Records --</option>
+              <optgroup label="--- Riders ---" className="bg-[#0f172a] text-emerald-400 font-bold">
+                {riders.map(r => <option key={r.id} value={r.id} className="text-white py-1.5">{r.firstName} {r.lastName} ({r.phoneNumber || 'No phone'})</option>)}
               </optgroup>
-              <optgroup label="--- Asset Owners ---" className="bg-void-navy text-purple-400 font-bold">
-                {owners.map(o => <option key={o.id} value={o.id} className="text-white">{o.firstName} {o.lastName} ({o.phoneNumber})</option>)}
+              <optgroup label="--- Asset Owners ---" className="bg-[#0f172a] text-purple-400 font-bold">
+                {owners.map(o => <option key={o.id} value={o.id} className="text-white py-1.5">{o.firstName} {o.lastName} ({o.phoneNumber || 'No phone'})</option>)}
               </optgroup>
             </select>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-300">
+              <ChevronDown size={18} />
+            </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Search Records</label>
+          <label className="block text-[11px] font-bold text-gray-300 uppercase tracking-widest mb-2">Search Records</label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input 
               type="text" 
               placeholder="Search references, descriptions, or plates..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-cobalt transition-colors"
+              className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-cobalt rounded-xl pl-10 pr-4 py-3 text-sm text-white font-medium transition-all outline-none shadow-inner"
             />
           </div>
         </div>

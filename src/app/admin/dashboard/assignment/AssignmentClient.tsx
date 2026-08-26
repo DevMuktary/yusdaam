@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Car, User, Briefcase, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Car, User, Briefcase, CheckCircle2, AlertCircle, Loader2, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function AssignmentClient({ vehicles, riders, owners }: { vehicles: any[], riders: any[], owners: any[] }) {
@@ -87,34 +87,74 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
       {/* SELECTION GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        <div className={`p-6 rounded-xl border transition-all ${selectedVehicle ? 'bg-cobalt/10 border-cobalt/40' : 'bg-void-navy border-white/10'}`}>
-          <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-4 uppercase tracking-wider">
-            <Car size={18} className="text-cobalt" /> 1. Select Vehicle *
+        <div className={`p-6 rounded-2xl border transition-all ${selectedVehicle ? 'bg-cobalt/10 border-cobalt/50 shadow-lg shadow-blue-900/10' : 'bg-[#0f172a] border-white/15'}`}>
+          <h3 className="flex items-center gap-2 text-xs font-black text-white mb-3 uppercase tracking-wider">
+            <Car size={16} className="text-cobalt" /> 1. Select Vehicle *
           </h3>
-          <select value={selectedVehicle} onChange={(e) => setSelectedVehicle(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cobalt appearance-none" required>
-            <option value="" className="bg-void-navy text-white">-- Choose Asset --</option>
-            {vehicles.map(v => <option key={v.id} value={v.id} className="bg-void-navy text-white">{v.registrationNumber} - {v.makeModel} ({v.type === 'OTHERS' ? v.customType : v.type})</option>)}
-          </select>
+          <div className="relative">
+            <select 
+              value={selectedVehicle} 
+              onChange={(e) => setSelectedVehicle(e.target.value)} 
+              className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-cobalt rounded-xl px-4 py-3.5 pr-11 text-white font-medium text-sm transition-all outline-none appearance-none cursor-pointer shadow-inner" 
+              required
+            >
+              <option value="" className="bg-[#0f172a] text-gray-400 font-medium">-- Choose Asset --</option>
+              {vehicles.map(v => (
+                <option key={v.id} value={v.id} className="bg-[#0f172a] text-white py-2">
+                  {v.registrationNumber} • {v.makeModel || 'Vehicle'} ({v.type === 'OTHERS' ? v.customType : v.type})
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-300">
+              <ChevronDown size={18} />
+            </div>
+          </div>
         </div>
 
-        <div className={`p-6 rounded-xl border transition-all ${selectedRider ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-void-navy border-white/10'}`}>
-          <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-4 uppercase tracking-wider">
-            <User size={18} className="text-emerald-400" /> 2. Select Rider
+        <div className={`p-6 rounded-2xl border transition-all ${selectedRider ? 'bg-emerald-500/10 border-emerald-500/50 shadow-lg shadow-emerald-900/10' : 'bg-[#0f172a] border-white/15'}`}>
+          <h3 className="flex items-center gap-2 text-xs font-black text-white mb-3 uppercase tracking-wider">
+            <User size={16} className="text-emerald-400" /> 2. Select Rider
           </h3>
-          <select value={selectedRider} onChange={(e) => setSelectedRider(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500 appearance-none">
-            <option value="" className="bg-void-navy text-white">-- Choose Approved Rider (Optional) --</option>
-            {riders.map(r => <option key={r.id} value={r.id} className="bg-void-navy text-white">{r.firstName} {r.lastName} ({r.phoneNumber})</option>)}
-          </select>
+          <div className="relative">
+            <select 
+              value={selectedRider} 
+              onChange={(e) => setSelectedRider(e.target.value)} 
+              className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-emerald-500 rounded-xl px-4 py-3.5 pr-11 text-white font-medium text-sm transition-all outline-none appearance-none cursor-pointer shadow-inner"
+            >
+              <option value="" className="bg-[#0f172a] text-gray-400 font-medium">-- Choose Approved Rider (Optional) --</option>
+              {riders.map(r => (
+                <option key={r.id} value={r.id} className="bg-[#0f172a] text-white py-2">
+                  {r.firstName} {r.lastName} ({r.phoneNumber || 'No phone'})
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-300">
+              <ChevronDown size={18} />
+            </div>
+          </div>
         </div>
 
-        <div className={`p-6 rounded-xl border transition-all ${selectedOwner ? 'bg-purple-500/10 border-purple-500/40' : 'bg-void-navy border-white/10'}`}>
-          <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-4 uppercase tracking-wider">
-            <Briefcase size={18} className="text-purple-400" /> 3. Select Asset Owner
+        <div className={`p-6 rounded-2xl border transition-all ${selectedOwner ? 'bg-purple-500/10 border-purple-500/50 shadow-lg shadow-purple-900/10' : 'bg-[#0f172a] border-white/15'}`}>
+          <h3 className="flex items-center gap-2 text-xs font-black text-white mb-3 uppercase tracking-wider">
+            <Briefcase size={16} className="text-purple-400" /> 3. Select Asset Owner
           </h3>
-          <select value={selectedOwner} onChange={(e) => setSelectedOwner(e.target.value)} className="w-full bg-void-navy border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 appearance-none">
-            <option value="" className="bg-void-navy text-white">-- Choose Asset Owner (Optional) --</option>
-            {owners.map(o => <option key={o.id} value={o.id} className="bg-void-navy text-white">{o.firstName} {o.lastName} - {o.preferredAssetClass}</option>)}
-          </select>
+          <div className="relative">
+            <select 
+              value={selectedOwner} 
+              onChange={(e) => setSelectedOwner(e.target.value)} 
+              className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-purple-500 rounded-xl px-4 py-3.5 pr-11 text-white font-medium text-sm transition-all outline-none appearance-none cursor-pointer shadow-inner"
+            >
+              <option value="" className="bg-[#0f172a] text-gray-400 font-medium">-- Choose Asset Owner (Optional) --</option>
+              {owners.map(o => (
+                <option key={o.id} value={o.id} className="bg-[#0f172a] text-white py-2">
+                  {o.firstName} {o.lastName} {o.preferredAssetClass ? `• ${o.preferredAssetClass}` : ''}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-300">
+              <ChevronDown size={18} />
+            </div>
+          </div>
         </div>
 
       </div>

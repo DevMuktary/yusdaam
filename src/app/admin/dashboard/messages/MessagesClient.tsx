@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Send, Phone, UserSquare2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, Send, Phone, UserSquare2, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react";
 
 interface RiderSubset {
   id: string;
@@ -81,20 +81,35 @@ export default function MessagesClient({ riders }: { riders: RiderSubset[] }) {
 
           {/* Recipient Input */}
           <div>
-            <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Recipient</label>
+            <label className="block text-[11px] font-bold text-slate-light uppercase tracking-widest mb-2">Recipient *</label>
             {mode === "SELECT" ? (
-              <select value={selectedNumber} onChange={(e) => setSelectedNumber(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt">
-                <option value="">-- Choose a Rider --</option>
-                {riders.map(rider => (
-                  <option key={rider.id} value={rider.phoneNumber || ""} disabled={!rider.phoneNumber}>
-                    {rider.firstName} {rider.lastName} {!rider.phoneNumber && "(No Phone Saved)"}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select 
+                  value={selectedNumber} 
+                  onChange={(e) => setSelectedNumber(e.target.value)} 
+                  className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-cobalt rounded-xl px-4 py-3.5 pr-11 text-white font-medium text-sm transition-all outline-none appearance-none cursor-pointer shadow-inner"
+                >
+                  <option value="" className="bg-[#0f172a] text-gray-400 font-medium">-- Choose a Fleet Rider --</option>
+                  {riders.map(rider => (
+                    <option key={rider.id} value={rider.phoneNumber || ""} disabled={!rider.phoneNumber} className="bg-[#0f172a] text-white py-2">
+                      {rider.firstName} {rider.lastName} {!rider.phoneNumber ? "(No Phone Saved)" : `(${rider.phoneNumber})`}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-300">
+                  <ChevronDown size={18} />
+                </div>
+              </div>
             ) : (
               <div className="relative">
-                <Phone size={18} className="absolute left-4 top-3.5 text-slate-light" />
-                <input type="text" value={selectedNumber} onChange={(e) => setSelectedNumber(e.target.value)} placeholder="e.g. 08012345678 or 2348012345678" className="w-full bg-void-navy border border-cobalt/30 rounded-lg pl-12 pr-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" />
+                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-light" />
+                <input 
+                  type="text" 
+                  value={selectedNumber} 
+                  onChange={(e) => setSelectedNumber(e.target.value)} 
+                  placeholder="e.g. 08012345678 or 2348012345678" 
+                  className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-cobalt rounded-xl pl-12 pr-4 py-3.5 text-sm text-white font-medium outline-none transition-all shadow-inner" 
+                />
               </div>
             )}
           </div>
