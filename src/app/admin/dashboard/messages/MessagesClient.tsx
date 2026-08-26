@@ -3,15 +3,7 @@
 import { useState } from "react";
 import { Loader2, Send, Phone, UserSquare2, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react";
 
-interface RiderSubset {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  phoneNumber: string | null;
-  accountStatus: string;
-}
-
-export default function MessagesClient({ riders }: { riders: RiderSubset[] }) {
+export default function MessagesClient({ riders }: { riders: any[] }) {
   const [mode, setMode] = useState<"SELECT" | "CUSTOM">("SELECT");
   const [selectedNumber, setSelectedNumber] = useState("");
   const [message, setMessage] = useState("");

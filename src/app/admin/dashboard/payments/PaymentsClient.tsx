@@ -20,58 +20,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-interface Assignment {
-  id: string;
-  registrationNumber: string;
-  makeModel?: string;
-  type: string;
-  customType?: string;
-  rider?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phoneNumber?: string;
-  };
-  owner?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phoneNumber?: string;
-    bankName?: string;
-    accountNumber?: string;
-    accountName?: string;
-  };
-  contract?: {
-    id: string;
-    riderWeeklyRemittance: number;
-    ownerWeeklyPayout: number;
-    riderDurationWeeks: number;
-    ownerDurationWeeks: number;
-    currentWeek: number;
-  };
-}
-
-interface WeeklyCycleItem {
-  id: string;
-  contractId: string;
-  weekNumber: number;
-  expectedAmount: number;
-  amountPaid: number;
-  shortfallAmount: number;
-  isSettled: boolean;
-  ownerExpectedAmount: number;
-  ownerRemittedAmount: number;
-  isOwnerSettled: boolean;
-  startDate?: string | Date;
-  endDate?: string | Date;
-  contract?: {
-    vehicleId?: string;
-  };
-}
-
-export default function PaymentsClient({ assignments, cycles }: { assignments: Assignment[], cycles: WeeklyCycleItem[] }) {
+export default function PaymentsClient({ assignments, cycles }: { assignments: any[], cycles: any[] }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
