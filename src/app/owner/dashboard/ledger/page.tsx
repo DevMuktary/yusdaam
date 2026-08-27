@@ -72,10 +72,11 @@ export default async function FinancialLedgerPage() {
           select: {
             id: true,
             weekNumber: true,
-            dueDate: true,
+            startDate: true,
+            endDate: true,
             ownerExpectedAmount: true,
             ownerRemittedAmount: true,
-            ownerStatus: true,
+            isOwnerSettled: true,
             contractId: true,
             contract: {
               select: {
