@@ -214,6 +214,8 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
 
           </div>
         ))}
+      </div>
+
       {/* PAGINATION BAR (10 ITEMS PER VIEW) */}
       {filteredVehicles.length > 0 && (
         <div className="p-3.5 border border-white/10 rounded-xl bg-[#0e1626] flex flex-wrap items-center justify-between gap-3 text-xs">
