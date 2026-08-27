@@ -12,7 +12,9 @@ import {
   Search, 
   Check, 
   X,
-  Sparkles 
+  Sparkles,
+  ArrowRight,
+  TrendingUp
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -136,7 +138,7 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
         throw new Error(data.error || "Assignment failed");
       }
 
-      alert("Success! Assignment completed and contract parameters established.");
+      alert("Success! Fleet assignment and contracts created successfully.");
       router.refresh();
       setSelectedVehicle(""); setSelectedRider(""); setSelectedOwner("");
       setFormData({ totalHirePurchasePrice: "", downPayment: "", riderWeeklyRemittance: "", riderDurationWeeks: "", ownerWeeklyPayout: "", ownerDurationWeeks: "" });
@@ -147,133 +149,158 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
     }
   };
 
+  // Weekly profit calculation
+  const weeklyMargin = useMemo(() => {
+    const inflow = Number(formData.riderWeeklyRemittance) || 0;
+    const payout = Number(formData.ownerWeeklyPayout) || 0;
+    return inflow - payout;
+  }, [formData.riderWeeklyRemittance, formData.ownerWeeklyPayout]);
+
   if (vehicles.length === 0) {
     return (
-      <div className="text-center py-20 bg-[#0f172a] border border-white/10 rounded-2xl shadow-xl">
-        <Car size={48} className="mx-auto text-gray-500 mb-4" />
-        <h3 className="text-xl font-bold text-white mb-2">No Vehicles Available</h3>
-        <p className="text-gray-400 text-sm">Add a new unassigned vehicle to the inventory before creating an assignment.</p>
+      <div className="text-center py-16 px-4 bg-[#0e1626] border border-white/10 rounded-2xl shadow-xl max-w-xl mx-auto">
+        <Car size={40} className="mx-auto text-gray-500 mb-3" />
+        <h3 className="text-lg font-bold text-white mb-1">No Unassigned Vehicles</h3>
+        <p className="text-gray-400 text-xs">Add a new vehicle to the inventory before creating an assignment.</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleAssignment} className="space-y-8">
+    <form onSubmit={handleAssignment} className="space-y-6 w-full max-w-3xl mx-auto">
       
-      {/* SELECTION GRID WITH MODERN CUSTOM DROPDOWNS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* 1. VEHICLE DROPDOWN */}
-        <div className={`p-5 rounded-2xl border transition-all ${selectedVehicle ? 'bg-cobalt/10 border-cobalt/50 shadow-lg shadow-blue-900/10' : 'bg-[#0f172a] border-white/15'}`} ref={vehicleRef}>
-          <h3 className="flex items-center gap-2 text-xs font-black text-white mb-3 uppercase tracking-wider">
-            <Car size={16} className="text-cobalt" /> 1. Select Vehicle *
-          </h3>
+      {/* 1. SELECTION STEP (MOBILE FIRST MATCHMAKING) */}
+      <div className="bg-[#0e1626] p-4 sm:p-5 rounded-2xl border border-white/10 space-y-4">
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <h2 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+            <Car size={15} className="text-cobalt" /> 1. Select Matchmaking Parties
+          </h2>
+          <span className="text-[10px] text-gray-400 font-medium">Step 1 of 2</span>
+        </div>
+
+        <div className="space-y-3.5">
           
-          <div className="relative">
+          {/* VEHICLE PICKER */}
+          <div className="relative" ref={vehicleRef}>
+            <label className="block text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+              Select Vehicle *
+            </label>
             <button
               type="button"
               onClick={() => { setIsVehicleOpen(!isVehicleOpen); setIsRiderOpen(false); setIsOwnerOpen(false); }}
-              className={`w-full bg-[#131d35] hover:bg-[#162340] border-2 rounded-xl p-3.5 flex items-center justify-between text-left transition outline-none shadow-md ${
-                isVehicleOpen ? 'border-cobalt ring-2 ring-cobalt/30' : 'border-white/20'
+              className={`w-full bg-[#141f33] hover:bg-[#18263e] border rounded-xl px-3.5 py-3 flex items-center justify-between text-left transition outline-none shadow-sm ${
+                isVehicleOpen ? 'border-cobalt ring-1 ring-cobalt' : 'border-white/15'
               }`}
             >
               {activeVehicle ? (
-                <div className="min-w-0">
-                  <span className="px-2 py-0.5 bg-cobalt text-white font-mono font-bold rounded text-xs">
-                    {activeVehicle.registrationNumber}
-                  </span>
-                  <p className="text-white font-bold text-xs mt-1 truncate">{activeVehicle.makeModel || 'Vehicle'} ({activeVehicle.type})</p>
+                <div className="min-w-0 pr-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-cobalt text-white font-mono font-bold rounded text-xs">
+                      {activeVehicle.registrationNumber}
+                    </span>
+                    <span className="text-xs text-white font-medium truncate">
+                      {activeVehicle.makeModel || 'Vehicle'} ({activeVehicle.type})
+                    </span>
+                  </div>
                 </div>
               ) : (
-                <span className="text-gray-400 text-xs font-medium">-- Choose Asset --</span>
+                <span className="text-sm text-gray-400">Choose unassigned asset...</span>
               )}
-              <ChevronDown size={18} className={`text-gray-300 transition-transform shrink-0 ${isVehicleOpen ? 'rotate-180 text-cobalt' : ''}`} />
+              <ChevronDown size={18} className={`text-gray-400 shrink-0 transition-transform ${isVehicleOpen ? 'rotate-180 text-cobalt' : ''}`} />
             </button>
 
+            {/* VEHICLES FLOATING POPOVER */}
             {isVehicleOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#0f172a] border-2 border-cobalt/40 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="p-2.5 border-b border-white/10 bg-[#131d35]/60 flex items-center gap-2">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[#0b1220] border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="p-2 border-b border-white/10 bg-[#141f33] flex items-center gap-2">
                   <Search size={14} className="text-gray-400 shrink-0" />
                   <input
                     type="text"
                     value={vehicleSearch}
                     onChange={(e) => setVehicleSearch(e.target.value)}
                     placeholder="Search plate or model..."
-                    className="w-full bg-transparent text-xs text-white placeholder-gray-400 outline-none"
+                    className="w-full bg-transparent text-base sm:text-xs text-white placeholder-gray-400 outline-none"
                     autoFocus
                   />
+                  {vehicleSearch && (
+                    <button type="button" onClick={() => setVehicleSearch("")} className="text-gray-400 hover:text-white">
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
-                <div className="max-h-56 overflow-y-auto p-1.5 space-y-1 custom-scrollbar">
-                  {filteredVehicles.map(v => {
-                    const isSelected = v.id === selectedVehicle;
-                    return (
-                      <button
-                        key={v.id}
-                        type="button"
-                        onClick={() => { setSelectedVehicle(v.id); setIsVehicleOpen(false); setVehicleSearch(""); }}
-                        className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition ${
-                          isSelected ? 'bg-cobalt/30 border border-cobalt text-white' : 'hover:bg-[#131d35] text-slate-light'
-                        }`}
-                      >
-                        <div className="min-w-0">
-                          <span className="font-mono font-bold text-xs text-white bg-white/10 px-2 py-0.5 rounded mr-2">
-                            {v.registrationNumber}
-                          </span>
-                          <span className="text-xs font-medium text-gray-300">{v.makeModel || v.type}</span>
-                        </div>
-                        {isSelected && <Check size={14} className="text-cobalt shrink-0 ml-2" />}
-                      </button>
-                    );
-                  })}
+                <div className="max-h-52 overflow-y-auto p-1 space-y-1">
+                  {filteredVehicles.length === 0 ? (
+                    <div className="py-4 text-center text-xs text-gray-400">No matching vehicles</div>
+                  ) : (
+                    filteredVehicles.map(v => {
+                      const isSelected = v.id === selectedVehicle;
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          onClick={() => { setSelectedVehicle(v.id); setIsVehicleOpen(false); setVehicleSearch(""); }}
+                          className={`w-full p-2.5 rounded-lg flex items-center justify-between text-left transition ${
+                            isSelected ? 'bg-cobalt/40 text-white' : 'hover:bg-[#141f33] text-gray-300'
+                          }`}
+                        >
+                          <div className="min-w-0 pr-2">
+                            <span className="font-mono font-bold text-xs bg-white/10 text-white px-2 py-0.5 rounded mr-2">
+                              {v.registrationNumber}
+                            </span>
+                            <span className="text-xs text-white font-medium">{v.makeModel || v.type}</span>
+                          </div>
+                          {isSelected && <Check size={16} className="text-cobalt shrink-0" />}
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}
           </div>
-        </div>
 
-        {/* 2. RIDER DROPDOWN */}
-        <div className={`p-5 rounded-2xl border transition-all ${selectedRider ? 'bg-emerald-500/10 border-emerald-500/50 shadow-lg shadow-emerald-900/10' : 'bg-[#0f172a] border-white/15'}`} ref={riderRef}>
-          <h3 className="flex items-center gap-2 text-xs font-black text-white mb-3 uppercase tracking-wider">
-            <User size={16} className="text-emerald-400" /> 2. Select Rider
-          </h3>
-          
-          <div className="relative">
+          {/* RIDER PICKER */}
+          <div className="relative" ref={riderRef}>
+            <label className="block text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+              Select Approved Rider (Optional)
+            </label>
             <button
               type="button"
               onClick={() => { setIsRiderOpen(!isRiderOpen); setIsVehicleOpen(false); setIsOwnerOpen(false); }}
-              className={`w-full bg-[#131d35] hover:bg-[#162340] border-2 rounded-xl p-3.5 flex items-center justify-between text-left transition outline-none shadow-md ${
-                isRiderOpen ? 'border-emerald-500 ring-2 ring-emerald-500/30' : 'border-white/20'
+              className={`w-full bg-[#141f33] hover:bg-[#18263e] border rounded-xl px-3.5 py-3 flex items-center justify-between text-left transition outline-none shadow-sm ${
+                isRiderOpen ? 'border-emerald-500 ring-1 ring-emerald-500' : 'border-white/15'
               }`}
             >
               {activeRider ? (
-                <div className="min-w-0">
-                  <p className="text-white font-bold text-xs truncate">{activeRider.firstName} {activeRider.lastName}</p>
+                <div className="min-w-0 pr-2">
+                  <p className="text-xs font-bold text-white truncate">{activeRider.firstName} {activeRider.lastName}</p>
                   <p className="text-[11px] text-emerald-400 mt-0.5 truncate">{activeRider.phoneNumber || 'No phone'}</p>
                 </div>
               ) : (
-                <span className="text-gray-400 text-xs font-medium">-- Choose Approved Rider --</span>
+                <span className="text-sm text-gray-400">Choose approved rider...</span>
               )}
-              <ChevronDown size={18} className={`text-gray-300 transition-transform shrink-0 ${isRiderOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+              <ChevronDown size={18} className={`text-gray-400 shrink-0 transition-transform ${isRiderOpen ? 'rotate-180 text-emerald-400' : ''}`} />
             </button>
 
+            {/* RIDERS FLOATING POPOVER */}
             {isRiderOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#0f172a] border-2 border-emerald-500/40 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="p-2.5 border-b border-white/10 bg-[#131d35]/60 flex items-center gap-2">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[#0b1220] border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="p-2 border-b border-white/10 bg-[#141f33] flex items-center gap-2">
                   <Search size={14} className="text-gray-400 shrink-0" />
                   <input
                     type="text"
                     value={riderSearch}
                     onChange={(e) => setRiderSearch(e.target.value)}
                     placeholder="Search rider name or phone..."
-                    className="w-full bg-transparent text-xs text-white placeholder-gray-400 outline-none"
+                    className="w-full bg-transparent text-base sm:text-xs text-white placeholder-gray-400 outline-none"
                     autoFocus
                   />
                 </div>
-                <div className="max-h-56 overflow-y-auto p-1.5 space-y-1 custom-scrollbar">
+                <div className="max-h-52 overflow-y-auto p-1 space-y-1">
                   <button
                     type="button"
                     onClick={() => { setSelectedRider(""); setIsRiderOpen(false); setRiderSearch(""); }}
-                    className="w-full p-2 rounded-xl text-left text-xs text-gray-400 hover:bg-[#131d35]"
+                    className="w-full p-2 rounded-lg text-left text-xs text-gray-400 hover:bg-[#141f33]"
                   >
                     -- None (Assign Later) --
                   </button>
@@ -284,15 +311,15 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
                         key={r.id}
                         type="button"
                         onClick={() => { setSelectedRider(r.id); setIsRiderOpen(false); setRiderSearch(""); }}
-                        className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition ${
-                          isSelected ? 'bg-emerald-500/20 border border-emerald-500 text-white' : 'hover:bg-[#131d35] text-slate-light'
+                        className={`w-full p-2.5 rounded-lg flex items-center justify-between text-left transition ${
+                          isSelected ? 'bg-emerald-950/60 text-white border border-emerald-500/50' : 'hover:bg-[#141f33] text-gray-300'
                         }`}
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 pr-2">
                           <p className="text-xs font-bold text-white">{r.firstName} {r.lastName}</p>
                           <p className="text-[11px] text-gray-400">{r.phoneNumber || 'No phone'}</p>
                         </div>
-                        {isSelected && <Check size={14} className="text-emerald-400 shrink-0 ml-2" />}
+                        {isSelected && <Check size={16} className="text-emerald-400 shrink-0" />}
                       </button>
                     );
                   })}
@@ -300,51 +327,49 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
               </div>
             )}
           </div>
-        </div>
 
-        {/* 3. ASSET OWNER DROPDOWN */}
-        <div className={`p-5 rounded-2xl border transition-all ${selectedOwner ? 'bg-purple-500/10 border-purple-500/50 shadow-lg shadow-purple-900/10' : 'bg-[#0f172a] border-white/15'}`} ref={ownerRef}>
-          <h3 className="flex items-center gap-2 text-xs font-black text-white mb-3 uppercase tracking-wider">
-            <Briefcase size={16} className="text-purple-400" /> 3. Select Asset Owner
-          </h3>
-          
-          <div className="relative">
+          {/* ASSET OWNER PICKER */}
+          <div className="relative" ref={ownerRef}>
+            <label className="block text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+              Select Asset Owner (Optional)
+            </label>
             <button
               type="button"
               onClick={() => { setIsOwnerOpen(!isOwnerOpen); setIsVehicleOpen(false); setIsRiderOpen(false); }}
-              className={`w-full bg-[#131d35] hover:bg-[#162340] border-2 rounded-xl p-3.5 flex items-center justify-between text-left transition outline-none shadow-md ${
-                isOwnerOpen ? 'border-purple-500 ring-2 ring-purple-500/30' : 'border-white/20'
+              className={`w-full bg-[#141f33] hover:bg-[#18263e] border rounded-xl px-3.5 py-3 flex items-center justify-between text-left transition outline-none shadow-sm ${
+                isOwnerOpen ? 'border-purple-500 ring-1 ring-purple-500' : 'border-white/15'
               }`}
             >
               {activeOwner ? (
-                <div className="min-w-0">
-                  <p className="text-white font-bold text-xs truncate">{activeOwner.firstName} {activeOwner.lastName}</p>
+                <div className="min-w-0 pr-2">
+                  <p className="text-xs font-bold text-white truncate">{activeOwner.firstName} {activeOwner.lastName}</p>
                   <p className="text-[11px] text-purple-400 mt-0.5 truncate">{activeOwner.preferredAssetClass || 'Asset Owner'}</p>
                 </div>
               ) : (
-                <span className="text-gray-400 text-xs font-medium">-- Choose Asset Owner --</span>
+                <span className="text-sm text-gray-400">Choose asset owner...</span>
               )}
-              <ChevronDown size={18} className={`text-gray-300 transition-transform shrink-0 ${isOwnerOpen ? 'rotate-180 text-purple-400' : ''}`} />
+              <ChevronDown size={18} className={`text-gray-400 shrink-0 transition-transform ${isOwnerOpen ? 'rotate-180 text-purple-400' : ''}`} />
             </button>
 
+            {/* OWNERS FLOATING POPOVER */}
             {isOwnerOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#0f172a] border-2 border-purple-500/40 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="p-2.5 border-b border-white/10 bg-[#131d35]/60 flex items-center gap-2">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[#0b1220] border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="p-2 border-b border-white/10 bg-[#141f33] flex items-center gap-2">
                   <Search size={14} className="text-gray-400 shrink-0" />
                   <input
                     type="text"
                     value={ownerSearch}
                     onChange={(e) => setOwnerSearch(e.target.value)}
                     placeholder="Search owner name..."
-                    className="w-full bg-transparent text-xs text-white placeholder-gray-400 outline-none"
+                    className="w-full bg-transparent text-base sm:text-xs text-white placeholder-gray-400 outline-none"
                     autoFocus
                   />
                 </div>
-                <div className="max-h-56 overflow-y-auto p-1.5 space-y-1 custom-scrollbar">
+                <div className="max-h-52 overflow-y-auto p-1 space-y-1">
                   <button
                     type="button"
                     onClick={() => { setSelectedOwner(""); setIsOwnerOpen(false); setOwnerSearch(""); }}
-                    className="w-full p-2 rounded-xl text-left text-xs text-gray-400 hover:bg-[#131d35]"
+                    className="w-full p-2 rounded-lg text-left text-xs text-gray-400 hover:bg-[#141f33]"
                   >
                     -- None (Assign Later) --
                   </button>
@@ -355,15 +380,15 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
                         key={o.id}
                         type="button"
                         onClick={() => { setSelectedOwner(o.id); setIsOwnerOpen(false); setOwnerSearch(""); }}
-                        className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition ${
-                          isSelected ? 'bg-purple-500/20 border border-purple-500 text-white' : 'hover:bg-[#131d35] text-slate-light'
+                        className={`w-full p-2.5 rounded-lg flex items-center justify-between text-left transition ${
+                          isSelected ? 'bg-purple-950/60 text-white border border-purple-500/50' : 'hover:bg-[#141f33] text-gray-300'
                         }`}
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 pr-2">
                           <p className="text-xs font-bold text-white">{o.firstName} {o.lastName}</p>
                           <p className="text-[11px] text-gray-400">{o.preferredAssetClass || 'Asset Owner'}</p>
                         </div>
-                        {isSelected && <Check size={14} className="text-purple-400 shrink-0 ml-2" />}
+                        {isSelected && <Check size={16} className="text-purple-400 shrink-0" />}
                       </button>
                     );
                   })}
@@ -371,77 +396,87 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
               </div>
             )}
           </div>
-        </div>
 
+        </div>
       </div>
 
-      {/* FINANCIAL PARAMETERS */}
-      <div className="bg-[#0f172a] border border-white/15 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="p-6 border-b border-white/10 bg-[#131d35]/60 flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-lg text-white flex items-center gap-2">
-              <Sparkles size={18} className="text-cobalt" /> Financial & Contract Terms
-            </h3>
-            <p className="text-xs text-gray-400 mt-0.5">Define hire purchase targets, installment frequencies, and returns.</p>
-          </div>
+      {/* 2. FINANCIAL & CONTRACT TERMS (MOBILE OPTIMIZED) */}
+      <div className="bg-[#0e1626] p-4 sm:p-5 rounded-2xl border border-white/10 space-y-5">
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <Sparkles size={15} className="text-cobalt" /> 2. Contract & Payment Terms
+          </h2>
+          <span className="text-[10px] text-gray-400 font-medium">Step 2 of 2</span>
         </div>
 
-        <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-5">
           
           {/* RIDER TERMS */}
-          <div className="space-y-4">
-            <h4 className="text-emerald-400 font-bold uppercase tracking-wider text-xs border-b border-white/10 pb-2">
-              Rider Obligations (Inflow)
-            </h4>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-300 uppercase mb-1.5">Total HP Price (₦) *</label>
-                <input 
-                  type="text" 
-                  name="totalHirePurchasePrice" 
-                  value={formData.totalHirePurchasePrice} 
-                  onChange={handleInputChange} 
-                  placeholder="e.g. 3500000" 
-                  className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-emerald-500 rounded-xl px-4 py-3 text-white font-mono text-sm outline-none transition shadow-inner" 
-                  required={!!selectedRider} 
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-300 uppercase mb-1.5">Down Payment (₦)</label>
-                <input 
-                  type="text" 
-                  name="downPayment" 
-                  value={formData.downPayment} 
-                  onChange={handleInputChange} 
-                  placeholder="Optional" 
-                  className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-emerald-500 rounded-xl px-4 py-3 text-white font-mono text-sm outline-none transition shadow-inner" 
-                />
-              </div>
+          <div className="bg-[#141f33]/60 border border-white/10 rounded-xl p-3.5 sm:p-4 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                <User size={14} /> Rider Terms (Inflow)
+              </span>
+              {selectedRider && <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">Active</span>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-gray-300 uppercase mb-1.5">Weekly Payment (₦) *</label>
-                <input 
-                  type="text" 
-                  name="riderWeeklyRemittance" 
-                  value={formData.riderWeeklyRemittance} 
-                  onChange={handleInputChange} 
-                  placeholder="e.g. 30000" 
-                  className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-emerald-500 rounded-xl px-4 py-3 text-white font-mono text-sm outline-none transition shadow-inner" 
-                  required={!!selectedRider} 
-                />
+                <label className="block text-[11px] text-gray-300 mb-1">Total HP Price (₦) *</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-gray-400 text-sm">₦</span>
+                  <input 
+                    type="text" 
+                    name="totalHirePurchasePrice" 
+                    value={formData.totalHirePurchasePrice} 
+                    onChange={handleInputChange} 
+                    placeholder="3500000" 
+                    className="w-full bg-[#0b1220] border border-white/15 focus:border-emerald-500 rounded-lg pl-8 pr-3 py-2.5 text-white font-mono text-base sm:text-sm outline-none" 
+                    required={!!selectedRider} 
+                  />
+                </div>
               </div>
+
               <div>
-                <label className="block text-xs font-bold text-gray-300 uppercase mb-1.5">Duration (Weeks) *</label>
+                <label className="block text-[11px] text-gray-300 mb-1">Down Payment (₦)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-gray-400 text-sm">₦</span>
+                  <input 
+                    type="text" 
+                    name="downPayment" 
+                    value={formData.downPayment} 
+                    onChange={handleInputChange} 
+                    placeholder="0" 
+                    className="w-full bg-[#0b1220] border border-white/15 focus:border-emerald-500 rounded-lg pl-8 pr-3 py-2.5 text-white font-mono text-base sm:text-sm outline-none" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-300 mb-1">Weekly Remittance (₦) *</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-gray-400 text-sm">₦</span>
+                  <input 
+                    type="text" 
+                    name="riderWeeklyRemittance" 
+                    value={formData.riderWeeklyRemittance} 
+                    onChange={handleInputChange} 
+                    placeholder="30000" 
+                    className="w-full bg-[#0b1220] border border-white/15 focus:border-emerald-500 rounded-lg pl-8 pr-3 py-2.5 text-white font-mono text-base sm:text-sm outline-none" 
+                    required={!!selectedRider} 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-300 mb-1">Duration (Weeks) *</label>
                 <input 
                   type="text" 
                   name="riderDurationWeeks" 
                   value={formData.riderDurationWeeks} 
                   onChange={handleInputChange} 
-                  placeholder="e.g. 104" 
-                  className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-emerald-500 rounded-xl px-4 py-3 text-white font-mono text-sm outline-none transition shadow-inner" 
+                  placeholder="104" 
+                  className="w-full bg-[#0b1220] border border-white/15 focus:border-emerald-500 rounded-lg px-3.5 py-2.5 text-white font-mono text-base sm:text-sm outline-none" 
                   required={!!selectedRider} 
                 />
               </div>
@@ -449,55 +484,77 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
           </div>
 
           {/* OWNER TERMS */}
-          <div className="space-y-4">
-            <h4 className="text-purple-400 font-bold uppercase tracking-wider text-xs border-b border-white/10 pb-2">
-              Owner Returns (Payout)
-            </h4>
-            
-            <div className="grid grid-cols-2 gap-4">
+          <div className="bg-[#141f33]/60 border border-white/10 rounded-xl p-3.5 sm:p-4 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Briefcase size={14} /> Owner Returns (Payout)
+              </span>
+              {selectedOwner && <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded font-mono">Active</span>}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-gray-300 uppercase mb-1.5">Weekly Payout (₦) *</label>
-                <input 
-                  type="text" 
-                  name="ownerWeeklyPayout" 
-                  value={formData.ownerWeeklyPayout} 
-                  onChange={handleInputChange} 
-                  placeholder="e.g. 20000" 
-                  className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-purple-500 rounded-xl px-4 py-3 text-white font-mono text-sm outline-none transition shadow-inner" 
-                  required={!!selectedOwner} 
-                />
+                <label className="block text-[11px] text-gray-300 mb-1">Weekly Payout (₦) *</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-gray-400 text-sm">₦</span>
+                  <input 
+                    type="text" 
+                    name="ownerWeeklyPayout" 
+                    value={formData.ownerWeeklyPayout} 
+                    onChange={handleInputChange} 
+                    placeholder="20000" 
+                    className="w-full bg-[#0b1220] border border-white/15 focus:border-purple-500 rounded-lg pl-8 pr-3 py-2.5 text-white font-mono text-base sm:text-sm outline-none" 
+                    required={!!selectedOwner} 
+                  />
+                </div>
               </div>
+
               <div>
-                <label className="block text-xs font-bold text-gray-300 uppercase mb-1.5">Duration (Weeks) *</label>
+                <label className="block text-[11px] text-gray-300 mb-1">Duration (Weeks) *</label>
                 <input 
                   type="text" 
                   name="ownerDurationWeeks" 
                   value={formData.ownerDurationWeeks} 
                   onChange={handleInputChange} 
-                  placeholder="e.g. 104" 
-                  className="w-full bg-[#131d35] hover:bg-[#162340] border-2 border-white/20 focus:border-purple-500 rounded-xl px-4 py-3 text-white font-mono text-sm outline-none transition shadow-inner" 
+                  placeholder="104" 
+                  className="w-full bg-[#0b1220] border border-white/15 focus:border-purple-500 rounded-lg px-3.5 py-2.5 text-white font-mono text-base sm:text-sm outline-none" 
                   required={!!selectedOwner} 
                 />
               </div>
             </div>
+          </div>
 
-            <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl flex gap-3 items-center">
-              <AlertCircle size={20} className="text-purple-400 shrink-0" />
-              <p className="text-xs text-purple-200">Both contract agreements and automated weekly billing schedules will be generated upon execution.</p>
+          {/* PROJECTED FINANCIAL MARGIN CARD */}
+          {(Number(formData.riderWeeklyRemittance) > 0 || Number(formData.ownerWeeklyPayout) > 0) && (
+            <div className="bg-[#141f33] border border-white/15 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={16} className={weeklyMargin >= 0 ? "text-emerald-400" : "text-signal-red"} />
+                <span className="text-gray-300">Projected Weekly Spread:</span>
+              </div>
+              <span className={`font-mono font-bold text-sm ${weeklyMargin >= 0 ? "text-emerald-400" : "text-signal-red"}`}>
+                {weeklyMargin >= 0 ? "+" : ""}₦{weeklyMargin.toLocaleString()}/wk
+              </span>
             </div>
+          )}
+
+          <div className="bg-[#0b1220] border border-white/10 p-3 rounded-lg flex gap-2.5 items-center text-xs text-gray-400">
+            <AlertCircle size={16} className="text-cobalt shrink-0" />
+            <p className="text-[11px] leading-tight">Digital agreements and weekly billing cycles will be created automatically on execution.</p>
           </div>
 
         </div>
 
-        <div className="p-6 bg-[#131d35]/60 border-t border-white/10 flex justify-end">
+        {/* SUBMIT BUTTON */}
+        <div className="pt-2">
           <button 
             type="submit" 
-            disabled={isSubmitting || !selectedVehicle} 
-            className="flex items-center gap-2 bg-cobalt hover:bg-blue-600 text-white px-8 py-3.5 rounded-xl font-bold transition disabled:opacity-40 shadow-xl shadow-blue-950/40"
+            disabled={isSubmitting || !selectedVehicle || (!selectedRider && !selectedOwner)} 
+            className="w-full py-4 rounded-xl font-bold bg-cobalt hover:bg-blue-600 text-white text-sm uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle2 size={18} /> Execute Assignment & Contract</>}
           </button>
         </div>
+
       </div>
     </form>
   );
