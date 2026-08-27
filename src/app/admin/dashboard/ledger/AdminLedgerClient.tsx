@@ -120,7 +120,7 @@ export default function AdminLedgerClient({ ledgers, users, cycles }: { ledgers:
                 {riders.map(r => <option key={r.id} value={r.id} className="text-white">{r.firstName} {r.lastName} ({r.phoneNumber || 'No phone'})</option>)}
               </optgroup>
               <optgroup label="--- Asset Owners ---" className="bg-[#0e1626] text-purple-400 font-bold">
-                {owners.map(o => <option key={o.id} value={o.id} className="text-white">{o.firstName} {o.lastName} ({r?.phoneNumber || 'No phone'})</option>)}
+                {owners.map(o => <option key={o.id} value={o.id} className="text-white">{o.firstName} {o.lastName} ({o.phoneNumber || 'No phone'})</option>)}
               </optgroup>
             </select>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
