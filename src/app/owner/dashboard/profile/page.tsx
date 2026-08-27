@@ -1,9 +1,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { UserCog, ShieldCheck, Mail, Phone, MapPin, Building2, CreditCard, Lock, AlertCircle, Users, BadgeInfo } from "lucide-react";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function ProfileSettingsPage() {
   const session = await getServerSession(authOptions);
@@ -11,6 +12,26 @@ export default async function ProfileSettingsPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phoneNumber: true,
+      streetAddress: true,
+      state: true,
+      country: true,
+      bvn: true,
+      nin: true,
+      bankName: true,
+      accountNumber: true,
+      nokFirstName: true,
+      nokLastName: true,
+      nokRelationship: true,
+      nokPhone: true,
+      nokIdNumber: true,
+      nokAddress: true,
+    }
   });
 
   if (!user) return null;

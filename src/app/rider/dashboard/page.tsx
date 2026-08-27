@@ -1,13 +1,14 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { ShieldAlert, Loader2, CheckCircle2, Clock, CarFront, Banknote } from "lucide-react";
 import RiderVirtualAgreement from "./RiderVirtualAgreement";
 import CopyLinkHelper from "./CopyLinkHelper";
 import ClientDashboard from "./ClientDashboard";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function RiderDashboardHome() {
   const session = await getServerSession(authOptions);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { sendSystemEmail } from "@/lib/email/sender";
 import { getRegistrationReceivedEmail } from "@/lib/email/templates";
@@ -11,8 +11,6 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
-const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {

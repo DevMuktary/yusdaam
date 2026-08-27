@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { CarFront, AlertCircle, CheckCircle2 } from "lucide-react";
 import VirtualAgreement from "../VirtualAgreement";
@@ -8,8 +8,6 @@ import VirtualAgreement from "../VirtualAgreement";
 // FORCE NEXT.JS TO NEVER CACHE THIS PAGE
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-const prisma = new PrismaClient();
 
 export default async function OwnerAssetsPage() {
   const session = await getServerSession(authOptions);
@@ -22,7 +20,19 @@ export default async function OwnerAssetsPage() {
   // NOTE: We intentionally DO NOT fetch the rider data here to maintain owner/rider privacy separation.
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: {
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phoneNumber: true,
+      bvn: true,
+      nin: true,
+      streetAddress: true,
+      bankName: true,
+      accountNumber: true,
+      defaultWitnessName: true,
+      defaultWitnessSignatureUrl: true,
       ownedVehicles: {
         include: {
           contract: true

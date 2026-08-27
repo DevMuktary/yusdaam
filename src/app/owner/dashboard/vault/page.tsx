@@ -1,12 +1,11 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Scale, FileText, Download, ShieldCheck, Calendar, CarFront, Clock } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
+export const revalidate = 0;
 
 export default async function LegalVaultPage() {
   const session = await getServerSession(authOptions);

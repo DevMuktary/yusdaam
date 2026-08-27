@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { sendSystemEmail } from "@/lib/email/sender";
 import { getAgreementSignedEmail } from "@/lib/email/templates";
 import { v2 as cloudinary } from "cloudinary";
@@ -11,8 +11,6 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
-const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {

@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { sendSystemEmail } from "@/lib/email/sender";
 import { sendSms } from "@/lib/sms/termii"; // <-- NEW IMPORT
 import { addDays, startOfDay, endOfDay, format } from "date-fns";
-
-const prisma = new PrismaClient();
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");

@@ -1,12 +1,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ShieldAlert, Loader2, CheckCircle2, Clock, TrendingUp, CarFront, Calendar, Activity } from "lucide-react";
 import VirtualAgreement from "./VirtualAgreement";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function DashboardHome() {
   const session = await getServerSession(authOptions);
@@ -144,15 +145,28 @@ export default async function DashboardHome() {
   }
 
   // --- STATE 3: FULLY ACTIVE DASHBOARD ---
-  const vehicles = await prisma.vehicle.findMany({
-    where: { ownerId: session.user.id },
-  });
-
-  // CRITICAL FIX: Removed `take: 5` so we fetch EVERYTHING for accurate math.
-  const ledgers = await prisma.ledger.findMany({
-    where: { ownerId: session.user.id, type: "OWNER_REMITTANCE" },
-    orderBy: { date: 'desc' }
-  });
+  const [vehicles, ledgers] = await Promise.all([
+    prisma.vehicle.findMany({
+      where: { ownerId: session.user.id },
+      select: {
+        id: true,
+        status: true,
+        registrationNumber: true,
+        type: true,
+        customType: true
+      }
+    }),
+    prisma.ledger.findMany({
+      where: { ownerId: session.user.id, type: "OWNER_REMITTANCE" },
+      orderBy: { date: 'desc' },
+      select: {
+        id: true,
+        amount: true,
+        date: true,
+        description: true
+      }
+    })
+  ]);
 
   const activeFleetCount = vehicles.filter(v => v.status === "ACTIVE").length;
   
