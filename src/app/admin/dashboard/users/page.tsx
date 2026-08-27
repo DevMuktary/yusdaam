@@ -72,7 +72,8 @@ export default async function UsersDirectoryPage() {
       guarantors: {
         select: {
           id: true,
-          fullName: true,
+          firstName: true,
+          lastName: true,
           phone: true,
           status: true,
           relationship: true,
