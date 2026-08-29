@@ -51,6 +51,8 @@ export const authOptions: NextAuthOptions = {
         const customUser = user as any; 
         token.id = customUser.id;
         token.role = customUser.role;
+        token.email = customUser.email;
+        token.name = customUser.name;
         token.accountStatus = customUser.accountStatus;
       }
       return token;
@@ -62,6 +64,8 @@ export const authOptions: NextAuthOptions = {
         const sessionUser = session.user as any;
         sessionUser.id = token.id;
         sessionUser.role = token.role;
+        sessionUser.email = token.email || sessionUser.email;
+        sessionUser.name = token.name || sessionUser.name;
         sessionUser.accountStatus = token.accountStatus;
       }
       return session;

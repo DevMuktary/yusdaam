@@ -8,16 +8,20 @@ import { getOtpEmail } from "@/lib/email/templates";
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || !session.user?.id || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const email = session.user.email;
-    const name = session.user.name || "Admin";
+    const adminUser = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
 
-    if (!email) {
-      return NextResponse.json({ error: "No email associated with this account." }, { status: 400 });
+    if (!adminUser || !adminUser.email) {
+      return NextResponse.json({ error: "No email associated with this admin account." }, { status: 400 });
     }
+
+    const email = adminUser.email.trim();
+    const name = `${adminUser.firstName || ""} ${adminUser.lastName || ""}`.trim() || adminUser.name || session.user.name || "Admin";
 
     // Generate a 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -42,13 +46,13 @@ export async function POST(req: Request) {
       toEmail: email,
       toName: name,
       subject: "Admin Password Change - OTP",
-      htmlBody: getOtpEmail({ name, otp })
+      htmlBody: getOtpEmail({ name, otp, expiryMinutes: 10 })
     });
 
     return NextResponse.json({ success: true, message: "OTP sent successfully." });
 
   } catch (error: any) {
     console.error("OTP Request Error:", error);
-    return NextResponse.json({ error: "Failed to send OTP." }, { status: 500 });
+    return NextResponse.json({ error: error?.message || "Failed to send OTP." }, { status: 500 });
   }
 }

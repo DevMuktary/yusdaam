@@ -7,17 +7,30 @@ import bcrypt from "bcrypt";
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || !session.user?.id || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const email = session.user.email;
-    if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const adminUser = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
 
-    const { otp, newPassword } = await req.json();
+    if (!adminUser || !adminUser.email) {
+      return NextResponse.json({ error: "No admin account or email found." }, { status: 404 });
+    }
+
+    const email = adminUser.email.trim();
+
+    const body = await req.json();
+    const otp = typeof body.otp === "string" ? body.otp.trim() : String(body.otp || "").trim();
+    const newPassword = typeof body.newPassword === "string" ? body.newPassword : String(body.newPassword || "");
 
     if (!otp || !newPassword) {
       return NextResponse.json({ error: "OTP and new password are required." }, { status: 400 });
+    }
+
+    if (newPassword.length < 6) {
+      return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
     }
 
     // 1. Verify the Token
@@ -29,10 +42,10 @@ export async function POST(req: Request) {
     });
 
     if (!tokenRecord) {
-      return NextResponse.json({ error: "Invalid OTP." }, { status: 400 });
+      return NextResponse.json({ error: "Invalid OTP. Please check the 6-digit code sent to your email." }, { status: 400 });
     }
 
-    if (tokenRecord.expires < new Date()) {
+    if (new Date(tokenRecord.expires).getTime() < Date.now()) {
       return NextResponse.json({ error: "OTP has expired. Please request a new one." }, { status: 400 });
     }
 
@@ -41,7 +54,7 @@ export async function POST(req: Request) {
 
     // 3. Update the user
     await prisma.user.update({
-      where: { email },
+      where: { id: adminUser.id },
       data: { password: hashedPassword }
     });
 
@@ -54,6 +67,6 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("Password Reset Error:", error);
-    return NextResponse.json({ error: "Failed to reset password." }, { status: 500 });
+    return NextResponse.json({ error: error?.message || "Failed to reset password." }, { status: 500 });
   }
 }
