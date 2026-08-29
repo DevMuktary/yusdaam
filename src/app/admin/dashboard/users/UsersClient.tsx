@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useMemo } from "react";
 import { Search, User, ShieldAlert, CheckCircle2, Ban, Briefcase, X, Banknote, Loader2, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";

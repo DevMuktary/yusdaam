@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useMemo } from "react";
 import { 
   ShieldCheck, Loader2, X, CheckCircle, 
