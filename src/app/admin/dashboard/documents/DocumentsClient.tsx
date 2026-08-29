@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Download, Search, ShieldCheck, FileSignature, UserCheck, AlertCircle, Loader2, CheckCircle2, ArrowDownCircle } from "lucide-react";
-import { downloadFileToDevice } from "@/lib/download";
+import { 
+  FileText, Download, Search, ShieldCheck, 
+  FileSignature, UserCheck, AlertCircle, Loader2, 
+  CheckCircle2, ArrowDownCircle, AlertTriangle 
+} from "lucide-react";
+import { downloadFileToDevice, DownloadProgress } from "@/lib/download";
 
 export default function DocumentsClient({ entries }: { entries: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<{ text: string; filename: string } | null>(null);
+  const [progress, setProgress] = useState<DownloadProgress | null>(null);
 
   const handleDownload = (url: string, plateNo: string, personName: string, docType: string, buttonKey: string) => {
     if (!url) return;
@@ -20,17 +24,18 @@ export default function DocumentsClient({ entries }: { entries: any[] }) {
     downloadFileToDevice({
       url,
       filename: safeFilename,
-      onStart: (fname) => {
-        setToastMessage({ text: "Download started", filename: fname });
+      onProgress: (p) => {
+        setProgress(p);
+        if (p.status === "COMPLETED") {
+          setDownloadingDocId(null);
+          setTimeout(() => setProgress(null), 3500);
+        } else if (p.status === "ERROR") {
+          setDownloadingDocId(null);
+          setTimeout(() => setProgress(null), 4500);
+        }
       },
-      onSuccess: () => {
+      onError: () => {
         setDownloadingDocId(null);
-        setTimeout(() => setToastMessage(null), 4500);
-      },
-      onError: (err) => {
-        setDownloadingDocId(null);
-        setToastMessage({ text: `Download notice: ${err}`, filename: safeFilename });
-        setTimeout(() => setToastMessage(null), 4500);
       }
     });
   };
@@ -46,24 +51,63 @@ export default function DocumentsClient({ entries }: { entries: any[] }) {
   return (
     <div className="space-y-6 relative">
       
-      {/* FLOATING TOAST NOTIFICATION FOR DOWNLOADS */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#0a1428] border border-blue-500/50 shadow-2xl shadow-blue-950/80 rounded-xl p-4 flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300">
-          <div className="p-2.5 bg-blue-500/20 text-blue-400 rounded-lg shrink-0">
-            <ArrowDownCircle size={22} className="animate-bounce" />
+      {/* COMPACT MOBILE-OPTIMIZED DOWNLOAD PROGRESS WIDGET */}
+      {progress && (
+        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 sm:w-80 z-50 bg-[#0a1224]/95 backdrop-blur-md border border-blue-500/40 rounded-xl p-3.5 shadow-2xl shadow-blue-950/80 animate-in slide-in-from-bottom-5 duration-300">
+          {/* Header Row: Icon + Name + Percentage */}
+          <div className="flex items-center justify-between gap-2.5 mb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {progress.status === "COMPLETED" ? (
+                <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg shrink-0">
+                  <CheckCircle2 size={16} />
+                </div>
+              ) : progress.status === "ERROR" ? (
+                <div className="p-1.5 bg-red-500/20 text-red-400 rounded-lg shrink-0">
+                  <AlertTriangle size={16} />
+                </div>
+              ) : (
+                <div className="p-1.5 bg-blue-500/20 text-blue-400 rounded-lg shrink-0">
+                  <ArrowDownCircle size={16} className="animate-bounce" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-white truncate leading-tight">
+                  {progress.status === "COMPLETED" ? "Download Complete" : progress.filename}
+                </p>
+                <p className="text-[10px] text-gray-400 truncate">
+                  {progress.status === "COMPLETED"
+                    ? "Saved to device storage"
+                    : progress.status === "ERROR"
+                    ? "Download failed"
+                    : `${progress.percent}% downloaded`}
+                </p>
+              </div>
+            </div>
+
+            <span className={`text-xs font-black font-mono px-2 py-0.5 rounded ${
+              progress.status === "COMPLETED"
+                ? "bg-emerald-500/20 text-emerald-300"
+                : "bg-blue-500/20 text-blue-300"
+            }`}>
+              {progress.percent}%
+            </span>
           </div>
-          <div className="overflow-hidden">
-            <p className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-              <CheckCircle2 size={14} className="text-emerald-400" /> {toastMessage.text}
-            </p>
-            <p className="text-[11px] text-gray-300 truncate font-mono mt-0.5" title={toastMessage.filename}>
-              {toastMessage.filename}
-            </p>
-            <p className="text-[10px] text-blue-300 mt-1">Saving directly to your device storage / Downloads folder.</p>
+
+          {/* Real-time Progress Bar */}
+          <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+            <div 
+              className={`h-full transition-all duration-150 ease-out rounded-full ${
+                progress.status === "COMPLETED" 
+                  ? "bg-emerald-400" 
+                  : "bg-gradient-to-r from-blue-500 via-indigo-400 to-emerald-400"
+              }`}
+              style={{ width: `${progress.percent}%` }}
+            />
           </div>
         </div>
       )}
 
+      {/* SEARCH BAR */}
       <div className="bg-[#0a0f1c] p-4 rounded-xl border border-white/10 flex items-center gap-3">
         <Search className="text-gray-400" size={20} />
         <input 
@@ -75,6 +119,7 @@ export default function DocumentsClient({ entries }: { entries: any[] }) {
         />
       </div>
 
+      {/* VAULT TABLE */}
       <div className="bg-[#0a0f1c] border border-white/10 rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[900px]">
