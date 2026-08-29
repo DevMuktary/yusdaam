@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertTriangle, Trash2, X, Loader2, ShieldAlert, CheckCircle2 } from "lucide-react";
 
 interface DeleteUserTarget {
@@ -28,6 +28,15 @@ export default function DeleteConfirmationModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState("");
+
+  // Reset confirmation input, errors, and loading state whenever the modal opens or user changes
+  useEffect(() => {
+    if (isOpen) {
+      setConfirmText("");
+      setError(null);
+      setIsDeleting(false);
+    }
+  }, [isOpen, user?.id]);
 
   if (!isOpen || !user) return null;
 
@@ -147,7 +156,11 @@ export default function DeleteConfirmationModal({
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="DELETE"
               disabled={isDeleting}
-              className="w-full bg-white/5 border border-white/15 focus:border-red-500 rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none font-mono uppercase tracking-widest"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              className="w-full bg-white/5 border border-white/15 focus:border-red-500 rounded-lg px-3.5 py-3 text-base text-white focus:outline-none font-mono uppercase tracking-widest"
+              style={{ fontSize: "16px" }}
             />
           </div>
 

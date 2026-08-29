@@ -1,28 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Download, Search, ShieldCheck, FileSignature, UserCheck, AlertCircle } from "lucide-react";
+import { FileText, Download, Search, ShieldCheck, FileSignature, UserCheck, AlertCircle, Loader2, CheckCircle2, ArrowDownCircle } from "lucide-react";
+import { downloadFileToDevice } from "@/lib/download";
 
 export default function DocumentsClient({ entries }: { entries: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ text: string; filename: string } | null>(null);
 
-  const handleForceDownload = (url: string, plateNo: string, personName: string, docType: string) => {
+  const handleDownload = (url: string, plateNo: string, personName: string, docType: string, buttonKey: string) => {
     if (!url) return;
     const cleanPlate = plateNo || "Unknown_Vehicle";
     const cleanName = personName ? personName.replace(/[^a-z0-9]/gi, '_') : "User";
-    const safeFilename = `Yusdaam_${docType}_${cleanPlate}_${cleanName}`;
+    const safeFilename = `Yusdaam_${docType}_${cleanPlate}_${cleanName}.pdf`;
 
-    let downloadUrl = url;
-    if (url.includes('cloudinary.com') && url.includes('/upload/')) {
-      downloadUrl = url.replace('/upload/', `/upload/fl_attachment:${safeFilename}/`);
-    }
+    setDownloadingDocId(buttonKey);
 
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = safeFilename; 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFileToDevice({
+      url,
+      filename: safeFilename,
+      onStart: (fname) => {
+        setToastMessage({ text: "Download started", filename: fname });
+      },
+      onSuccess: () => {
+        setDownloadingDocId(null);
+        setTimeout(() => setToastMessage(null), 4500);
+      },
+      onError: (err) => {
+        setDownloadingDocId(null);
+        setToastMessage({ text: `Download notice: ${err}`, filename: safeFilename });
+        setTimeout(() => setToastMessage(null), 4500);
+      }
+    });
   };
 
   const filteredEntries = entries.filter((entry) => {
@@ -34,8 +44,26 @@ export default function DocumentsClient({ entries }: { entries: any[] }) {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       
+      {/* FLOATING TOAST NOTIFICATION FOR DOWNLOADS */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#0a1428] border border-blue-500/50 shadow-2xl shadow-blue-950/80 rounded-xl p-4 flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="p-2.5 bg-blue-500/20 text-blue-400 rounded-lg shrink-0">
+            <ArrowDownCircle size={22} className="animate-bounce" />
+          </div>
+          <div className="overflow-hidden">
+            <p className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+              <CheckCircle2 size={14} className="text-emerald-400" /> {toastMessage.text}
+            </p>
+            <p className="text-[11px] text-gray-300 truncate font-mono mt-0.5" title={toastMessage.filename}>
+              {toastMessage.filename}
+            </p>
+            <p className="text-[10px] text-blue-300 mt-1">Saving directly to your device storage / Downloads folder.</p>
+          </div>
+        </div>
+      )}
+
       <div className="bg-[#0a0f1c] p-4 rounded-xl border border-white/10 flex items-center gap-3">
         <Search className="text-gray-400" size={20} />
         <input 
@@ -55,7 +83,7 @@ export default function DocumentsClient({ entries }: { entries: any[] }) {
                 <th className="p-5">Record Type</th>
                 <th className="p-5">Personnel Details</th>
                 <th className="p-5">Execution Date</th>
-                <th className="p-5 text-right">Document Actions (Force Download)</th>
+                <th className="p-5 text-right">Document Actions (Direct Download)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-sm">
@@ -106,46 +134,56 @@ export default function DocumentsClient({ entries }: { entries: any[] }) {
                         
                         {docs.masterContractUrl && (
                           <button
-                            onClick={() => handleForceDownload(docs.masterContractUrl!, entry.plateNumber, entry.ownerName, "Master_Contract")}
-                            className="flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 hover:border-blue-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
+                            onClick={() => handleDownload(docs.masterContractUrl!, entry.plateNumber, entry.ownerName, "Master_Contract", `${entry.id}-master`)}
+                            disabled={downloadingDocId === `${entry.id}-master`}
+                            className="flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 hover:border-blue-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition disabled:opacity-50"
                           >
-                            <Download size={12} /> Master Contract
+                            {downloadingDocId === `${entry.id}-master` ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                            Master Contract
                           </button>
                         )}
 
                         {docs.riderHpaUrl && (
                           <button
-                            onClick={() => handleForceDownload(docs.riderHpaUrl!, entry.plateNumber, entry.riderName, "Rider_HPA")}
-                            className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
+                            onClick={() => handleDownload(docs.riderHpaUrl!, entry.plateNumber, entry.riderName, "Rider_HPA", `${entry.id}-rider-hpa`)}
+                            disabled={downloadingDocId === `${entry.id}-rider-hpa`}
+                            className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition disabled:opacity-50"
                           >
-                            <FileSignature size={12} /> Rider HPA
+                            {downloadingDocId === `${entry.id}-rider-hpa` ? <Loader2 size={12} className="animate-spin" /> : <FileSignature size={12} />}
+                            Rider HPA
                           </button>
                         )}
                         
                         {docs.riderPoaUrl && (
                           <button
-                            onClick={() => handleForceDownload(docs.riderPoaUrl!, entry.plateNumber, entry.riderName, "Rider_POA")}
-                            className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
+                            onClick={() => handleDownload(docs.riderPoaUrl!, entry.plateNumber, entry.riderName, "Rider_POA", `${entry.id}-rider-poa`)}
+                            disabled={downloadingDocId === `${entry.id}-rider-poa`}
+                            className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition disabled:opacity-50"
                           >
-                            <FileSignature size={12} /> Rider POA
+                            {downloadingDocId === `${entry.id}-rider-poa` ? <Loader2 size={12} className="animate-spin" /> : <FileSignature size={12} />}
+                            Rider POA
                           </button>
                         )}
 
                         {docs.ownerHpaUrl && (
                           <button
-                            onClick={() => handleForceDownload(docs.ownerHpaUrl!, entry.plateNumber, entry.ownerName, "Owner_HPA")}
-                            className="flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/30 hover:border-purple-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
+                            onClick={() => handleDownload(docs.ownerHpaUrl!, entry.plateNumber, entry.ownerName, "Owner_HPA", `${entry.id}-owner-hpa`)}
+                            disabled={downloadingDocId === `${entry.id}-owner-hpa`}
+                            className="flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/30 hover:border-purple-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition disabled:opacity-50"
                           >
-                            <UserCheck size={12} /> Owner HPA
+                            {downloadingDocId === `${entry.id}-owner-hpa` ? <Loader2 size={12} className="animate-spin" /> : <UserCheck size={12} />}
+                            Owner HPA
                           </button>
                         )}
                         
                         {docs.ownerPoaUrl && (
                           <button
-                            onClick={() => handleForceDownload(docs.ownerPoaUrl!, entry.plateNumber, entry.ownerName, "Owner_POA")}
-                            className="flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/30 hover:border-purple-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition"
+                            onClick={() => handleDownload(docs.ownerPoaUrl!, entry.plateNumber, entry.ownerName, "Owner_POA", `${entry.id}-owner-poa`)}
+                            disabled={downloadingDocId === `${entry.id}-owner-poa`}
+                            className="flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/30 hover:border-purple-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition disabled:opacity-50"
                           >
-                            <UserCheck size={12} /> Owner POA
+                            {downloadingDocId === `${entry.id}-owner-poa` ? <Loader2 size={12} className="animate-spin" /> : <UserCheck size={12} />}
+                            Owner POA
                           </button>
                         )}
 

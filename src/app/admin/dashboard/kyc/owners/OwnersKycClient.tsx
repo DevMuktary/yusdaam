@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { 
   ShieldCheck, Loader2, X, CheckCircle, 
-  ChevronDown, ChevronUp, UserCheck, UserX, FileText, Briefcase, Search, ChevronLeft, ChevronRight, Trash2 
+  ChevronDown, ChevronUp, UserCheck, UserX, FileText, Briefcase, Search, ChevronLeft, ChevronRight, Trash2, Download 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
@@ -13,20 +13,33 @@ type Owner = any;
 const ITEMS_PER_PAGE = 10;
 
 // DocumentPreview now includes e.stopPropagation() so clicking it doesn't accidentally trigger other elements
-const DocumentPreview = ({ url, label }: { url: string, label: string }) => {
+const DocumentPreview = ({ url, label, personName = "Owner" }: { url: string, label: string, personName?: string }) => {
   if (!url) return null;
-  const isPdf = url.toLowerCase().includes('.pdf');
+  const isPdf = url.toLowerCase().includes('.pdf') || label.toLowerCase().includes('agreement') || label.toLowerCase().includes('hpa') || label.toLowerCase().includes('poa');
+  const safeFilename = `Yusdaam_${label.replace(/\s+/g, '_')}_${personName.replace(/\s+/g, '_')}`;
+  const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(safeFilename)}`;
   
   return (
-    <a href={url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-2 text-xs text-slate-300 hover:text-white transition group">
-      <div className="w-20 h-20 bg-void-navy border border-white/10 rounded-lg overflow-hidden flex items-center justify-center group-hover:border-cobalt transition">
+    <a 
+      href={downloadUrl} 
+      download={`${safeFilename}.pdf`}
+      onClick={(e) => e.stopPropagation()} 
+      className="flex flex-col items-center gap-2 text-xs text-slate-300 hover:text-white transition group"
+      title={`Download ${label}`}
+    >
+      <div className="w-20 h-20 bg-void-navy border border-white/10 rounded-lg overflow-hidden flex items-center justify-center group-hover:border-cobalt transition relative">
         {isPdf ? (
           <FileText size={28} className="text-cobalt" />
         ) : (
           <img src={url} alt={label} className="w-full h-full object-cover" />
         )}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+          <Download size={18} className="text-white" />
+        </div>
       </div>
-      <span className="font-medium text-center">{label}</span>
+      <span className="font-medium text-center flex items-center gap-1">
+        {label} <Download size={11} className="text-gray-400 group-hover:text-white" />
+      </span>
     </a>
   );
 };
