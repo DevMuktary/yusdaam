@@ -178,47 +178,61 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
     return inflow - payout;
   }, [formData.riderWeeklyRemittance, formData.ownerWeeklyPayout]);
 
-  if (vehicles.length === 0) {
-    return (
-      <div className="text-center py-16 px-4 bg-[#0e1626] border border-white/10 rounded-2xl shadow-xl max-w-xl mx-auto">
-        <Car size={40} className="mx-auto text-gray-500 mb-3" />
-        <h3 className="text-lg font-bold text-white mb-1">No Unassigned Vehicles</h3>
-        <p className="text-gray-400 text-xs">Add a new vehicle to the inventory before creating an assignment.</p>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={handleAssignment} className="space-y-6 w-full max-w-3xl mx-auto">
+    <div className="space-y-6 w-full max-w-3xl mx-auto">
       
       {/* RECONCILIATION BANNER / STATUS */}
       {reconcileResult && (
-        <div className="p-3 bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs rounded-xl flex items-center justify-between animate-in fade-in duration-200">
-          <span>{reconcileResult}</span>
-          <button type="button" onClick={() => setReconcileResult(null)} className="text-emerald-400 font-bold ml-2">✕</button>
+        <div className="p-3.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs rounded-xl flex items-center justify-between shadow-xl animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+            <span>{reconcileResult}</span>
+          </div>
+          <button type="button" onClick={() => setReconcileResult(null)} className="text-emerald-400 font-bold ml-2 hover:text-white">✕</button>
         </div>
       )}
 
-      {/* 1. SELECTION STEP (MOBILE FIRST MATCHMAKING) */}
-      <div className="bg-[#0e1626] p-4 sm:p-5 rounded-2xl border border-white/10 space-y-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <h2 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-            <Car size={15} className="text-cobalt" /> 1. Select Matchmaking Parties
+      {/* TOP AUDIT & SYNC ACTIONS BAR */}
+      <div className="flex items-center justify-between bg-[#0e1626] border border-white/10 p-3.5 sm:p-4 rounded-2xl">
+        <div>
+          <h2 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <Sparkles size={16} className="text-blue-400" /> Fleet Assignment & Contracts
           </h2>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleReconcile}
-              disabled={isReconciling}
-              className="text-[10px] bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-400 hover:text-white px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 disabled:opacity-50"
-              title="Audit and sync fractional final week remainders for all existing contracts"
-            >
-              {isReconciling ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-              Sync Existing Contracts
-            </button>
-            <span className="text-[10px] text-gray-400 font-medium">Step 1 of 2</span>
-          </div>
+          <p className="text-[10px] text-gray-400 mt-0.5">Manage vehicle deployments and contract billing cycles</p>
         </div>
+
+        <button
+          type="button"
+          onClick={handleReconcile}
+          disabled={isReconciling}
+          className="bg-blue-600 hover:bg-blue-500 text-white border border-blue-400/40 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5 shadow-lg shadow-blue-950/50 disabled:opacity-50 active:scale-95 shrink-0"
+          title="Audit and sync fractional final week remainders for all existing contracts"
+        >
+          {isReconciling ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+          <span>{isReconciling ? "Syncing..." : "Sync Contracts"}</span>
+        </button>
+      </div>
+
+      {vehicles.length === 0 ? (
+        <div className="text-center py-14 px-4 bg-[#0e1626] border border-white/10 rounded-2xl shadow-xl max-w-xl mx-auto space-y-3">
+          <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mx-auto text-gray-400 border border-white/10">
+            <Car size={28} />
+          </div>
+          <h3 className="text-base font-bold text-white">All Vehicles Currently Assigned</h3>
+          <p className="text-gray-400 text-xs max-w-md mx-auto leading-relaxed">
+            There are currently no unassigned vehicles in the inventory. Click <strong>"Sync Contracts"</strong> above to audit and reconcile existing active contracts, or add a new vehicle from the Fleet page.
+          </p>
+        </div>
+      ) : (
+        <form onSubmit={handleAssignment} className="space-y-6">
+          {/* 1. SELECTION STEP (MOBILE FIRST MATCHMAKING) */}
+          <div className="bg-[#0e1626] p-4 sm:p-5 rounded-2xl border border-white/10 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h2 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                <Car size={15} className="text-cobalt" /> 1. Select Matchmaking Parties
+              </h2>
+              <span className="text-[10px] text-gray-400 font-medium">Step 1 of 2</span>
+            </div>
 
         <div className="space-y-3.5">
           
@@ -656,5 +670,7 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
 
       </div>
     </form>
+  )}
+</div>
   );
 }

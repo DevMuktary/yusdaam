@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Car, Plus, X, Loader2, Search, Wrench, CheckCircle2, UserMinus, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Car, Plus, X, Loader2, Search, Wrench, CheckCircle2, UserMinus, ChevronDown, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Vehicle = any;
@@ -108,11 +108,44 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
     return filteredVehicles.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredVehicles, page]);
 
+  const [isReconciling, setIsReconciling] = useState(false);
+  const [reconcileResult, setReconcileResult] = useState<string | null>(null);
+
+  const handleReconcile = async () => {
+    if (!confirm("This will inspect all active contracts and automatically cap any fractional final weeks so that total scheduled payments match the exact total contract price. Proceed?")) return;
+    
+    setIsReconciling(true);
+    setReconcileResult(null);
+    try {
+      const res = await fetch("/api/admin/contracts/reconcile", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reconcile contracts");
+      setReconcileResult(data.message);
+      setTimeout(() => setReconcileResult(null), 6000);
+      router.refresh();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsReconciling(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       
+      {/* Reconciliation Alert Banner */}
+      {reconcileResult && (
+        <div className="p-3.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs rounded-xl flex items-center justify-between shadow-xl animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+            <span>{reconcileResult}</span>
+          </div>
+          <button type="button" onClick={() => setReconcileResult(null)} className="text-emerald-400 font-bold ml-2 hover:text-white">✕</button>
+        </div>
+      )}
+
       {/* Top Controls */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input 
@@ -123,12 +156,24 @@ export default function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
             className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-base sm:text-sm text-white focus:outline-none focus:border-cobalt"
           />
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 bg-cobalt hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-bold transition whitespace-nowrap"
-        >
-          <Plus size={18} /> Add New Vehicle
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={handleReconcile}
+            disabled={isReconciling}
+            className="flex items-center justify-center gap-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 hover:text-white border border-blue-500/30 px-4 py-2.5 rounded-lg text-sm font-bold transition disabled:opacity-50"
+            title="Audit and sync fractional final week remainders for all existing contracts"
+          >
+            {isReconciling ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            <span>{isReconciling ? "Syncing..." : "Sync Contracts"}</span>
+          </button>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center justify-center gap-2 bg-cobalt hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition whitespace-nowrap"
+          >
+            <Plus size={18} /> Add Vehicle
+          </button>
+        </div>
       </div>
 
       {/* Vehicle Grid */}
