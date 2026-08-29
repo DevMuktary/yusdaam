@@ -336,64 +336,137 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     );
   }
 
+  const signSectionRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div className="fixed inset-0 z-[100] bg-void-navy/95 backdrop-blur-md overflow-y-auto h-screen w-screen px-2 sm:px-6 py-10">
-      <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-hidden relative">
+    <div className="fixed inset-0 z-[100] bg-void-navy/95 backdrop-blur-md overflow-y-auto h-screen w-screen px-2 sm:px-6 py-6 sm:py-10">
+      <div ref={topRef} className="max-w-5xl mx-auto bg-void-light/5 border border-cobalt/30 rounded-xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 w-full overflow-hidden relative pb-12">
         
-        <div className="bg-void-navy p-6 border-b border-cobalt/30 flex items-center gap-4 shrink-0 shadow-md">
-          <ShieldCheck size={32} className="text-signal-red shrink-0" />
-          <div>
-            <h2 className="text-lg sm:text-xl font-black text-crisp-white uppercase tracking-wider">Pending Legal Execution</h2>
-            <p className="text-[10px] sm:text-xs text-slate-light font-bold uppercase tracking-widest">Read and sign below to unlock your dashboard.</p>
+        {/* TOP HEADER WITH JUMP TO SIGN BUTTON */}
+        <div className="sticky top-0 z-20 bg-void-navy/95 backdrop-blur border-b border-cobalt/30 p-4 sm:p-6 flex items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-3 min-w-0">
+            <ShieldCheck size={28} className="text-signal-red shrink-0" />
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-lg font-black text-crisp-white uppercase tracking-wider truncate">Pending Legal Execution</h2>
+              <p className="text-[10px] sm:text-xs text-slate-light font-bold uppercase tracking-widest truncate">Read & sign to unlock dashboard.</p>
+            </div>
           </div>
+
+          <button 
+            type="button"
+            onClick={() => signSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+            className="flex items-center gap-1.5 bg-signal-red hover:bg-signal-red/90 text-white px-3 sm:px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0 shadow-lg shadow-red-950/40 transition active:scale-95"
+          >
+            <PenTool size={13} />
+            <span className="hidden xs:inline">Jump to</span> Sign
+          </button>
         </div>
 
-        <div className="p-6 sm:p-12 bg-void-navy/50">
+        {/* AGREEMENT LEGAL TEXT */}
+        <div className="p-4 sm:p-12 bg-void-navy/50">
           <HpaDocument isPdf={false} />
         </div>
 
-        <div className="p-6 sm:p-12 border-t border-cobalt/30 bg-void-navy">
-          {errorMsg && <p className="text-signal-red text-sm font-bold mb-6 bg-signal-red/10 border border-signal-red/20 p-4 rounded-lg">{errorMsg}</p>}
+        {/* SIGNATURE & SUBMISSION SECTION */}
+        <div ref={signSectionRef} className="p-4 sm:p-10 border-t-2 border-cobalt/40 bg-void-navy space-y-6">
+          <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+            <PenTool size={20} className="text-signal-red" />
+            <h3 className="text-base sm:text-lg font-black text-crisp-white uppercase tracking-wider">
+              Step 2: Signatures & Submission
+            </h3>
+          </div>
+
+          {errorMsg && (
+            <p className="text-signal-red text-xs sm:text-sm font-bold bg-signal-red/10 border border-signal-red/30 p-3.5 rounded-xl">
+              {errorMsg}
+            </p>
+          )}
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-void-light/5 border border-cobalt/20 rounded-xl">
-            <div className="md:col-span-2"><h4 className="font-bold uppercase tracking-wider text-cobalt text-sm">Independent Witness</h4></div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Full Name</label>
-              <input type="text" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="Jane Doe" />
+          {/* Witness Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6 bg-void-light/5 border border-cobalt/20 rounded-xl">
+            <div className="md:col-span-2">
+              <h4 className="font-bold uppercase tracking-wider text-cobalt text-xs sm:text-sm">
+                Independent Witness Details
+              </h4>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2">Witness Address</label>
-              <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-4 py-3 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street, Lagos" />
+              <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1.5">Witness Full Name</label>
+              <input type="text" value={witnessName} onChange={(e) => setWitnessName(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-3.5 py-2.5 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="Jane Doe" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1.5">Witness Address</label>
+              <input type="text" value={witnessAddress} onChange={(e) => setWitnessAddress(e.target.value)} className="w-full bg-void-navy border border-cobalt/30 rounded-lg px-3.5 py-2.5 text-sm text-crisp-white focus:outline-none focus:border-cobalt" placeholder="123 Example Street, Lagos" />
             </div>
             <div className="md:col-span-2">
-              <label className="flex items-center gap-2 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-2"><PenTool size={12} /> Draw Witness Signature</label>
+              <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-light uppercase tracking-widest mb-1.5">
+                <PenTool size={12} /> Draw Witness Signature (Inside Box)
+              </label>
               <div className="bg-white rounded-lg border-2 border-cobalt/30 overflow-hidden shadow-inner">
-                <SignatureCanvas ref={witnessSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} onEnd={() => setWitnessSig(witnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)} />
+                <SignatureCanvas 
+                  ref={witnessSigCanvas} 
+                  clearOnResize={false} 
+                  penColor="#001232" 
+                  canvasProps={{ className: "w-full h-32 sm:h-36 cursor-crosshair" }} 
+                  onEnd={() => setWitnessSig(witnessSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)} 
+                />
               </div>
-              <div className="flex justify-end mt-2">
-                <button type="button" onClick={() => { witnessSigCanvas.current?.clear(); setWitnessSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red">Clear Witness Canvas</button>
+              <div className="flex justify-end mt-1.5">
+                <button type="button" onClick={() => { witnessSigCanvas.current?.clear(); setWitnessSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red font-semibold">
+                  Clear Witness Signature
+                </button>
               </div>
             </div>
           </div>
 
-          <div className="mb-6 p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl">
-            <label className="flex items-center gap-2 text-xs font-bold text-signal-red uppercase tracking-widest mb-3"><PenTool size={14} /> Draw Your Signature</label>
+          {/* Rider Signature Box */}
+          <div className="p-4 sm:p-6 bg-signal-red/5 border border-signal-red/20 rounded-xl space-y-2">
+            <label className="flex items-center gap-1.5 text-xs font-bold text-signal-red uppercase tracking-widest">
+              <PenTool size={14} /> Draw Your Signature (Rider / Driver)
+            </label>
             <div className="bg-white rounded-lg border-2 border-signal-red/30 overflow-hidden shadow-inner">
-              <SignatureCanvas ref={riderSigCanvas} clearOnResize={false} penColor="#001232" canvasProps={{ className: "w-full h-40 cursor-crosshair" }} onEnd={() => setRiderSig(riderSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)} />
+              <SignatureCanvas 
+                ref={riderSigCanvas} 
+                clearOnResize={false} 
+                penColor="#001232" 
+                canvasProps={{ className: "w-full h-32 sm:h-36 cursor-crosshair" }} 
+                onEnd={() => setRiderSig(riderSigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || null)} 
+              />
             </div>
-            <div className="flex justify-end mt-2">
-              <button type="button" onClick={() => { riderSigCanvas.current?.clear(); setRiderSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red">Clear Canvas</button>
+            <div className="flex justify-end">
+              <button type="button" onClick={() => { riderSigCanvas.current?.clear(); setRiderSig(null); }} className="text-[10px] uppercase tracking-wider text-slate-light hover:text-signal-red font-semibold">
+                Clear Your Signature
+              </button>
             </div>
           </div>
 
-          <label className="flex items-start gap-3 cursor-pointer mb-8 group">
-            <input type="checkbox" className="mt-1 w-4 h-4 accent-signal-red cursor-pointer" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-            <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">I, {rider.firstName} {rider.lastName}, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.</span>
+          {/* Confirmation Checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer p-3 bg-white/5 border border-white/10 rounded-xl group">
+            <input type="checkbox" className="mt-1 w-4 h-4 accent-signal-red cursor-pointer shrink-0" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+            <span className="text-xs text-slate-light leading-relaxed group-hover:text-crisp-white transition">
+              I, <strong className="text-white">{rider.firstName} {rider.lastName}</strong>, acknowledge that checking this box and applying my digital signature carries the exact legal weight and binding authority as a physical signature on a paper document.
+            </span>
           </label>
 
-          <button onClick={handleSubmitAll} disabled={isSubmitting} className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg disabled:opacity-50">
-            {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> {loadingText}</> : <><CheckSquare size={16} /> Submit & Execute Agreement</>}
-          </button>
+          {/* PROMINENT SUBMIT BUTTON */}
+          <div className="pt-2 pb-6">
+            <button 
+              onClick={handleSubmitAll} 
+              disabled={isSubmitting} 
+              className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 sm:py-4 bg-gradient-to-r from-red-600 via-signal-red to-rose-600 hover:from-red-500 hover:to-rose-500 text-crisp-white text-sm font-black uppercase tracking-wider rounded-xl shadow-xl shadow-red-950/60 border border-red-400/30 transition-all active:scale-[0.99] disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" /> 
+                  <span>{loadingText}</span>
+                </>
+              ) : (
+                <>
+                  <CheckSquare size={18} /> 
+                  <span>Submit & Execute Agreement</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         <div style={{ position: "fixed", left: "-9999px", top: 0, width: "750px", zIndex: -9999, pointerEvents: "none" }}>
