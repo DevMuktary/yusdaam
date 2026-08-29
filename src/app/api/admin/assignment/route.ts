@@ -75,26 +75,36 @@ export async function POST(req: Request) {
         }
       });
 
-      // 3. --- PRE-GENERATE ALL WEEKLY CYCLES INSTANTLY ---
+      // 3. --- PRE-GENERATE ALL WEEKLY CYCLES WITH AUTOMATIC REMAINDER CAPPING ---
       const rDuration = Number(riderDurationWeeks);
       const oDuration = Number(ownerDurationWeeks);
       const rWeekly = Number(riderWeeklyRemittance);
       const oWeekly = Number(ownerWeeklyPayout);
       
+      const targetRiderTotal = Math.max(0, (Number(systemGrandTotal) || Number(totalHirePurchasePrice)) - (Number(downPayment) || 0));
+      const targetOwnerTotal = Number(totalHirePurchasePrice);
+      
       const cyclesData = [];
+      let riderCumulativeScheduled = 0;
+      let ownerCumulativeScheduled = 0;
 
       // The loop runs for the length of the Rider's tenure
       for (let week = 1; week <= rDuration; week++) {
         
-        // --- 1. RIDER LOGIC: Strictly fixed expected amount ---
-        // We removed the systemGrandTotal capping that was artificially forcing this to 0.
-        let expAmt = rWeekly;
+        // --- 1. RIDER LOGIC: Cap expected amount so total never exceeds targetRiderTotal ---
+        let expAmt = 0;
+        if (riderCumulativeScheduled < targetRiderTotal) {
+          const remainingRiderBalance = targetRiderTotal - riderCumulativeScheduled;
+          expAmt = Math.min(rWeekly, remainingRiderBalance);
+          riderCumulativeScheduled += expAmt;
+        }
 
-        // --- 2. OWNER LOGIC: Strictly fixed payout for their duration ---
-        // We removed the hpTotal capping that was artificially forcing this to 0.
+        // --- 2. OWNER LOGIC: Cap payout for owner duration so total never exceeds targetOwnerTotal ---
         let ownExpAmt = 0;
-        if (week <= oDuration) {
-          ownExpAmt = oWeekly;
+        if (week <= oDuration && ownerCumulativeScheduled < targetOwnerTotal) {
+          const remainingOwnerBalance = targetOwnerTotal - ownerCumulativeScheduled;
+          ownExpAmt = Math.min(oWeekly, remainingOwnerBalance);
+          ownerCumulativeScheduled += ownExpAmt;
         }
 
         const wStartDate = new Date(baseDate);
@@ -112,7 +122,7 @@ export async function POST(req: Request) {
           isSettled: expAmt <= 0,
           ownerExpectedAmount: ownExpAmt, 
           ownerRemittedAmount: 0,
-          isOwnerSettled: ownExpAmt <= 0, // This will only be true for weeks AFTER the owner's tenure ends
+          isOwnerSettled: ownExpAmt <= 0, // True if 0 expected or tenure finished
           startDate: wStartDate,
           endDate: wEndDate
         });

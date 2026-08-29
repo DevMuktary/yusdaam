@@ -149,6 +149,28 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
     }
   };
 
+  const [isReconciling, setIsReconciling] = useState(false);
+  const [reconcileResult, setReconcileResult] = useState<string | null>(null);
+
+  const handleReconcile = async () => {
+    if (!confirm("This will inspect all active contracts and automatically cap any fractional final weeks so that total scheduled payments match the exact total contract price. Proceed?")) return;
+    
+    setIsReconciling(true);
+    setReconcileResult(null);
+    try {
+      const res = await fetch("/api/admin/contracts/reconcile", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reconcile contracts");
+      setReconcileResult(data.message);
+      setTimeout(() => setReconcileResult(null), 6000);
+      router.refresh();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsReconciling(false);
+    }
+  };
+
   // Weekly profit calculation
   const weeklyMargin = useMemo(() => {
     const inflow = Number(formData.riderWeeklyRemittance) || 0;
@@ -169,13 +191,33 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
   return (
     <form onSubmit={handleAssignment} className="space-y-6 w-full max-w-3xl mx-auto">
       
+      {/* RECONCILIATION BANNER / STATUS */}
+      {reconcileResult && (
+        <div className="p-3 bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs rounded-xl flex items-center justify-between animate-in fade-in duration-200">
+          <span>{reconcileResult}</span>
+          <button type="button" onClick={() => setReconcileResult(null)} className="text-emerald-400 font-bold ml-2">✕</button>
+        </div>
+      )}
+
       {/* 1. SELECTION STEP (MOBILE FIRST MATCHMAKING) */}
       <div className="bg-[#0e1626] p-4 sm:p-5 rounded-2xl border border-white/10 space-y-4">
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <h2 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <Car size={15} className="text-cobalt" /> 1. Select Matchmaking Parties
           </h2>
-          <span className="text-[10px] text-gray-400 font-medium">Step 1 of 2</span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleReconcile}
+              disabled={isReconciling}
+              className="text-[10px] bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-400 hover:text-white px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 disabled:opacity-50"
+              title="Audit and sync fractional final week remainders for all existing contracts"
+            >
+              {isReconciling ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+              Sync Existing Contracts
+            </button>
+            <span className="text-[10px] text-gray-400 font-medium">Step 1 of 2</span>
+          </div>
         </div>
 
         <div className="space-y-3.5">
@@ -469,18 +511,75 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
               </div>
 
               <div>
-                <label className="block text-[11px] text-gray-300 mb-1">Duration (Weeks) *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] text-gray-300">Duration (Weeks) *</label>
+                  {(() => {
+                    const price = Number(formData.totalHirePurchasePrice) || 0;
+                    const down = Number(formData.downPayment) || 0;
+                    const weekly = Number(formData.riderWeeklyRemittance) || 0;
+                    if (price > 0 && weekly > 0) {
+                      const net = Math.max(0, price - down);
+                      const fullW = Math.floor(net / weekly);
+                      const rem = net % weekly;
+                      const totalW = rem > 0 ? fullW + 1 : fullW;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, riderDurationWeeks: totalW.toString() }))}
+                          className="text-[10px] text-emerald-400 hover:text-emerald-300 underline font-mono font-bold"
+                        >
+                          Auto-fill: {totalW} Wks
+                        </button>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
                 <input 
                   type="text" 
                   name="riderDurationWeeks" 
                   value={formData.riderDurationWeeks} 
                   onChange={handleInputChange} 
-                  placeholder="104" 
+                  placeholder="85" 
                   className="w-full bg-[#0b1220] border border-white/15 focus:border-emerald-500 rounded-lg px-3.5 py-2.5 text-white font-mono text-base sm:text-sm outline-none" 
                   required={!!selectedRider} 
                 />
               </div>
             </div>
+
+            {/* DYNAMIC CALCULATION BREAKDOWN HELPER */}
+            {(() => {
+              const price = Number(formData.totalHirePurchasePrice) || 0;
+              const down = Number(formData.downPayment) || 0;
+              const weekly = Number(formData.riderWeeklyRemittance) || 0;
+              const duration = Number(formData.riderDurationWeeks) || 0;
+              if (price > 0 && weekly > 0 && duration > 0) {
+                const net = Math.max(0, price - down);
+                const fullW = Math.floor(net / weekly);
+                const rem = net % weekly;
+                return (
+                  <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-lg p-2.5 text-[11px] text-emerald-300/90 font-mono space-y-1">
+                    <p className="font-bold flex items-center gap-1.5">
+                      <span>💡 Payment Breakdown:</span>
+                    </p>
+                    <p className="text-gray-300">
+                      {rem > 0 && duration > fullW ? (
+                        <>
+                          • Weeks 1 to {fullW}: <strong className="text-white">₦{weekly.toLocaleString()}</strong>/wk<br />
+                          • Week {duration} (Final Week): <strong className="text-emerald-400">₦{rem.toLocaleString()}</strong> (Exact Remainder)<br />
+                          • Total Sum: <strong className="text-white">₦{price.toLocaleString()}</strong> (Zero overbilling)
+                        </>
+                      ) : (
+                        <>
+                          • {duration} Weeks × ₦{weekly.toLocaleString()} = <strong className="text-white">₦{(duration * weekly).toLocaleString()}</strong>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           {/* OWNER TERMS */}
