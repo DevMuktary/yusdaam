@@ -61,7 +61,7 @@ export async function downloadFileToDevice({
     
     const reader = response.body.getReader();
     let loaded = 0;
-    const chunks: Uint8Array[] = [];
+    const chunks: BlobPart[] = [];
 
     while (true) {
       const { done, value } = await reader.read();
