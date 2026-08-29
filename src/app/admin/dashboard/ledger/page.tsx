@@ -15,15 +15,36 @@ export default async function AdminLedgerPage() {
     redirect("/admin/login");
   }
 
-  // Fetch Raw Transactions, Dropdown Users, and Weekly Cycles in PARALLEL
+  // 1. First fetch active contract IDs for direct indexed lookup
+  const activeContracts = await prisma.contract.findMany({
+    where: {
+      vehicle: { status: "ACTIVE" }
+    },
+    select: {
+      id: true
+    }
+  });
+
+  const activeContractIds = activeContracts.map(c => c.id);
+
+  // 2. Fetch Raw Transactions, Dropdown Users, and Weekly Cycles in PARALLEL with lean selective projections
   const [ledgers, users, cycles] = await Promise.all([
-    // 1. Fetch Raw Transactions
+    // 1. Fetch Raw Transactions (Lean Select + Indexed Order)
     prisma.ledger.findMany({
       orderBy: { date: 'desc' },
       take: 200, // Safety cap to avoid giant memory spikes
-      include: {
+      select: {
+        id: true,
+        amount: true,
+        type: true,
+        reference: true,
+        description: true,
+        date: true,
+        ownerId: true,
         vehicle: { 
-          include: { 
+          select: { 
+            id: true,
+            registrationNumber: true,
             rider: { select: { id: true, firstName: true, lastName: true } } 
           } 
         },
@@ -38,27 +59,42 @@ export default async function AdminLedgerPage() {
       orderBy: { firstName: 'asc' }
     }),
 
-    // 3. Fetch Weekly Billing Cycles to monitor Arrears
-    prisma.weeklyCycle.findMany({
-      where: {
-        contract: {
-          vehicle: { status: "ACTIVE" }
-        }
-      },
-      orderBy: [{ contractId: 'asc' }, { weekNumber: 'desc' }],
-      include: {
-        contract: {
-          include: {
-            vehicle: { 
-              include: { 
-                rider: { select: { id: true, firstName: true, lastName: true, phoneNumber: true } } 
-              } 
-            },
-            owner: { select: { id: true, firstName: true, lastName: true } }
+    // 3. Fetch Weekly Billing Cycles directly by indexed contractId with lean selective projections
+    activeContractIds.length > 0
+      ? prisma.weeklyCycle.findMany({
+          where: {
+            contractId: { in: activeContractIds }
+          },
+          orderBy: [{ contractId: 'asc' }, { weekNumber: 'desc' }],
+          take: 300,
+          select: {
+            id: true,
+            contractId: true,
+            weekNumber: true,
+            startDate: true,
+            endDate: true,
+            expectedAmount: true,
+            amountPaid: true,
+            shortfallAmount: true,
+            isSettled: true,
+            contract: {
+              select: {
+                id: true,
+                ownerId: true,
+                vehicle: { 
+                  select: { 
+                    id: true,
+                    registrationNumber: true,
+                    riderId: true,
+                    rider: { select: { id: true, firstName: true, lastName: true, phoneNumber: true } } 
+                  } 
+                },
+                owner: { select: { id: true, firstName: true, lastName: true } }
+              }
+            }
           }
-        }
-      }
-    })
+        })
+      : []
   ]);
 
   return (
