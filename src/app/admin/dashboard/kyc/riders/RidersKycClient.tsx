@@ -1,11 +1,10 @@
-"use client";
-
 import { useState, useMemo } from "react";
 import { 
   ShieldCheck, Loader2, X, CheckCircle, 
-  ChevronDown, ChevronUp, UserCheck, UserX, FileText, User, Search, ChevronLeft, ChevronRight 
+  ChevronDown, ChevronUp, UserCheck, UserX, FileText, User, Search, ChevronLeft, ChevronRight, Trash2 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 type Guarantor = any; 
 type Rider = any; 
@@ -38,6 +37,7 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
   const [ninData, setNinData] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [riderToDelete, setRiderToDelete] = useState<Rider | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [page, setPage] = useState(1);
@@ -198,26 +198,41 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
             <div className="p-4 sm:p-6 border-t border-white/10 bg-void-navy/50">
               
               {/* ACTION BUTTONS */}
-              {rider.accountStatus === "PENDING" && (
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 pb-6 border-b border-white/10">
-                  <button 
-                    onClick={() => handleStatusUpdate(rider.id, "APPROVED")}
-                    disabled={isProcessing === rider.id}
-                    className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold transition disabled:opacity-50 w-full sm:w-auto"
-                  >
-                    {isProcessing === rider.id ? <Loader2 className="animate-spin" size={18} /> : <UserCheck size={18} />}
-                    Approve Rider
-                  </button>
-                  <button 
-                    onClick={() => handleStatusUpdate(rider.id, "REJECTED")}
-                    disabled={isProcessing === rider.id}
-                    className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold transition disabled:opacity-50 w-full sm:w-auto"
-                  >
-                    {isProcessing === rider.id ? <Loader2 className="animate-spin" size={18} /> : <UserX size={18} />}
-                    Reject Rider
-                  </button>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-8 pb-6 border-b border-white/10">
+                <div className="flex flex-wrap items-center gap-3">
+                  {rider.accountStatus === "PENDING" && (
+                    <>
+                      <button 
+                        onClick={() => handleStatusUpdate(rider.id, "APPROVED")}
+                        disabled={isProcessing === rider.id}
+                        className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition disabled:opacity-50"
+                      >
+                        {isProcessing === rider.id ? <Loader2 className="animate-spin" size={16} /> : <UserCheck size={16} />}
+                        Approve Rider
+                      </button>
+                      <button 
+                        onClick={() => handleStatusUpdate(rider.id, "REJECTED")}
+                        disabled={isProcessing === rider.id}
+                        className="flex items-center justify-center gap-2 bg-white/10 hover:bg-red-600/30 text-red-400 hover:text-red-300 border border-red-500/30 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition disabled:opacity-50"
+                      >
+                        {isProcessing === rider.id ? <Loader2 className="animate-spin" size={16} /> : <UserX size={16} />}
+                        Reject Rider
+                      </button>
+                    </>
+                  )}
                 </div>
-              )}
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRiderToDelete(rider);
+                  }}
+                  className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition"
+                >
+                  <Trash2 size={15} />
+                  Delete Rider & Records
+                </button>
+              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
                 
@@ -489,6 +504,17 @@ export default function RidersKycClient({ riders }: { riders: Rider[] }) {
           <p>No riders found.</p>
         </div>
       )}
+
+      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      <DeleteConfirmationModal
+        isOpen={Boolean(riderToDelete)}
+        user={riderToDelete}
+        onClose={() => setRiderToDelete(null)}
+        onSuccess={() => {
+          setRiderToDelete(null);
+          router.refresh();
+        }}
+      />
 
     </div>
   );

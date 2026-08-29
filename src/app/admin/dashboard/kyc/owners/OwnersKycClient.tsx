@@ -1,11 +1,10 @@
-"use client";
-
 import { useState, useMemo } from "react";
 import { 
   ShieldCheck, Loader2, X, CheckCircle, 
-  ChevronDown, ChevronUp, UserCheck, UserX, FileText, Briefcase, Search, ChevronLeft, ChevronRight 
+  ChevronDown, ChevronUp, UserCheck, UserX, FileText, Briefcase, Search, ChevronLeft, ChevronRight, Trash2 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 type Owner = any; 
 
@@ -37,6 +36,7 @@ export default function OwnersKycClient({ owners }: { owners: Owner[] }) {
   const [ninData, setNinData] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [ownerToDelete, setOwnerToDelete] = useState<Owner | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [page, setPage] = useState(1);
@@ -196,26 +196,41 @@ export default function OwnersKycClient({ owners }: { owners: Owner[] }) {
             <div className="p-4 sm:p-6 border-t border-white/10 bg-void-navy/50">
               
               {/* ACTION BUTTONS */}
-              {owner.accountStatus === "PENDING" && (
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 pb-6 border-b border-white/10">
-                  <button 
-                    onClick={() => handleStatusUpdate(owner.id, "APPROVED")}
-                    disabled={isProcessing === owner.id}
-                    className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold transition disabled:opacity-50 w-full sm:w-auto"
-                  >
-                    {isProcessing === owner.id ? <Loader2 className="animate-spin" size={18} /> : <UserCheck size={18} />}
-                    Approve Owner
-                  </button>
-                  <button 
-                    onClick={() => handleStatusUpdate(owner.id, "REJECTED")}
-                    disabled={isProcessing === owner.id}
-                    className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold transition disabled:opacity-50 w-full sm:w-auto"
-                  >
-                    {isProcessing === owner.id ? <Loader2 className="animate-spin" size={18} /> : <UserX size={18} />}
-                    Reject Owner
-                  </button>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-8 pb-6 border-b border-white/10">
+                <div className="flex flex-wrap items-center gap-3">
+                  {owner.accountStatus === "PENDING" && (
+                    <>
+                      <button 
+                        onClick={() => handleStatusUpdate(owner.id, "APPROVED")}
+                        disabled={isProcessing === owner.id}
+                        className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition disabled:opacity-50"
+                      >
+                        {isProcessing === owner.id ? <Loader2 className="animate-spin" size={16} /> : <UserCheck size={16} />}
+                        Approve Owner
+                      </button>
+                      <button 
+                        onClick={() => handleStatusUpdate(owner.id, "REJECTED")}
+                        disabled={isProcessing === owner.id}
+                        className="flex items-center justify-center gap-2 bg-white/10 hover:bg-red-600/30 text-red-400 hover:text-red-300 border border-red-500/30 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition disabled:opacity-50"
+                      >
+                        {isProcessing === owner.id ? <Loader2 className="animate-spin" size={16} /> : <UserX size={16} />}
+                        Reject Owner
+                      </button>
+                    </>
+                  )}
                 </div>
-              )}
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOwnerToDelete(owner);
+                  }}
+                  className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition"
+                >
+                  <Trash2 size={15} />
+                  Delete Owner & Records
+                </button>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 
@@ -404,6 +419,17 @@ export default function OwnersKycClient({ owners }: { owners: Owner[] }) {
           <p>No asset owners found.</p>
         </div>
       )}
+
+      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      <DeleteConfirmationModal
+        isOpen={Boolean(ownerToDelete)}
+        user={ownerToDelete}
+        onClose={() => setOwnerToDelete(null)}
+        onSuccess={() => {
+          setOwnerToDelete(null);
+          router.refresh();
+        }}
+      />
 
     </div>
   );

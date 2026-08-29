@@ -1,8 +1,7 @@
-"use client";
-
 import { useState, useMemo } from "react";
-import { Search, User, ShieldAlert, CheckCircle2, Ban, Briefcase, X, Banknote, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, User, ShieldAlert, CheckCircle2, Ban, Briefcase, X, Banknote, Loader2, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 type UserData = any;
 
@@ -13,8 +12,15 @@ export default function UsersClient({ users }: { users: UserData[] }) {
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [page, setPage] = useState(1);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (text: string, type: "success" | "error" = "success") => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   // Filter Logic
   const filteredUsers = useMemo(() => {
@@ -35,9 +41,6 @@ export default function UsersClient({ users }: { users: UserData[] }) {
   // Action Handler (Suspend / Reactivate)
   const handleStatusChange = async (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === "SUSPENDED" ? "ACTIVE" : "SUSPENDED";
-    const actionText = newStatus === "SUSPENDED" ? "suspend and lock out" : "reactivate";
-    
-    if (!confirm(`Are you sure you want to ${actionText} this user?`)) return;
 
     setIsProcessing(true);
     try {
@@ -47,13 +50,18 @@ export default function UsersClient({ users }: { users: UserData[] }) {
         body: JSON.stringify({ userId, status: newStatus }),
       });
 
-      if (!res.ok) throw new Error("Failed to update status");
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update status");
+      }
       
-      alert(`User account is now ${newStatus}`);
+      showToast(`User account is now ${newStatus}`, "success");
       router.refresh();
-      setSelectedUser(null); // Close modal if open
+      if (selectedUser && selectedUser.id === userId) {
+        setSelectedUser({ ...selectedUser, accountStatus: newStatus });
+      }
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message || "Failed to update status", "error");
     } finally {
       setIsProcessing(false);
     }
@@ -88,6 +96,18 @@ export default function UsersClient({ users }: { users: UserData[] }) {
   return (
     <div className="space-y-6">
       
+      {/* TOAST NOTIFICATION */}
+      {toastMessage && (
+        <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl border shadow-2xl flex items-center gap-2.5 text-xs font-bold uppercase tracking-wider animate-in slide-in-from-bottom-5 duration-300 ${
+          toastMessage.type === "success" 
+            ? "bg-emerald-950/90 border-emerald-500/50 text-emerald-300 shadow-emerald-950/50" 
+            : "bg-red-950/90 border-red-500/50 text-red-300 shadow-red-950/50"
+        }`}>
+          {toastMessage.type === "success" ? <CheckCircle2 size={18} className="text-emerald-400" /> : <ShieldAlert size={18} className="text-red-400" />}
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
       {/* CONTROLS: Tabs & Search */}
       <div className="flex flex-col lg:flex-row justify-between gap-4 bg-void-navy p-4 rounded-xl border border-white/10 shadow-lg">
         <div className="flex overflow-x-auto gap-2 pb-2 lg:pb-0 hide-scrollbar">
@@ -128,12 +148,12 @@ export default function UsersClient({ users }: { users: UserData[] }) {
                 <th className="p-4">Role</th>
                 <th className="p-4">Contact</th>
                 <th className="p-4">Status</th>
-                <th className="p-4 text-right">Action</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {paginatedUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-white/5 transition duration-150">
+                <tr key={user.id} className="hover:bg-white/5 transition duration-150 group">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
@@ -167,12 +187,24 @@ export default function UsersClient({ users }: { users: UserData[] }) {
                     </span>
                   </td>
                   <td className="p-4 text-right">
-                    <button 
-                      onClick={() => setSelectedUser(user)}
-                      className="bg-white/10 hover:bg-cobalt hover:text-white text-gray-300 px-4 py-1.5 rounded-lg text-xs font-bold transition"
-                    >
-                      View Profile
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => setSelectedUser(user)}
+                        className="bg-white/10 hover:bg-cobalt hover:text-white text-gray-300 px-3.5 py-1.5 rounded-lg text-xs font-bold transition"
+                      >
+                        Profile
+                      </button>
+                      
+                      {user.role !== "ADMIN" && (
+                        <button 
+                          onClick={() => setUserToDelete(user)}
+                          title="Delete User and All Records"
+                          className="bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 p-1.5 rounded-lg text-xs transition"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -336,21 +368,34 @@ export default function UsersClient({ users }: { users: UserData[] }) {
                     <h3 className="text-red-500 font-bold uppercase tracking-wider flex items-center gap-2 mb-1">
                       <ShieldAlert size={18} /> Danger Zone
                     </h3>
-                    <p className="text-xs text-red-200/70">Suspending a user immediately revokes their dashboard access and flags their profile.</p>
+                    <p className="text-xs text-red-200/70">Suspend access or permanently delete this user account along with all relational data.</p>
                   </div>
                   
-                  <button 
-                    onClick={() => handleStatusChange(selectedUser.id, selectedUser.accountStatus)}
-                    disabled={isProcessing || selectedUser.role === "ADMIN"}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold text-sm uppercase tracking-wider transition disabled:opacity-50 ${
-                      selectedUser.accountStatus === 'SUSPENDED' 
-                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
-                        : 'bg-red-600 hover:bg-red-500 text-white'
-                    }`}
-                  >
-                    {isProcessing ? <Loader2 size={16} className="animate-spin" /> : selectedUser.accountStatus === 'SUSPENDED' ? <CheckCircle2 size={16} /> : <Ban size={16} />}
-                    {selectedUser.accountStatus === 'SUSPENDED' ? 'Reactivate User' : 'Suspend User'}
-                  </button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button 
+                      onClick={() => handleStatusChange(selectedUser.id, selectedUser.accountStatus)}
+                      disabled={isProcessing || selectedUser.role === "ADMIN"}
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition disabled:opacity-50 ${
+                        selectedUser.accountStatus === 'SUSPENDED' 
+                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
+                          : 'bg-white/10 hover:bg-white/20 text-gray-200'
+                      }`}
+                    >
+                      {isProcessing ? <Loader2 size={15} className="animate-spin" /> : selectedUser.accountStatus === 'SUSPENDED' ? <CheckCircle2 size={15} /> : <Ban size={15} />}
+                      {selectedUser.accountStatus === 'SUSPENDED' ? 'Reactivate' : 'Suspend'}
+                    </button>
+
+                    {selectedUser.role !== "ADMIN" && (
+                      <button 
+                        onClick={() => setUserToDelete(selectedUser)}
+                        disabled={isProcessing}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30"
+                      >
+                        <Trash2 size={15} />
+                        Delete User & Records
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -358,6 +403,20 @@ export default function UsersClient({ users }: { users: UserData[] }) {
           </div>
         </div>
       )}
+
+      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      <DeleteConfirmationModal
+        isOpen={Boolean(userToDelete)}
+        user={userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onSuccess={() => {
+          showToast("User and all associated data permanently deleted.", "success");
+          setSelectedUser(null);
+          router.refresh();
+        }}
+      />
+
     </div>
   );
 }
+
