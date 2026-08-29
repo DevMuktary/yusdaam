@@ -38,6 +38,8 @@ export default async function AdminDocumentsPage() {
             id: true,
             firstName: true,
             lastName: true,
+            hpaAgreementUrl: true,
+            poaAgreementUrl: true,
           }
         },
         contract: {
@@ -84,6 +86,38 @@ export default async function AdminDocumentsPage() {
     })
   ]);
 
+  // 1. Process Vehicles (Active and Assigned Deployments with Contracts/Agreements)
+  vehicles.forEach(v => {
+    const r = v.rider;
+    const o = v.owner;
+    const c = v.contract;
+
+    const rHpa = r?.hpaAgreementUrl || null;
+    const rPoa = r?.poaAgreementUrl || null;
+    const oHpa = c?.ownerHpaUrl || o?.hpaAgreementUrl || null;
+    const oPoa = c?.ownerPoaUrl || o?.poaAgreementUrl || null;
+    const cMaster = c?.signedDocumentUrl || null;
+
+    if (rHpa || rPoa || oHpa || oPoa || cMaster) {
+      vaultEntries.push({
+        id: v.id,
+        type: "DEPLOYMENT",
+        plateNumber: v.registrationNumber,
+        riderName: r ? `${r.firstName || ""} ${r.lastName || ""}`.trim() || "Unassigned" : "Unassigned",
+        ownerName: o ? `${o.firstName || ""} ${o.lastName || ""}`.trim() || "Unassigned" : "Unassigned",
+        updatedAt: c?.updatedAt || v.updatedAt,
+        docs: {
+          masterContractUrl: cMaster,
+          riderHpaUrl: rHpa,
+          riderPoaUrl: rPoa,
+          ownerHpaUrl: oHpa,
+          ownerPoaUrl: oPoa,
+        }
+      });
+    }
+  });
+
+  // 2. Process Users who have uploaded/signed documents but have no assigned vehicle yet
   allUsers.forEach(u => {
      // For riders with no assigned vehicle
      if (u.role === "RIDER" && !u.assignedTrip) {
