@@ -235,7 +235,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
                 </ul>
                 <div className={`flex items-end gap-2 ${isPdf ? "h-8" : "h-10"}`}>
                   <span className={isPdf ? "text-[9px]" : "text-xs"}>Signature:</span>
-                  {g1?.signatureUrl ? <img src={g1.signatureUrl} alt="G1 Sig" className={`${isPdf ? "h-6" : "h-8"} object-contain`} /> : <span className="border-b border-black w-16 inline-block"></span>}
+                  {g1?.signatureUrl ? <img src={g1.signatureUrl} crossOrigin="anonymous" alt="G1 Sig" className={`${isPdf ? "h-6" : "h-8"} object-contain`} /> : <span className="border-b border-black w-16 inline-block"></span>}
                 </div>
                 <p className={isPdf ? "text-[8px]" : "text-[10px]"}>Signed: {g1?.signedAt ? new Date(g1.signedAt).toLocaleDateString('en-GB') : "N/A"}</p>
               </div>
@@ -247,7 +247,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
                 </ul>
                 <div className={`flex items-end gap-2 ${isPdf ? "h-8" : "h-10"}`}>
                   <span className={isPdf ? "text-[9px]" : "text-[10px]"}>Signature:</span>
-                  {g2?.signatureUrl ? <img src={g2.signatureUrl} alt="G2 Sig" className={`${isPdf ? "h-6" : "h-8"} object-contain`} /> : <span className="border-b border-black w-16 inline-block"></span>}
+                  {g2?.signatureUrl ? <img src={g2.signatureUrl} crossOrigin="anonymous" alt="G2 Sig" className={`${isPdf ? "h-6" : "h-8"} object-contain`} /> : <span className="border-b border-black w-16 inline-block"></span>}
                 </div>
                 <p className={isPdf ? "text-[8px]" : "text-[10px]"}>Signed: {g2?.signedAt ? new Date(g2.signedAt).toLocaleDateString('en-GB') : "N/A"}</p>
               </div>
@@ -255,7 +255,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           </div>
         </div>
 
-        {/* Section 10: Signatures */}
         <div style={pdfBreakAvoid} className="avoid-page-break signature-block">
           <h3 className={headingStyle}>10. SIGNATURES</h3>
           <p className={paraSpacing}>IN WITNESS WHEREOF, the Parties hereto have executed this Agreement on the day and year first above written.</p>
@@ -264,7 +263,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
             <div>
               <p className="font-bold mb-1 text-[10px]">SIGNED by the ADMINISTRATOR</p>
               <div className="relative h-10 w-40 mb-1">
-                 <img src="/images/stamp.png" alt="Company Seal" className="absolute left-0 -top-2 h-12 opacity-80 object-contain" />
+                 <img src="/images/stamp.png" crossOrigin="anonymous" alt="Company Seal" className="absolute left-0 -top-2 h-12 opacity-80 object-contain" />
                  <div className={`absolute bottom-0 w-full border-b ${isPdf ? "border-gray-400" : "border-slate-light"}`}></div>
               </div>
               <p className="font-bold text-[9px] mt-1">YUSSUF DARE ORELAJA (MD)</p>
@@ -310,6 +309,11 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   };
 
   if (step === 2) {
+    const safeRiderName = `${rider?.firstName || 'Rider'}_${rider?.lastName || 'User'}`.replace(/[^a-zA-Z0-9_]/g, '_');
+    const downloadDocUrl = contractUrl 
+      ? `/api/download?url=${encodeURIComponent(contractUrl)}&filename=YUSDAAM_HPA_${safeRiderName}` 
+      : null;
+
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-4 h-screen w-screen overflow-y-auto">
         <div className="max-w-3xl mx-auto bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full my-auto">
@@ -318,16 +322,25 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
           </div>
           <h2 className="text-3xl font-black uppercase tracking-wider text-crisp-white mb-2">Agreement Executed</h2>
           <p className="text-slate-light leading-relaxed mb-10">
-            Your digital signature has been permanently attached. A secured PDF copy has been emailed to your registered address. Your dashboard is now unlocked.
+            Your digital signature has been permanently attached. A secured copy has been archived in the legal vault. Your command dashboard is now fully unlocked.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {contractUrl && (
-              <a href={`${contractUrl}?fl_attachment=YUSDAAM_HPA_${rider.firstName}_${rider.lastName}.pdf`} download className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition">
+            {downloadDocUrl && (
+              <a 
+                href={downloadDocUrl} 
+                download={`YUSDAAM_HPA_${safeRiderName}.pdf`} 
+                className="flex items-center justify-center gap-2 px-6 py-4 bg-void-navy border border-cobalt/30 text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-void-light/10 transition"
+              >
                 <Download size={16} /> Download Agreement
               </a>
             )}
-            <button onClick={() => router.refresh()} className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg">
+            <button 
+              onClick={() => {
+                window.location.href = "/rider/dashboard";
+              }} 
+              className="flex items-center justify-center gap-2 px-6 py-4 bg-signal-red text-crisp-white text-sm font-bold uppercase tracking-wider rounded-xl hover:bg-signal-red/90 transition shadow-lg active:scale-95"
+            >
               Access Dashboard <ArrowRight size={16} />
             </button>
           </div>

@@ -51,7 +51,13 @@ export default function GuarantorExecutionPage() {
     meta.name = 'viewport';
     meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
     document.head.appendChild(meta);
-    return () => { document.head.removeChild(meta); };
+    return () => { 
+      try {
+        if (meta.parentNode) {
+          meta.parentNode.removeChild(meta);
+        }
+      } catch (e) {}
+    };
   }, []);
 
   useEffect(() => {
