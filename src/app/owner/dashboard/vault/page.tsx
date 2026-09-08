@@ -29,9 +29,9 @@ export default async function LegalVaultPage() {
 
   if (!user) redirect("/owner/login");
 
-  // Filter ONLY vehicles that have a signed contract
+  // Filter ONLY vehicles that have an executed owner agreement
   const signedAssets = user.ownedVehicles.filter(
-    (v) => v.contract && v.contract.isSigned === true
+    (v) => v.contract && Boolean(v.contract.ownerSignatureUrl || v.contract.ownerHpaUrl)
   );
 
   return (

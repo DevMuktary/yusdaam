@@ -65,8 +65,8 @@ export default async function OwnerAssetsPage() {
         <div className="space-y-12">
           {user.ownedVehicles.map((vehicle) => {
             const contract = vehicle.contract;
-            // Determine if this specific vehicle requires a signature
-            const needsSignature = contract && contract.isSigned === false;
+            // Determine if this specific vehicle requires the owner's signature
+            const needsSignature = contract && (!contract.ownerSignatureUrl || !contract.ownerHpaUrl);
 
             // Calculate Dates if contract exists
             let startDateStr = "TBD";

@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ShieldAlert, Loader2, CheckCircle2, Clock, TrendingUp, CarFront, Calendar, Activity } from "lucide-react";
+import { ShieldAlert, Loader2, CheckCircle2, Clock, TrendingUp, CarFront, Calendar, Activity, ArrowRight } from "lucide-react";
 import VirtualAgreement from "./VirtualAgreement";
 
 export const dynamic = "force-dynamic";
@@ -49,8 +49,15 @@ export default async function DashboardHome() {
   const currentStatus = String(user?.accountStatus);
   const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
   
-  const assignedVehicle = user?.ownedVehicles?.[0];
+  // Locate any vehicle that has a contract awaiting the owner's signature
+  const unsignedVehicle = user?.ownedVehicles?.find(
+    (v) => v.contract && (!v.contract.ownerSignatureUrl || !v.contract.ownerHpaUrl)
+  );
+  const assignedVehicle = unsignedVehicle || user?.ownedVehicles?.[0];
   const assignedContract = assignedVehicle?.contract;
+  const pendingContractsCount = user?.ownedVehicles?.filter(
+    (v) => v.contract && (!v.contract.ownerSignatureUrl || !v.contract.ownerHpaUrl)
+  ).length || 0;
 
   // --- STATE 1: PENDING KYC ---
   if (currentStatus === "PENDING" || currentStatus === "undefined" || !user?.accountStatus) {
@@ -179,6 +186,31 @@ export default async function DashboardHome() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden">
       
+      {/* ACTIONABLE BANNER FOR UNEXECUTED AGREEMENTS */}
+      {pendingContractsCount > 0 && (
+        <div className="bg-signal-red/10 border border-signal-red/30 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in slide-in-from-top-2 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-signal-red/20 text-signal-red rounded-xl shrink-0">
+              <ShieldAlert size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-white uppercase tracking-wider">
+                Action Required: {pendingContractsCount} Asset Agreement{pendingContractsCount > 1 ? "s" : ""} Awaiting Signature
+              </h3>
+              <p className="text-xs text-slate-light mt-0.5">
+                Review and execute the Power of Attorney and Administration Agreement to activate remittance routing.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/owner/dashboard/assets"
+            className="px-4 py-2.5 bg-signal-red hover:bg-signal-red/90 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-lg shrink-0 flex items-center gap-1.5 active:scale-95"
+          >
+            Review & Sign <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
+
       <div className="border-b border-cobalt/20 pb-6">
         <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-wide mb-2">Operational Overview</h1>
         <p className="text-slate-light">Welcome back, {user?.firstName}. Here is your real-time asset performance.</p>

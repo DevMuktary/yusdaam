@@ -16,7 +16,11 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
     document.head.appendChild(meta);
     document.body.style.overflow = "hidden"; 
     return () => { 
-      document.head.removeChild(meta); 
+      try {
+        if (meta.parentNode) {
+          meta.parentNode.removeChild(meta);
+        }
+      } catch (e) {}
       document.body.style.overflow = "auto";
     };
   }, []);
@@ -30,6 +34,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
   const riderSigCanvas = useRef<SignatureCanvas>(null);
   const witnessSigCanvas = useRef<SignatureCanvas>(null);
   const pdfContractRef = useRef<HTMLDivElement>(null);
+  const signSectionRef = useRef<HTMLDivElement>(null);
   
   const [agreed, setAgreed] = useState(false);
   const [witnessName, setWitnessName] = useState("");
@@ -316,7 +321,7 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
 
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-void-navy/95 backdrop-blur-md p-4 h-screen w-screen overflow-y-auto">
-        <div className="max-w-3xl mx-auto bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full my-auto">
+        <div ref={topRef} className="max-w-3xl mx-auto bg-void-light/5 border border-emerald-500/30 p-8 sm:p-12 rounded-2xl text-center shadow-2xl animate-in fade-in zoom-in duration-500 w-full my-auto">
           <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 size={40} className="text-emerald-400" />
           </div>
@@ -348,8 +353,6 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
       </div>
     );
   }
-
-  const signSectionRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="fixed inset-0 z-[100] bg-void-navy/95 backdrop-blur-md overflow-y-auto h-screen w-screen px-2 sm:px-6 py-6 sm:py-10">

@@ -77,11 +77,17 @@ export async function POST(req: Request) {
 
     // 4. Update the active Contract (if attached to vehicle)
     if (user.assignedTrip?.contract) {
+      const existingContract = await prisma.contract.findUnique({
+        where: { id: user.assignedTrip.contract.id },
+        select: { ownerSignatureUrl: true }
+      });
+      const isOwnerSigned = Boolean(existingContract?.ownerSignatureUrl);
+
       await prisma.contract.update({
         where: { id: user.assignedTrip.contract.id },
         data: {
-          isSigned: true,
           signedDocumentUrl: secureUrl,
+          ...(isOwnerSigned ? { isSigned: true } : {}),
         }
       }).catch(err => console.warn("Contract signature update warning:", err));
     }
