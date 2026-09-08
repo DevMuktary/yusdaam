@@ -128,9 +128,14 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
           vehicleId: selectedVehicle,
           riderId: selectedRider || null,
           ownerId: selectedOwner || null,
-          systemGrandTotal: formData.totalHirePurchasePrice, 
-          weeklyServiceFee: formData.weeklyServiceFee || "0", 
-          ...formData
+          totalHirePurchasePrice: formData.totalHirePurchasePrice,
+          systemGrandTotal: formData.totalHirePurchasePrice,
+          downPayment: formData.downPayment,
+          riderWeeklyRemittance: formData.riderWeeklyRemittance,
+          riderDurationWeeks: formData.riderDurationWeeks,
+          weeklyServiceFee: formData.weeklyServiceFee || "0",
+          ownerWeeklyPayout: formData.ownerWeeklyPayout,
+          ownerDurationWeeks: formData.ownerDurationWeeks,
         }),
       });
 
