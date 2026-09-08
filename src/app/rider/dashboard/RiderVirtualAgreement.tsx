@@ -167,9 +167,9 @@ export default function RiderVirtualAgreement({ rider, vehicle, contract, guaran
         
         <p style={pdfBreakAvoid} className={paraSpacing}>2.2 <strong>Initial Deposit:</strong> The Driver/Rider has paid a non-refundable initial commitment deposit of <strong>₦{contract?.downPayment?.toLocaleString() || "0"}</strong>.</p>
         
-        <p style={pdfBreakAvoid} className={paraSpacing}>2.3 <strong>Weekly Remittance & Service Fee:</strong> The Driver/Rider shall pay a fixed sum of <strong>₦{contract?.riderWeeklyRemittance?.toLocaleString() || "---"}</strong> every week directly into the Administrator’s designated Client Remittance Account.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>2.3 <strong>Weekly Vehicle Remittance:</strong> The Driver/Rider shall pay a fixed vehicle hire purchase remittance of <strong>₦{contract?.riderWeeklyRemittance?.toLocaleString() || "---"}</strong> every week directly into the Administrator’s designated Client Remittance Account.</p>
         
-        <p style={pdfBreakAvoid} className={paraSpacing}>2.4 <strong>Fee Breakdown:</strong> Out of the ₦{contract?.riderWeeklyRemittance?.toLocaleString() || "---"} weekly remittance, the sum of <strong>₦{contract?.weeklyServiceFee?.toLocaleString() || "---"}</strong> is explicitly allocated and applied as the Hire Purchase Administration Service Fee. Mind you, the Total Hire Purchase Price stated in Clause 2.1 does not contain this service fee at all.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>2.4 <strong>Company Administration Charge:</strong> In addition, the Driver/Rider agrees to pay a separate fixed company administration charge of <strong>₦{Number(contract?.weeklyServiceFee || 0).toLocaleString()}</strong> per week for administration, fleet tracking, and compliance services. For the avoidance of doubt, this company administration charge is entirely separate, is not merged with the vehicle hire purchase remittance, and does not form part of the Total Hire Purchase Price stated in Clause 2.1.</p>
         
         <p style={pdfBreakAvoid} className={paraSpacing}>2.5 <strong>Payment Schedule:</strong> Payments must be made no later than <strong>{currentDayOfWeek} 11:59 PM</strong> of every week. Payments made to unauthorized staff or third parties will not be recognized.</p>
         

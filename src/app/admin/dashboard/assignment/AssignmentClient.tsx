@@ -99,6 +99,7 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
     downPayment: "",
     riderWeeklyRemittance: "",
     riderDurationWeeks: "",
+    weeklyServiceFee: "",
     ownerWeeklyPayout: "",
     ownerDurationWeeks: ""
   });
@@ -128,7 +129,7 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
           riderId: selectedRider || null,
           ownerId: selectedOwner || null,
           systemGrandTotal: formData.totalHirePurchasePrice, 
-          weeklyServiceFee: "0", 
+          weeklyServiceFee: formData.weeklyServiceFee || "0", 
           ...formData
         }),
       });
@@ -141,7 +142,7 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
       alert("Success! Fleet assignment and contracts created successfully.");
       router.refresh();
       setSelectedVehicle(""); setSelectedRider(""); setSelectedOwner("");
-      setFormData({ totalHirePurchasePrice: "", downPayment: "", riderWeeklyRemittance: "", riderDurationWeeks: "", ownerWeeklyPayout: "", ownerDurationWeeks: "" });
+      setFormData({ totalHirePurchasePrice: "", downPayment: "", riderWeeklyRemittance: "", riderDurationWeeks: "", weeklyServiceFee: "", ownerWeeklyPayout: "", ownerDurationWeeks: "" });
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -558,6 +559,23 @@ export default function AssignmentClient({ vehicles, riders, owners }: { vehicle
                   className="w-full bg-[#0b1220] border border-white/15 focus:border-emerald-500 rounded-lg px-3.5 py-2.5 text-white font-mono text-base sm:text-sm outline-none" 
                   required={!!selectedRider} 
                 />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-[11px] text-gray-300 mb-1">
+                  Company Admin Charge / Fee (₦/week) <span className="text-[10px] text-gray-400 font-normal">(Separate administration fee for legal agreement)</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-gray-400 text-sm">₦</span>
+                  <input 
+                    type="text" 
+                    name="weeklyServiceFee" 
+                    value={formData.weeklyServiceFee} 
+                    onChange={handleInputChange} 
+                    placeholder="0" 
+                    className="w-full bg-[#0b1220] border border-white/15 focus:border-emerald-500 rounded-lg pl-8 pr-3 py-2.5 text-white font-mono text-base sm:text-sm outline-none" 
+                  />
+                </div>
               </div>
             </div>
 
