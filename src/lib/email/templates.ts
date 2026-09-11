@@ -398,3 +398,55 @@ export const getOtpEmail = (data: OtpEmailData) => {
     </div>
   `;
 };
+
+export interface PasswordResetOtpEmailData {
+  name: string;
+  otp: string;
+  roleTitle: string; // e.g. "Rider / Driver" or "Asset Owner"
+  portalName: string; // e.g. "Rider Fleet Operations Portal" or "Asset Owner Administration Portal"
+  expiryMinutes?: number;
+}
+
+export const getPasswordResetOtpEmail = (data: PasswordResetOtpEmailData) => {
+  const expiry = data.expiryMinutes || 10;
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 550px; margin: 0 auto; line-height: 1.6; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <div style="background-color: #001232; padding: 36px 20px; text-align: center;">
+        <img src="https://yusdaamautos.com/images/logo2.PNG" alt="YUSDAAM AUTOS" style="max-height: 80px; width: auto; max-width: 100%; object-fit: contain;" />
+        <div style="margin-top: 12px; font-size: 13px; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; font-weight: 600;">
+          ${data.portalName}
+        </div>
+      </div>
+      
+      <div style="padding: 32px 24px; font-size: 15px; background-color: #ffffff;">
+        <p style="margin-top: 0;">Hello <strong>${data.name}</strong>,</p>
+        <p>We received a password reset request for your <strong>${data.roleTitle}</strong> account on the Yusdaam Autos platform.</p>
+        <p>Use the 6-digit verification code below to authorize this password reset:</p>
+        
+        <div style="background: #f1f5f9; border: 2px dashed #0F3460; padding: 20px; text-align: center; font-size: 36px; font-weight: 800; letter-spacing: 8px; border-radius: 10px; margin: 28px 0; color: #001232; font-family: monospace;">
+          ${data.otp}
+        </div>
+
+        <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 4px; margin-bottom: 24px;">
+          <p style="margin: 0; font-size: 13px; color: #92400e; line-height: 1.5;">
+            <strong>Security Notice:</strong> This code is valid for <strong>${expiry} minutes</strong> and can only be used once. Never share this code with anyone, including Yusdaam Autos staff.
+          </p>
+        </div>
+
+        <p style="font-size: 14px; color: #64748b; line-height: 1.5;">
+          If you did not request a password reset, someone may have entered your email address by mistake. Your account remains secure and no further action is required.
+        </p>
+        
+        <p style="margin-top: 30px; margin-bottom: 0; font-size: 14px;">
+          Best regards,<br>
+          <strong style="color: #001232;">Yusdaam Autos Security Team</strong>
+        </p>
+      </div>
+
+      <div style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b; text-align: center;">
+        <p style="margin: 0 0 6px 0; font-weight: bold; color: #334155;">YUSDAAM AUTOS FLEET MANAGEMENT NIGERIA LIMITED</p>
+        <p style="margin: 0; line-height: 1.4;">RC-9562528 &bull; Automated Identity & Security System</p>
+      </div>
+    </div>
+  `;
+};
