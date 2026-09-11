@@ -143,6 +143,8 @@ export default async function DashboardHome() {
           chassisNo={assignedVehicle?.chassisNumber || ""}
           engineNo={assignedVehicle?.engineNumber || ""}
           targetWeeklyRemittance={assignedContract?.ownerWeeklyPayout?.toString() || "0"}
+          ownerDurationWeeks={assignedContract?.ownerDurationWeeks || 0}
+          totalHirePurchasePrice={assignedContract?.totalHirePurchasePrice || 0}
           startDate={startDateStr}
           endDate={endDateStr}
           policyNo="To Be Provided By Admin"

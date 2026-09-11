@@ -139,6 +139,7 @@ export default async function OwnerAssetsPage() {
                       
                       targetWeeklyRemittance={contract.ownerWeeklyPayout.toString()}
                       ownerDurationWeeks={contract.ownerDurationWeeks?.toString() || "0"} 
+                      totalHirePurchasePrice={contract.totalHirePurchasePrice || 0}
                       
                       startDate={startDateStr}
                       endDate={endDateStr}

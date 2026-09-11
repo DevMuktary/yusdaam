@@ -26,6 +26,7 @@ export interface AgreementProps {
   endDate?: string;
   ownerDurationWeeks?: string | number;
   targetWeeklyRemittance?: string;
+  totalHirePurchasePrice?: string | number;
   ownerBank?: string;
   ownerAcctNo?: string;
   policyNo?: string;
@@ -273,9 +274,10 @@ export default function VirtualAgreement(props: AgreementProps) {
         <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>3.3 Proof of the Owner's direct payment to the dealer shall be annexed to this Agreement as <strong>Schedule A</strong>.</p>
 
         <h3 style={pdfBreakAvoid} className={headingStyle}>4. TENURE AND FINANCIAL PROVISIONS</h3>
-        <p style={pdfBreakAvoid} className={paraSpacing}>4.1 <strong>Tenure:</strong> This Agreement shall remain valid for an estimated period of <strong>{props.ownerDurationWeeks || fallback}</strong> weeks, commencing on {props.startDate || fallback} and terminating on {props.endDate || fallback}, subject to earlier termination as provided in Clause 10.</p>
-        <p style={pdfBreakAvoid} className={paraSpacing}>4.2 <strong>Target Remittance:</strong> The Owner's Target Weekly Remittance is defined as <strong>₦{Number(props.targetWeeklyRemittance).toLocaleString() || fallback}</strong>. The Parties acknowledge that this figure is a target based on current market data for the Asset type and is expressly not guaranteed by the Administrator in the event of rider default.</p>
-        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>4.3 <strong>Payment Collection:</strong> All payments made by the Rider shall be deposited directly into the Administrator's designated Client Remittance Account. The Administrator shall transfer the Net Weekly Remittance to the Owner's nominated bank account (<strong>Bank:</strong> {props.ownerBank || fallback}, <strong>Account No:</strong> {props.ownerAcctNo || fallback}) within forty-eight (48) hours of cleared receipt.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>4.1 <strong>Total Hire Purchase Consideration:</strong> The total agreed financial consideration payable to the Owner across the Tenure of this Agreement is the cumulative principal sum of <strong>₦{Number(props.totalHirePurchasePrice || (Number(props.targetWeeklyRemittance) * Number(props.ownerDurationWeeks)) || 0).toLocaleString() || fallback}</strong>.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>4.2 <strong>Tenure:</strong> This Agreement shall remain valid for an estimated period of <strong>{props.ownerDurationWeeks || fallback}</strong> weeks, commencing on {props.startDate || fallback} and terminating on {props.endDate || fallback}, subject to earlier termination as provided in Clause 10.</p>
+        <p style={pdfBreakAvoid} className={paraSpacing}>4.3 <strong>Target Weekly Remittance:</strong> Towards the full liquidation of the Total Hire Purchase Consideration stated in Clause 4.1, the Owner's Target Weekly Remittance is defined as <strong>₦{Number(props.targetWeeklyRemittance).toLocaleString() || fallback}</strong>. The Parties acknowledge that this figure is a target based on current market operations for the Asset type and is expressly not guaranteed by the Administrator in the event of default.</p>
+        <p style={pdfBreakAvoid} className={isPdf ? "mb-2 avoid-page-break" : "mb-6"}>4.4 <strong>Payment Collection:</strong> All payments made in respect of the Asset shall be deposited directly into the Administrator's designated Client Remittance Account. The Administrator shall transfer the Net Weekly Remittance to the Owner's nominated bank account (<strong>Bank:</strong> {props.ownerBank || fallback}, <strong>Account No:</strong> {props.ownerAcctNo || fallback}) within forty-eight (48) hours of cleared receipt.</p>
 
         <h3 style={pdfBreakAvoid} className={headingStyle}>5. ADMINISTRATOR'S OBLIGATIONS AND REMUNERATION</h3>
         <p style={pdfBreakAvoid} className={paraSpacing}>5.1 The Administrator shall provide the following services at no cost to the Owner: vetting and recruiting Riders, executing hire purchase contracts with Riders, monitoring the Asset, collecting remittances, enforcing payment compliance, executing repossessions in the event of a default, and providing Monthly Operation Reports.</p>
