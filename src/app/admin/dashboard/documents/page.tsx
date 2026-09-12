@@ -92,13 +92,12 @@ export default async function AdminDocumentsPage() {
     const o = v.owner;
     const c = v.contract;
 
-    const rHpa = r?.hpaAgreementUrl || null;
+    const rHpa = r?.hpaAgreementUrl || c?.signedDocumentUrl || null;
     const rPoa = r?.poaAgreementUrl || null;
     const oHpa = c?.ownerHpaUrl || o?.hpaAgreementUrl || null;
     const oPoa = c?.ownerPoaUrl || o?.poaAgreementUrl || null;
-    const cMaster = c?.signedDocumentUrl || null;
 
-    if (rHpa || rPoa || oHpa || oPoa || cMaster) {
+    if (rHpa || rPoa || oHpa || oPoa) {
       vaultEntries.push({
         id: v.id,
         type: "DEPLOYMENT",
@@ -107,7 +106,6 @@ export default async function AdminDocumentsPage() {
         ownerName: o ? `${o.firstName || ""} ${o.lastName || ""}`.trim() || "Unassigned" : "Unassigned",
         updatedAt: c?.updatedAt || v.updatedAt,
         docs: {
-          masterContractUrl: cMaster,
           riderHpaUrl: rHpa,
           riderPoaUrl: rPoa,
           ownerHpaUrl: oHpa,
@@ -129,7 +127,6 @@ export default async function AdminDocumentsPage() {
          ownerName: "N/A",
          updatedAt: u.updatedAt,
          docs: {
-           masterContractUrl: null,
            riderHpaUrl: u.hpaAgreementUrl || null,
            riderPoaUrl: u.poaAgreementUrl || null,
            ownerHpaUrl: null,
@@ -147,7 +144,6 @@ export default async function AdminDocumentsPage() {
          ownerName: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
          updatedAt: u.updatedAt,
          docs: {
-           masterContractUrl: null,
            riderHpaUrl: null,
            riderPoaUrl: null,
            ownerHpaUrl: u.hpaAgreementUrl || null,

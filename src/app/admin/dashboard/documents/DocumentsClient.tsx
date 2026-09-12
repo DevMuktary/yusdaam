@@ -177,17 +177,6 @@ export default function DocumentsClient({ entries }: { entries: any[] }) {
                     <td className="p-5">
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         
-                        {docs.masterContractUrl && (
-                          <button
-                            onClick={() => handleDownload(docs.masterContractUrl!, entry.plateNumber, entry.ownerName, "Master_Contract", `${entry.id}-master`)}
-                            disabled={downloadingDocId === `${entry.id}-master`}
-                            className="flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 hover:border-blue-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition disabled:opacity-50"
-                          >
-                            {downloadingDocId === `${entry.id}-master` ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-                            Master Contract
-                          </button>
-                        )}
-
                         {docs.riderHpaUrl && (
                           <button
                             onClick={() => handleDownload(docs.riderHpaUrl!, entry.plateNumber, entry.riderName, "Rider_HPA", `${entry.id}-rider-hpa`)}
